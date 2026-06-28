@@ -16,6 +16,7 @@ export interface RecentDrop {
   player_name: string
   gp_value: number
   item_name: string | null
+  image_url: string | null
   recorded_at: string
 }
 
@@ -63,7 +64,7 @@ export async function getAlltimePlankLeaderboard(): Promise<PlankEntry[]> {
 export async function getMostRecentDrop(): Promise<RecentDrop | null> {
   const { data } = await supabase
     .from('drops')
-    .select('player_name, gp_value, item_name, recorded_at')
+    .select('player_name, gp_value, item_name, image_url, recorded_at')
     .eq('guild_id', GUILD_ID)
     .order('recorded_at', { ascending: false })
     .limit(1)
