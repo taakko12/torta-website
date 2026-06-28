@@ -46,7 +46,7 @@ export default async function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
 
         {/* Recent Drop */}
-        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#0e0e1c] p-5 flex flex-col">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-3">
             💰 Most Recent Drop
           </p>
@@ -87,7 +87,7 @@ export default async function Home() {
                 </div>
               </div>
               {recentDrop.screenshot_url && (
-                <div className="mt-4">
+                <div className="mt-auto pt-4">
                   <Image
                     src={recentDrop.screenshot_url}
                     alt="drop screenshot"
@@ -105,7 +105,7 @@ export default async function Home() {
         </div>
 
         {/* Recent Plank */}
-        <div className="rounded-xl border border-[#cc5555]/25 bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#cc5555]/25 bg-[#0e0e1c] p-5 flex flex-col">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#cc5555] mb-3">
             💀 Most Recent Death
           </p>
@@ -126,7 +126,7 @@ export default async function Home() {
                 </a>
               )}
               {recentPlank.image_url && (
-                <div className="mt-4">
+                <div className="mt-auto pt-4">
                   <Image
                     src={recentPlank.image_url}
                     alt="death screenshot"
