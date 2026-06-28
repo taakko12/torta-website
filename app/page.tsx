@@ -43,30 +43,44 @@ export default async function Home() {
             💰 Most Recent Drop
           </p>
           {recentDrop ? (
-            <div className="flex items-start gap-4">
-              {recentDrop.image_url && (
-                <Image
-                  src={recentDrop.image_url}
-                  alt={recentDrop.item_name ?? 'drop'}
-                  width={48}
-                  height={48}
-                  className="rounded mt-1 shrink-0 object-contain"
-                  unoptimized
-                />
-              )}
-              <div>
-                <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentDrop.player_name}</p>
-                <p className="text-2xl font-mono font-semibold text-[#f0c060] mt-1">
-                  {formatGp(recentDrop.gp_value)}
-                </p>
-                {recentDrop.item_name && recentDrop.item_name !== 'Monthly aggregate' && (
-                  <p className="text-sm text-[#7070a0] mt-1">{recentDrop.item_name}</p>
+            <>
+              <div className="flex items-start gap-3">
+                {recentDrop.image_url && (
+                  <Image
+                    src={recentDrop.image_url}
+                    alt={recentDrop.item_name ?? 'drop'}
+                    width={40}
+                    height={40}
+                    className="rounded mt-1 shrink-0 object-contain"
+                    unoptimized
+                  />
                 )}
-                <p className="text-xs text-[#7070a0] mt-3">
-                  <ClientDate iso={recentDrop.recorded_at} />
-                </p>
+                <div>
+                  <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentDrop.player_name}</p>
+                  <p className="text-2xl font-mono font-semibold text-[#f0c060] mt-1">
+                    {formatGp(recentDrop.gp_value)}
+                  </p>
+                  {recentDrop.item_name && recentDrop.item_name !== 'Monthly aggregate' && (
+                    <p className="text-sm text-[#7070a0] mt-1">{recentDrop.item_name}</p>
+                  )}
+                  <p className="text-xs text-[#7070a0] mt-2">
+                    <ClientDate iso={recentDrop.recorded_at} />
+                  </p>
+                </div>
               </div>
-            </div>
+              {recentDrop.screenshot_url && (
+                <div className="mt-4">
+                  <Image
+                    src={recentDrop.screenshot_url}
+                    alt="drop screenshot"
+                    width={800}
+                    height={500}
+                    className="w-full rounded-lg object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <p className="text-[#7070a0]">No drops recorded yet.</p>
           )}
@@ -78,24 +92,24 @@ export default async function Home() {
             💀 Most Recent Death
           </p>
           {recentPlank ? (
-            <div className="flex items-start gap-4">
+            <>
+              <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentPlank.player_name}</p>
+              <p className="text-xs text-[#7070a0] mt-1">
+                <ClientDate iso={recentPlank.recorded_at} />
+              </p>
               {recentPlank.image_url && (
-                <Image
-                  src={recentPlank.image_url}
-                  alt="death screenshot"
-                  width={48}
-                  height={48}
-                  className="rounded mt-1 shrink-0 object-contain"
-                  unoptimized
-                />
+                <div className="mt-4">
+                  <Image
+                    src={recentPlank.image_url}
+                    alt="death screenshot"
+                    width={800}
+                    height={500}
+                    className="w-full rounded-lg object-cover"
+                    unoptimized
+                  />
+                </div>
               )}
-              <div>
-                <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentPlank.player_name}</p>
-                <p className="text-xs text-[#7070a0] mt-3">
-                  <ClientDate iso={recentPlank.recorded_at} />
-                </p>
-              </div>
-            </div>
+            </>
           ) : (
             <p className="text-[#7070a0]">No deaths recorded yet.</p>
           )}
