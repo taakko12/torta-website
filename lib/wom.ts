@@ -61,6 +61,38 @@ function mergeParticipations(comps: CompetitionWithStandings[]): Participant[] {
   return [...byPlayer.values()].sort((a, b) => b.progress.gained - a.progress.gained)
 }
 
+export async function getUpcomingCompetitions(): Promise<Competition[]> {
+  const data = await womFetch(`/groups/${GROUP_ID}/competitions?limit=20`)
+  if (!data) return []
+  const now = Date.now()
+  const upcoming = (data as Competition[])
+    .filter((c) => new Date(c.startsAt).getTime() > now)
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+
+  // Merge paired boss comps the same way active ones are merged
+  const out: Competition[] = []
+  const used = new Set<number>()
+  for (const comp of upcoming) {
+    if (used.has(comp.id)) continue
+    const pairMetric = BOSS_PAIRS[comp.metric]
+    if (pairMetric) {
+      const pair = upcoming.find((c) => c.metric === pairMetric && !used.has(c.id))
+      if (pair) {
+        used.add(pair.id)
+        out.push({
+          ...comp,
+          title: `Boss of the Week — ${formatMetric(comp.metric)} + ${formatMetric(pairMetric)}`,
+        })
+        used.add(comp.id)
+        continue
+      }
+    }
+    out.push(comp)
+    used.add(comp.id)
+  }
+  return out.slice(0, 4)
+}
+
 export async function getActiveCompetitionsWithStandings(): Promise<CompetitionWithStandings[]> {
   const data = await womFetch(`/groups/${GROUP_ID}/competitions?limit=20`)
   if (!data) return []
