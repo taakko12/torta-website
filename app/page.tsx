@@ -78,12 +78,24 @@ export default async function Home() {
             💀 Most Recent Death
           </p>
           {recentPlank ? (
-            <>
-              <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentPlank.player_name}</p>
-              <p className="text-xs text-[#7070a0] mt-3">
-                <ClientDate iso={recentPlank.recorded_at} />
-              </p>
-            </>
+            <div className="flex items-start gap-4">
+              {recentPlank.image_url && (
+                <Image
+                  src={recentPlank.image_url}
+                  alt="death screenshot"
+                  width={48}
+                  height={48}
+                  className="rounded mt-1 shrink-0 object-contain"
+                  unoptimized
+                />
+              )}
+              <div>
+                <p className="text-xl font-bold capitalize text-[#e8e8f0]">{recentPlank.player_name}</p>
+                <p className="text-xs text-[#7070a0] mt-3">
+                  <ClientDate iso={recentPlank.recorded_at} />
+                </p>
+              </div>
+            </div>
           ) : (
             <p className="text-[#7070a0]">No deaths recorded yet.</p>
           )}
