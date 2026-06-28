@@ -12,6 +12,14 @@ import { ClientDate } from '@/components/ClientDate'
 export const revalidate = 30
 
 const MEDALS = ['🥇', '🥈', '🥉']
+const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
+const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
+const PLANKS_CHANNEL = process.env.NEXT_PUBLIC_PLANKS_CHANNEL_ID!
+
+function discordLink(channelId: string, messageId: string | null) {
+  if (!messageId) return null
+  return `https://discord.com/channels/${GUILD_ID}/${channelId}/${messageId}`
+}
 
 export default async function Home() {
   const [recentDrop, recentPlank, topDrops, topPlanks] = await Promise.all([
@@ -66,6 +74,16 @@ export default async function Home() {
                   <p className="text-xs text-[#7070a0] mt-2">
                     <ClientDate iso={recentDrop.recorded_at} />
                   </p>
+                  {discordLink(DROPS_CHANNEL, recentDrop.discord_message_id) && (
+                    <a
+                      href={discordLink(DROPS_CHANNEL, recentDrop.discord_message_id)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors"
+                    >
+                      View in Discord →
+                    </a>
+                  )}
                 </div>
               </div>
               {recentDrop.screenshot_url && (
@@ -97,6 +115,16 @@ export default async function Home() {
               <p className="text-xs text-[#7070a0] mt-1">
                 <ClientDate iso={recentPlank.recorded_at} />
               </p>
+              {discordLink(PLANKS_CHANNEL, recentPlank.discord_message_id) && (
+                <a
+                  href={discordLink(PLANKS_CHANNEL, recentPlank.discord_message_id)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-xs text-[#7070a0] hover:text-[#cc5555] transition-colors"
+                >
+                  View in Discord →
+                </a>
+              )}
               {recentPlank.image_url && (
                 <div className="mt-4">
                   <Image
