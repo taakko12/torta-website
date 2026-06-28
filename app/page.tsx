@@ -6,6 +6,7 @@ import {
   getMonthlyDropLeaderboard,
   getMonthlyPlankLeaderboard,
 } from '@/lib/data'
+import { getActiveCompetitions, formatMetric } from '@/lib/wom'
 import { formatGp, currentMonthLabel } from '@/lib/utils'
 import { ClientDate } from '@/components/ClientDate'
 
@@ -22,11 +23,12 @@ function discordLink(channelId: string, messageId: string | null) {
 }
 
 export default async function Home() {
-  const [recentDrop, recentPlank, topDrops, topPlanks] = await Promise.all([
+  const [recentDrop, recentPlank, topDrops, topPlanks, activeComps] = await Promise.all([
     getMostRecentDrop(),
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
     getMonthlyPlankLeaderboard(),
+    getActiveCompetitions(),
   ])
 
   const month = currentMonthLabel()
@@ -201,6 +203,31 @@ export default async function Home() {
           </Link>
         </div>
       </div>
+
+      {/* Active WOM Competitions */}
+      {activeComps.length > 0 && (
+        <div className="mt-4 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <h2 className="font-semibold text-[#e8e8f0] mb-4">🏆 Active Competitions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {activeComps.map((comp) => {
+              const endsAt = new Date(comp.endsAt)
+              const msLeft = endsAt.getTime() - Date.now()
+              const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+              return (
+                <div key={comp.id} className="rounded-lg bg-[#07070f] border border-[#2a2a4a] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">
+                    {comp.title}
+                  </p>
+                  <p className="text-lg font-bold text-[#e8e8f0]">{formatMetric(comp.metric)}</p>
+                  <p className="text-xs text-[#7070a0] mt-2">
+                    Ends <ClientDate iso={comp.endsAt} /> · {daysLeft}d left
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
