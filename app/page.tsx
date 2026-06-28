@@ -27,7 +27,7 @@ export default async function Home() {
       {/* Hero */}
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-widest uppercase text-[#c89b3c] mb-2">
-          Clan Name
+          Torta
         </h1>
         <p className="text-[#7070a0] text-sm tracking-wide uppercase">Old School RuneScape</p>
       </div>

@@ -7,8 +7,8 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Clan Leaderboards',
-  description: 'Old School RuneScape clan loot and plank leaderboards',
+  title: 'Torta — OSRS Clan',
+  description: 'Torta clan loot and plank leaderboards for Old School RuneScape',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <main className="flex-1">{children}</main>
         <footer className="border-t border-[#2a2a4a] py-6 text-center text-xs text-[#7070a0]">
-          Clan Leaderboards · Built with Next.js &amp; Supabase
+          Torta · Built with Next.js &amp; Supabase
         </footer>
       </body>
     </html>
