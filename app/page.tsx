@@ -6,7 +6,7 @@ import {
   getMonthlyDropLeaderboard,
   getMonthlyPlankLeaderboard,
 } from '@/lib/data'
-import { getActiveCompetitions, formatMetric } from '@/lib/wom'
+import { getActiveCompetitionsWithStandings, formatMetric, formatGained } from '@/lib/wom'
 import { formatGp, currentMonthLabel } from '@/lib/utils'
 import { ClientDate } from '@/components/ClientDate'
 
@@ -28,7 +28,7 @@ export default async function Home() {
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
     getMonthlyPlankLeaderboard(),
-    getActiveCompetitions(),
+    getActiveCompetitionsWithStandings(),
   ])
 
   const month = currentMonthLabel()
@@ -210,18 +210,30 @@ export default async function Home() {
           <h2 className="font-semibold text-[#e8e8f0] mb-4">🏆 Active Competitions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activeComps.map((comp) => {
-              const endsAt = new Date(comp.endsAt)
-              const msLeft = endsAt.getTime() - Date.now()
-              const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
+              const daysLeft = Math.ceil((new Date(comp.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              const top3 = (comp.participations ?? []).filter(p => p.progress.gained > 0).slice(0, 3)
               return (
                 <div key={comp.id} className="rounded-lg bg-[#07070f] border border-[#2a2a4a] p-4">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">
                     {comp.title}
                   </p>
                   <p className="text-lg font-bold text-[#e8e8f0]">{formatMetric(comp.metric)}</p>
-                  <p className="text-xs text-[#7070a0] mt-2">
+                  <p className="text-xs text-[#7070a0] mt-1 mb-3">
                     Ends <ClientDate iso={comp.endsAt} /> · {daysLeft}d left
                   </p>
+                  {top3.length > 0 ? (
+                    <ul className="space-y-1">
+                      {top3.map((p, i) => (
+                        <li key={p.player.displayName} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="w-5 shrink-0">{MEDALS[i] ?? `${i + 1}.`}</span>
+                          <span className="flex-1 truncate text-[#e8e8f0] capitalize">{p.player.displayName}</span>
+                          <span className="font-mono text-[#c89b3c]">{formatGained(comp.metric, p.progress.gained)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-[#7070a0]">No progress yet.</p>
+                  )}
                 </div>
               )
             })}
