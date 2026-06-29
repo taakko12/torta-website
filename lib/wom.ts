@@ -4,9 +4,15 @@ const GROUP_ID = process.env.WOM_GROUP_ID
 // Wilderness bosses whose singles-area variant is tracked separately on WOM.
 // When both are active simultaneously, their standings are merged for display.
 const BOSS_PAIRS: Record<string, string> = {
+  // Wilderness singles-area variants
   callisto: 'artio',    artio: 'callisto',
   venenatis: 'spindel', spindel: 'venenatis',
   vetion: 'calvarion',  calvarion: 'vetion',
+  // Raid normal ↔ challenge/hard/expert modes
+  chambers_of_xeric: 'chambers_of_xeric_challenge_mode', chambers_of_xeric_challenge_mode: 'chambers_of_xeric',
+  theatre_of_blood: 'theatre_of_blood_hard_mode',         theatre_of_blood_hard_mode: 'theatre_of_blood',
+  tombs_of_amascut: 'tombs_of_amascut_expert_mode',       tombs_of_amascut_expert_mode: 'tombs_of_amascut',
+  the_gauntlet: 'the_corrupted_gauntlet',                 the_corrupted_gauntlet: 'the_gauntlet',
 }
 
 const SKILL_METRICS = new Set([
