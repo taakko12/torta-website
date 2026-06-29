@@ -3,21 +3,34 @@ const GROUP_ID = process.env.WOM_GROUP_ID
 
 // Wilderness bosses whose singles-area variant is tracked separately on WOM.
 // When both are active simultaneously, their standings are merged for display.
-const BOSS_PAIRS: Record<string, string> = {
-  // Wilderness singles-area variants
-  callisto: 'artio',    artio: 'callisto',
-  venenatis: 'spindel', spindel: 'venenatis',
-  vetion: 'calvarion',  calvarion: 'vetion',
+const BOSS_PARTNERS: Record<string, string[]> = {
+  callisto: ['artio'],    artio: ['callisto'],
+  venenatis: ['spindel'], spindel: ['venenatis'],
+  vetion: ['calvarion'],  calvarion: ['vetion'],
   // Raid normal ↔ challenge/hard/expert modes
-  chambers_of_xeric: 'chambers_of_xeric_challenge_mode', chambers_of_xeric_challenge_mode: 'chambers_of_xeric',
-  theatre_of_blood: 'theatre_of_blood_hard_mode',         theatre_of_blood_hard_mode: 'theatre_of_blood',
-  tombs_of_amascut: 'tombs_of_amascut_expert_mode',       tombs_of_amascut_expert_mode: 'tombs_of_amascut',
-  the_gauntlet: 'the_corrupted_gauntlet',                 the_corrupted_gauntlet: 'the_gauntlet',
+  chambers_of_xeric: ['chambers_of_xeric_challenge_mode'], chambers_of_xeric_challenge_mode: ['chambers_of_xeric'],
+  theatre_of_blood: ['theatre_of_blood_hard_mode'],         theatre_of_blood_hard_mode: ['theatre_of_blood'],
+  tombs_of_amascut: ['tombs_of_amascut_expert_mode'],       tombs_of_amascut_expert_mode: ['tombs_of_amascut'],
+  the_gauntlet: ['the_corrupted_gauntlet'],                 the_corrupted_gauntlet: ['the_gauntlet'],
   // Group vs solo instance
-  nightmare: 'phosani_nightmare',                         phosani_nightmare: 'nightmare',
+  nightmare: ['phosani_nightmare'],                         phosani_nightmare: ['nightmare'],
   // Same thematic progression / always done together
-  tztok_jad: 'tzkal_zuk',                                 tzkal_zuk: 'tztok_jad',
-  crazy_archaeologist: 'deranged_archaeologist',           deranged_archaeologist: 'crazy_archaeologist',
+  tztok_jad: ['tzkal_zuk'],                                 tzkal_zuk: ['tztok_jad'],
+  crazy_archaeologist: ['deranged_archaeologist'],           deranged_archaeologist: ['crazy_archaeologist'],
+  // Dagannoth Kings trio
+  dagannoth_prime:   ['dagannoth_rex', 'dagannoth_supreme'],
+  dagannoth_rex:     ['dagannoth_prime', 'dagannoth_supreme'],
+  dagannoth_supreme: ['dagannoth_prime', 'dagannoth_rex'],
+}
+
+const BOSS_GROUP_LABELS: Record<string, string> = {
+  dagannoth_prime:   'Dagannoth Kings',
+  dagannoth_rex:     'Dagannoth Kings',
+  dagannoth_supreme: 'Dagannoth Kings',
+}
+
+function groupLabel(metrics: string[]): string {
+  return BOSS_GROUP_LABELS[metrics[0]] ?? metrics.map(formatMetric).join(' + ')
 }
 
 const SKILL_METRICS = new Set([
@@ -80,20 +93,19 @@ export async function getUpcomingCompetitions(): Promise<Competition[]> {
     .filter((c) => new Date(c.startsAt).getTime() > now)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
 
-  // Merge paired boss comps the same way active ones are merged
   const out: Competition[] = []
   const used = new Set<number>()
   for (const comp of upcoming) {
     if (used.has(comp.id)) continue
-    const pairMetric = BOSS_PAIRS[comp.metric]
-    if (pairMetric) {
-      const pair = upcoming.find((c) => c.metric === pairMetric && !used.has(c.id))
-      if (pair) {
-        used.add(pair.id)
-        out.push({
-          ...comp,
-          title: `Boss of the Week — ${formatMetric(comp.metric)} + ${formatMetric(pairMetric)}`,
-        })
+    const partnerMetrics = BOSS_PARTNERS[comp.metric] ?? []
+    if (partnerMetrics.length > 0) {
+      const partners = partnerMetrics
+        .map((m) => upcoming.find((c) => c.metric === m && !used.has(c.id)))
+        .filter((c): c is Competition => c != null)
+      if (partners.length > 0) {
+        for (const p of partners) used.add(p.id)
+        const allMetrics = [comp.metric, ...partners.map((p) => p.metric)]
+        out.push({ ...comp, title: `Boss of the Week — ${groupLabel(allMetrics)}` })
         used.add(comp.id)
         continue
       }
@@ -113,21 +125,22 @@ export async function getActiveCompetitionsWithStandings(): Promise<CompetitionW
   )
   const fetched = (await Promise.all(active.map((c) => womFetch(`/competitions/${c.id}`)))).filter(Boolean) as CompetitionWithStandings[]
 
-  // Group paired boss comps into one merged entry so the homepage shows one card.
   const out: CompetitionWithStandings[] = []
   const used = new Set<number>()
   for (const comp of fetched) {
     if (used.has(comp.id)) continue
-    const pairMetric = BOSS_PAIRS[comp.metric]
-    if (pairMetric) {
-      const pair = fetched.find((c) => c.metric === pairMetric && !used.has(c.id))
-      if (pair) {
-        used.add(pair.id)
+    const partnerMetrics = BOSS_PARTNERS[comp.metric] ?? []
+    if (partnerMetrics.length > 0) {
+      const partners = partnerMetrics
+        .map((m) => fetched.find((c) => c.metric === m && !used.has(c.id)))
+        .filter((c): c is CompetitionWithStandings => c != null)
+      if (partners.length > 0) {
+        for (const p of partners) used.add(p.id)
+        const allMetrics = [comp.metric, ...partners.map((p) => p.metric)]
         out.push({
           ...comp,
-          title: `Boss of the Week — ${formatMetric(comp.metric)} + ${formatMetric(pairMetric)}`,
-          metric: comp.metric,
-          participations: mergeParticipations([comp, pair]),
+          title: `Boss of the Week — ${groupLabel(allMetrics)}`,
+          participations: mergeParticipations([comp, ...partners]),
         })
         used.add(comp.id)
         continue
