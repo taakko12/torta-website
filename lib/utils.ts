@@ -1,3 +1,5 @@
+export const MEDALS = ['🥇', '🥈', '🥉']
+
 export function formatGp(value: number): string {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B gp`
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M gp`

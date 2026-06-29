@@ -1,7 +1,5 @@
 import { DropEntry, PlankEntry } from '@/lib/data'
-import { formatGp } from '@/lib/utils'
-
-const MEDALS = ['🥇', '🥈', '🥉']
+import { formatGp, MEDALS } from '@/lib/utils'
 
 function Rank({ i }: { i: number }) {
   if (i < 3) return <span className="text-lg">{MEDALS[i]}</span>

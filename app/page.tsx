@@ -12,12 +12,10 @@ import {
   formatMetric,
   formatGained,
 } from '@/lib/wom'
-import { formatGp, currentMonthLabel } from '@/lib/utils'
+import { formatGp, currentMonthLabel, MEDALS } from '@/lib/utils'
 import { ClientDate } from '@/components/ClientDate'
 
 export const revalidate = 30
-
-const MEDALS = ['🥇', '🥈', '🥉']
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
 const PLANKS_CHANNEL = process.env.NEXT_PUBLIC_PLANKS_CHANNEL_ID!
