@@ -76,6 +76,24 @@ export async function getMostRecentDrop(): Promise<RecentDrop | null> {
   return data ?? null
 }
 
+export interface Achievement {
+  id: string
+  player_name: string
+  title: string
+  description: string
+  recorded_at: string
+}
+
+export async function getRecentAchievements(limit = 15): Promise<Achievement[]> {
+  const { data } = await supabase
+    .from('achievements')
+    .select('id, player_name, title, description, recorded_at')
+    .eq('guild_id', GUILD_ID)
+    .order('recorded_at', { ascending: false })
+    .limit(limit)
+  return data ?? []
+}
+
 export async function getMostRecentPlank(): Promise<RecentPlank | null> {
   const { data } = await supabase
     .from('planks')

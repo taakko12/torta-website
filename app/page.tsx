@@ -5,6 +5,7 @@ import {
   getMostRecentPlank,
   getMonthlyDropLeaderboard,
   getMonthlyPlankLeaderboard,
+  getRecentAchievements,
 } from '@/lib/data'
 import {
   getActiveCompetitionsWithStandings,
@@ -33,13 +34,14 @@ function timeUntilLabel(iso: string) {
 }
 
 export default async function Home() {
-  const [recentDrop, recentPlank, topDrops, topPlanks, activeComps, upcomingComps] = await Promise.all([
+  const [recentDrop, recentPlank, topDrops, topPlanks, activeComps, upcomingComps, achievements] = await Promise.all([
     getMostRecentDrop(),
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
     getMonthlyPlankLeaderboard(),
     getActiveCompetitionsWithStandings(),
     getUpcomingCompetitions(),
+    getRecentAchievements(),
   ])
 
   const month = currentMonthLabel()
@@ -295,6 +297,28 @@ export default async function Home() {
             View full leaderboard →
           </Link>
         </div>
+      </div>
+      </div>
+
+      {/* Clan Achievements */}
+      <div className="mt-4 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+        <h2 className="font-semibold text-[#e8e8f0] mb-4">🏆 Clan Achievements</h2>
+        {achievements.length === 0 ? (
+          <p className="text-sm text-[#7070a0]">No achievements recorded yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {achievements.map((a) => (
+              <li key={a.id} className="flex flex-col gap-0.5 border-b border-[#2a2a4a] pb-3 last:border-0 last:pb-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{a.title}</span>
+                  <span className="text-xs text-[#7070a0] shrink-0"><ClientDate iso={a.recorded_at} /></span>
+                </div>
+                <p className="text-sm font-medium text-[#e8e8f0] capitalize">{a.player_name}</p>
+                <p className="text-xs text-[#7070a0]">{a.description}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
