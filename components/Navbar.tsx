@@ -2,8 +2,10 @@ import Link from 'next/link'
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/loot', label: 'Loot Leaders' },
-  { href: '/planks', label: 'Plank Leaders' },
+  { href: '/loot', label: 'Loot' },
+  { href: '/planks', label: 'Planks' },
+  { href: '/achievements', label: 'Achievements' },
+  { href: '/player', label: 'Players' },
 ]
 
 export default function Navbar() {
