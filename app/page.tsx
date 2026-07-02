@@ -298,7 +298,6 @@ export default async function Home() {
           </Link>
         </div>
       </div>
-      </div>
 
       {/* Clan Achievements */}
       <div className="mt-4 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
