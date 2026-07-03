@@ -38,7 +38,7 @@ export async function isAdmin(discordId: string): Promise<boolean> {
   try {
     const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, {
       headers: { Authorization: `Bot ${botToken}` },
-      next: { revalidate: 60 },
+      cache: 'no-store',
     })
     if (!res.ok) return false
     const member = await res.json()
