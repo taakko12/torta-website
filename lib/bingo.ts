@@ -113,6 +113,16 @@ export async function getApprovedSubmissions(eventId: string): Promise<BingoSubm
   return data ?? []
 }
 
+export async function getRecentSubmissions(eventId: string, limit = 20): Promise<BingoSubmission[]> {
+  const { data } = await supabase
+    .from('bingo_submissions')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('submitted_at', { ascending: false })
+    .limit(limit)
+  return data ?? []
+}
+
 export async function getPendingSubmissions(eventId: string): Promise<BingoSubmission[]> {
   const { data } = await supabase
     .from('bingo_submissions')

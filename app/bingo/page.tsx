@@ -1,212 +1,226 @@
-import Link from 'next/link'
 import {
-  getActiveEvent, getEventTasks, getEventTeams,
-  getTeamMembers, getApprovedSubmissions, computeTeamProgress,
+  getActiveEvent, getEventTasks, getEventTeams, getTeamMembers,
+  getApprovedSubmissions, computeTeamProgress, getRecentSubmissions,
 } from '@/lib/bingo'
-import { getServerSession } from '@/lib/auth'
+import { ClientDate } from '@/components/ClientDate'
 
 export const revalidate = 15
 
-type Props = { searchParams: Promise<{ team?: string }> }
-
-export default async function BingoPage({ searchParams }: Props) {
-  const { team: selectedTeamId } = await searchParams
-  const [event, session] = await Promise.all([getActiveEvent(), getServerSession()])
+export default async function BingoDashboard() {
+  const event = await getActiveEvent()
 
   if (!event) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <p className="text-[#c89b3c] text-xl font-bold uppercase tracking-widest mb-2">No Active Bingo</p>
-        <p className="text-sm text-[#7070a0]">Check back when the next event is live.</p>
+      <div className="px-8 py-24 text-center">
+        <p className="text-5xl mb-5">🎯</p>
+        <p className="text-[#c89b3c] text-xl font-black uppercase tracking-widest mb-2">No Active Bingo</p>
+        <p className="text-sm text-[#6868a0]">Check back when the next event goes live.</p>
       </div>
     )
   }
 
-  const [tasks, teams, submissions] = await Promise.all([
+  const [tasks, teams, approvedSubs, recentSubs] = await Promise.all([
     getEventTasks(event.id),
     getEventTeams(event.id),
     getApprovedSubmissions(event.id),
+    getRecentSubmissions(event.id, 20),
   ])
 
   const teamIds = teams.map(t => t.id)
-  const allMembers = await getTeamMembers(teamIds)
+  const allMembers = teamIds.length ? await getTeamMembers(teamIds) : []
   const membersByTeam = Object.fromEntries(teamIds.map(id => [id, allMembers.filter(m => m.team_id === id)]))
-  const progress = computeTeamProgress(teams, membersByTeam, tasks, submissions)
+  const progress = computeTeamProgress(teams, membersByTeam, tasks, approvedSubs)
   const sorted = [...progress].sort((a, b) => b.totalPoints - a.totalPoints)
 
-  const activeTeam = progress.find(p => p.team.id === selectedTeamId) ?? progress[0]
-  const totalCells = event.board_size * event.board_size
   const totalPossible = tasks.reduce((s, t) => s + t.points, 0)
+  const leader = sorted[0]
+  const runner = sorted[1]
+  const leadGap = leader && runner ? leader.totalPoints - runner.totalPoints : 0
+
+  const totalEarned = progress.reduce((s, p) => s + p.totalPoints, 0)
+  const maxEarnable = totalPossible * Math.max(teams.length, 1)
+  const boardPct = Math.round((totalEarned / maxEarnable) * 100)
+
+  const rsnToTeam = new Map<string, typeof teams[0]>()
+  for (const team of teams) {
+    for (const m of membersByTeam[team.id] ?? []) {
+      rsnToTeam.set(m.rsn.toLowerCase(), team)
+    }
+  }
+  const taskMap = new Map(tasks.map(t => [t.id, t]))
+  const approvedFeed = recentSubs.filter(s => s.status === 'approved')
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#c89b3c] uppercase tracking-widest">{event.title}</h1>
-          <p className="text-xs text-[#7070a0] mt-1">{event.board_size}×{event.board_size} board · {tasks.length} tasks</p>
+    <div className="px-6 py-8 max-w-7xl mx-auto">
+      {/* Event header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-[#57f287]/10 text-[#57f287] border border-[#57f287]/20 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#57f287] animate-pulse" />
+            Live Tournament
+          </span>
+          <span className="text-xs text-[#4a4a70]">
+            {event.board_size}×{event.board_size} · {tasks.length} tasks · {teams.length} teams
+          </span>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Link
-            href="/bingo/submit"
-            className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
-          >
-            Submit Drop
-          </Link>
-          {session?.isAdmin && (
-            <Link
-              href="/bingo/admin"
-              className="text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors"
-            >
-              ⚙ Manage Board
-            </Link>
-          )}
-        </div>
+        <h1 className="text-4xl font-black uppercase tracking-tight text-white">{event.title}</h1>
       </div>
 
-      {/* Team tabs */}
-      {teams.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {progress.map(p => (
-            <Link
-              key={p.team.id}
-              href={`/bingo?team=${p.team.id}`}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-                (activeTeam?.team.id === p.team.id)
-                  ? 'text-[#07070f] border-transparent'
-                  : 'bg-[#141427] text-[#a0a0c0] border-[#2a2a4a] hover:text-[#e8e8f0]'
-              }`}
-              style={(activeTeam?.team.id === p.team.id) ? { backgroundColor: p.team.color, borderColor: p.team.color } : {}}
-            >
-              {p.team.name} · {p.totalPoints}pts
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Main: standings + stats */}
+        <div className="xl:col-span-2 space-y-5">
 
-      <div className="flex flex-col xl:flex-row gap-8">
-        {/* Board grid */}
-        <div className="flex-1 min-w-0">
-          <div
-            className="grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${event.board_size}, minmax(0, 1fr))` }}
-          >
-            {Array.from({ length: totalCells }).map((_, i) => {
-              const task = tasks.find(t => t.position === i)
-              if (!task) {
-                return <div key={i} className="aspect-square rounded-lg bg-[#0a0a18] border border-[#1a1a30]" />
-              }
-              const count = activeTeam?.taskProgress[task.id] ?? 0
-              const done = activeTeam?.completedTasks.has(task.id) ?? false
-              const pct = Math.min(100, Math.round((count / task.required_count) * 100))
-
-              const teamColor = activeTeam?.team.color ?? '#c89b3c'
-              return (
-                <div
-                  key={task.id}
-                  className={`aspect-square rounded-xl border-2 relative overflow-hidden transition-all`}
-                  style={{ borderColor: done ? teamColor : '#2a2a4a' }}
-                >
-                  {/* Background */}
-                  <div className="absolute inset-0 bg-[#0d0d1e]" />
-                  {task.image_url && (
-                    <div className="absolute inset-0 flex items-center justify-center p-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-40" />
-                    </div>
-                  )}
-                  {/* Gradient overlay so text is always readable */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#07070f]/95 via-[#07070f]/30 to-transparent" />
-                  {/* Done tint */}
-                  {done && <div className="absolute inset-0 opacity-10 transition-all" style={{ backgroundColor: teamColor }} />}
-
-                  {/* Content pinned to bottom */}
-                  <div className="absolute inset-x-0 bottom-0 p-2 flex flex-col gap-1">
-                    <p className="text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow">{task.title}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-[#9090b0]">{count}/{task.required_count}</span>
-                      <span className="text-[11px] font-bold" style={{ color: teamColor }}>
-                        {task.points}pt{task.points !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-[#1a1a30] overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: teamColor }} />
-                    </div>
-                  </div>
-
-                  {done && (
-                    <div className="absolute top-2 right-2 text-base leading-none" style={{ color: teamColor }}>✓</div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Leaderboard */}
-        <div className="xl:w-64 shrink-0">
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Leaderboard</h2>
-              <span className="text-xs text-[#7070a0]">{totalPossible} pts total</span>
+          {/* Leader callout */}
+          {leader && leader.totalPoints > 0 && (
+            <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5 relative overflow-hidden">
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse 80% 100% at 100% 50%, ${leader.team.color}12, transparent)` }}
+              />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] mb-2">Current Leader</p>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <h2 className="text-2xl font-black text-white">{leader.team.name}</h2>
+                <span className="text-[#6868a0] text-sm">leads with</span>
+                <span className="text-2xl font-black" style={{ color: leader.team.color }}>
+                  {leader.totalPoints.toLocaleString()} pts
+                </span>
+              </div>
+              {runner && (
+                <p className="mt-2 text-sm text-[#6868a0]">
+                  <span
+                    className="font-bold px-2 py-0.5 rounded text-xs mr-1.5"
+                    style={{ backgroundColor: `${leader.team.color}25`, color: leader.team.color }}
+                  >
+                    +{leadGap}
+                  </span>
+                  ahead of {runner.team.name}
+                </p>
+              )}
             </div>
+          )}
+
+          {/* Live standings */}
+          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#6868a0] mb-5">Live Standings</h2>
             {sorted.length === 0 ? (
-              <p className="text-xs text-[#7070a0]">No teams yet.</p>
+              <p className="text-sm text-[#4a4a70]">No teams yet.</p>
             ) : (
-              <ul className="space-y-4">
+              <div className="space-y-5">
                 {sorted.map((p, i) => {
-                  const pct = totalPossible > 0 ? Math.round((p.totalPoints / totalPossible) * 100) : 0
-                  const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+                  const leaderPts = sorted[0].totalPoints || 1
+                  const barPct = Math.max(2, Math.round((p.totalPoints / leaderPts) * 100))
                   return (
-                    <li key={p.team.id}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {medal
-                            ? <span className="text-sm shrink-0">{medal}</span>
-                            : <span className="text-xs text-[#7070a0] w-4 text-right shrink-0">{i + 1}</span>
-                          }
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.team.color }} />
-                          <span className="text-sm font-semibold text-[#e8e8f0] truncate">{p.team.name}</span>
+                    <div key={p.team.id}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <span className="text-sm w-6 text-center shrink-0">{i === 0 ? '👑' : `#${i + 1}`}</span>
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-[#07070f] shrink-0"
+                          style={{ backgroundColor: p.team.color }}
+                        >
+                          {p.team.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <span className="text-xs font-bold shrink-0 ml-2" style={{ color: p.team.color }}>
-                          {p.totalPoints}
+                        <span className="text-sm font-semibold text-[#e8e8f0] flex-1 truncate">{p.team.name}</span>
+                        <span className="text-xs text-[#4a4a70] shrink-0">{p.completedTasks.size}/{tasks.length} tiles</span>
+                        <span className="text-sm font-bold shrink-0 w-20 text-right" style={{ color: p.team.color }}>
+                          {p.totalPoints.toLocaleString()} pts
                         </span>
                       </div>
-                      <div className="relative h-2 rounded-full bg-[#141427] overflow-hidden">
+                      <div className="ml-[3.625rem] h-2.5 rounded-full bg-[#141427] overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700 bar-shimmer"
                           style={{
-                            width: `${pct}%`,
-                            background: `linear-gradient(90deg, ${p.team.color}aa, ${p.team.color}, ${p.team.color}cc)`,
-                            boxShadow: `0 0 8px ${p.team.color}60`,
+                            width: `${barPct}%`,
+                            background: `linear-gradient(90deg, ${p.team.color}80, ${p.team.color})`,
+                            boxShadow: i === 0 ? `0 0 12px ${p.team.color}60` : undefined,
                           }}
                         />
                       </div>
-                      <p className="text-[11px] text-[#7070a0] mt-1">
-                        {pct}% · {p.completedTasks.size}/{tasks.length} tiles
-                      </p>
-                    </li>
+                    </div>
                   )
                 })}
-              </ul>
+              </div>
             )}
           </div>
 
-          {activeTeam && (
-            <div className="mt-4 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: activeTeam.team.color }}>
-                {activeTeam.team.name}
-              </h2>
-              <p className="text-xs text-[#7070a0] mb-2">Members</p>
-              {activeTeam.members.length === 0 ? (
-                <p className="text-xs text-[#7070a0] italic">None assigned</p>
-              ) : (
-                <ul className="space-y-1">
-                  {activeTeam.members.map(rsn => (
-                    <li key={rsn} className="text-xs text-[#e8e8f0]">{rsn}</li>
-                  ))}
-                </ul>
-              )}
+          {/* Event stats */}
+          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#6868a0] mb-4">Event Stats</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              {[
+                { label: 'Points Pool', value: totalPossible.toLocaleString(), color: '#c89b3c' },
+                { label: 'Tiles', value: tasks.length, color: '#e8e8f0' },
+                { label: 'Drops Approved', value: approvedSubs.length, color: '#57f287' },
+                { label: 'Teams', value: teams.length, color: '#7c5ce8' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="rounded-lg bg-[#141427] p-3 text-center">
+                  <p className="text-xl font-black" style={{ color }}>{value}</p>
+                  <p className="text-[11px] text-[#4a4a70] mt-0.5">{label}</p>
+                </div>
+              ))}
             </div>
+            <p className="text-xs text-[#4a4a70] mb-1.5">
+              Overall completion — {boardPct}% of all possible points earned across all teams
+            </p>
+            <div className="h-2 rounded-full bg-[#141427] overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${Math.max(boardPct, 0)}%`, background: 'linear-gradient(90deg, #7c5ce8, #c89b3c)' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Right: live feed */}
+        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-4 self-start xl:sticky xl:top-4">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-[#57f287] animate-pulse shrink-0" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#e8e8f0]">Live Feed</h2>
+            <span className="ml-auto text-[10px] text-[#4a4a70]">Approved drops</span>
+          </div>
+
+          {approvedFeed.length === 0 ? (
+            <p className="text-sm text-[#4a4a70] text-center py-8">No approved drops yet.</p>
+          ) : (
+            <ul className="divide-y divide-[#141427]">
+              {approvedFeed.slice(0, 15).map(sub => {
+                const team = rsnToTeam.get(sub.rsn.toLowerCase())
+                const task = taskMap.get(sub.task_id)
+                return (
+                  <li key={sub.id} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className="w-1 self-stretch rounded-full mt-0.5 shrink-0 min-h-[2.5rem]"
+                        style={{ backgroundColor: team?.color ?? '#252540' }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-[#e8e8f0] truncate">{sub.rsn}</p>
+                          {task && (
+                            <span className="text-xs font-bold text-[#c89b3c] shrink-0">
+                              +{task.points}pt
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#6868a0] truncate mt-0.5">{task?.title ?? '—'}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          {team && (
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                              style={{ backgroundColor: `${team.color}20`, color: team.color }}
+                            >
+                              {team.name}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-[#4a4a70]">
+                            <ClientDate iso={sub.submitted_at} />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
           )}
         </div>
       </div>
