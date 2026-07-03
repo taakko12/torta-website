@@ -10,6 +10,8 @@ type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: stri
 
 const TEAM_COLORS = ['#c89b3c', '#5865F2', '#57F287', '#ED4245', '#FEE75C', '#EB459E', '#3498db']
 
+const EMPTY_TASK = { id: '', position: 0, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' }
+
 async function api(action: string, extra: object = {}) {
   const res = await fetch('/api/bingo/admin', {
     method: 'POST',
@@ -42,11 +44,14 @@ export default function AdminDashboard() {
   // Forms
   const [newTitle, setNewTitle] = useState('')
   const [newSize, setNewSize] = useState(5)
-  const [taskForm, setTaskForm] = useState({ id: '', position: 0, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })
+  const [taskForm, setTaskForm] = useState(EMPTY_TASK)
   const [teamName, setTeamName] = useState('')
   const [teamColor, setTeamColor] = useState(TEAM_COLORS[0])
   const [memberRsn, setMemberRsn] = useState('')
   const [memberTeamId, setMemberTeamId] = useState('')
+
+  // Drag state for board builder
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null)
 
   const selectedEvent = events.find(e => e.id === selectedEventId)
 
@@ -97,14 +102,45 @@ export default function AdminDashboard() {
   async function upsertTask() {
     if (!taskForm.title.trim() || !selectedEventId) return
     const pps = taskForm.points_per_submission ? Number(taskForm.points_per_submission) : null
-    await api('upsert_task', { ...taskForm, event_id: selectedEventId, points_per_submission: pps })
-    setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })
-    if (selectedEventId) loadEventData(selectedEventId)
+    try {
+      await api('upsert_task', { ...taskForm, event_id: selectedEventId, points_per_submission: pps })
+      setTaskForm({ ...EMPTY_TASK, position: tasks.length + 1 })
+      loadEventData(selectedEventId)
+    } catch (e) {
+      alert(`Error: ${(e as Error).message}`)
+    }
   }
 
   async function deleteTask(id: string) {
     await api('delete_task', { id })
     if (selectedEventId) loadEventData(selectedEventId)
+  }
+
+  // Drag-to-move: immediately commits position change without going through the form
+  async function moveTaskTo(taskId: string, newPos: number) {
+    if (!selectedEventId) return
+    const src = tasks.find(t => t.id === taskId)
+    if (!src || src.position === newPos) { setDragTaskId(null); return }
+    const occupant = tasks.find(t => t.position === newPos)
+    try {
+      if (occupant) {
+        await api('swap_tasks', { id_a: taskId, id_b: occupant.id })
+        if (taskForm.id === taskId) setTaskForm(f => ({ ...f, position: newPos }))
+        if (taskForm.id === occupant.id) setTaskForm(f => ({ ...f, position: src.position }))
+      } else {
+        await api('upsert_task', {
+          id: src.id, event_id: selectedEventId, position: newPos,
+          title: src.title, description: src.description, image_url: src.image_url,
+          points: src.points, required_count: src.required_count,
+          points_per_submission: src.points_per_submission,
+        })
+        if (taskForm.id === taskId) setTaskForm(f => ({ ...f, position: newPos }))
+      }
+    } catch (e) {
+      alert(`Error: ${(e as Error).message}`)
+    }
+    setDragTaskId(null)
+    loadEventData(selectedEventId)
   }
 
   async function createTeam() {
@@ -136,6 +172,15 @@ export default function AdminDashboard() {
     setSubs(s => s.filter(x => x.id !== subId))
   }
 
+  function loadTaskIntoForm(t: BingoTask) {
+    setTaskForm({
+      id: t.id, position: t.position, title: t.title,
+      description: t.description ?? '', image_url: t.image_url ?? '',
+      points: t.points, required_count: t.required_count,
+      points_per_submission: t.points_per_submission?.toString() ?? '',
+    })
+  }
+
   const tabs: { key: typeof tab; label: string }[] = [
     { key: 'events', label: 'Events' },
     { key: 'tasks', label: `Tasks (${tasks.length})` },
@@ -144,7 +189,7 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest">Bingo Admin</h1>
         {events.length > 0 && (
@@ -255,109 +300,205 @@ export default function AdminDashboard() {
 
       {/* TASKS TAB */}
       {tab === 'tasks' && (
-        <div className="space-y-6">
-          {!selectedEventId ? (
+        <div className="space-y-5">
+          {!selectedEventId || !selectedEvent ? (
             <p className="text-sm text-[#7070a0]">Select an event above.</p>
           ) : (
             <>
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">
-                  {taskForm.id ? 'Edit Task' : 'Add Task'}
-                </h2>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="col-span-2">
-                    <label className="text-xs text-[#7070a0] mb-1 block">Title</label>
-                    <input value={taskForm.title} onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))}
-                      placeholder="Get 5 sapphires from Giant Mole"
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs text-[#7070a0] mb-1 block">Description (optional)</label>
-                    <input value={taskForm.description} onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))}
-                      placeholder="Additional context…"
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs text-[#7070a0] mb-1 block">Image URL (optional)</label>
-                    <input value={taskForm.image_url} onChange={e => setTaskForm(f => ({ ...f, image_url: e.target.value }))}
-                      placeholder="https://…"
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#7070a0] mb-1 block">Grid position (0-indexed)</label>
-                    <input type="number" min={0} max={selectedEvent ? selectedEvent.board_size ** 2 - 1 : 99}
-                      value={taskForm.position} onChange={e => setTaskForm(f => ({ ...f, position: Number(e.target.value) }))}
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#7070a0] mb-1 block">Points</label>
-                    <input type="number" min={1} value={taskForm.points}
-                      onChange={e => setTaskForm(f => ({ ...f, points: Number(e.target.value) }))}
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#7070a0] mb-1 block">Required submissions</label>
-                    <input type="number" min={1} value={taskForm.required_count}
-                      onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))}
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs text-[#7070a0] mb-1 block">
-                      Points per submission <span className="font-normal">(optional — awards partial points before tile completion)</span>
-                    </label>
-                    <input type="number" min={1} value={taskForm.points_per_submission}
-                      onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))}
-                      placeholder={`e.g. ${Math.round(taskForm.points / Math.max(taskForm.required_count, 1))} (${taskForm.points}pts ÷ ${taskForm.required_count} subs)`}
-                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                {/* Task form */}
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">
+                    {taskForm.id ? 'Edit Task' : 'Add Task'}
+                  </h2>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-[#7070a0] mb-1 block">Title</label>
+                      <input
+                        value={taskForm.title}
+                        onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))}
+                        placeholder="Get 5 sapphires from Giant Mole"
+                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#7070a0] mb-1 block">Description <span className="font-normal">(optional)</span></label>
+                      <input
+                        value={taskForm.description}
+                        onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))}
+                        placeholder="Additional context…"
+                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#7070a0] mb-1 block">Image URL <span className="font-normal">(optional)</span></label>
+                      <input
+                        value={taskForm.image_url}
+                        onChange={e => setTaskForm(f => ({ ...f, image_url: e.target.value }))}
+                        placeholder="https://…"
+                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-[#7070a0] mb-1 block">Points</label>
+                        <input
+                          type="number" min={1} value={taskForm.points}
+                          onChange={e => setTaskForm(f => ({ ...f, points: Number(e.target.value) }))}
+                          className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[#7070a0] mb-1 block">Required submissions</label>
+                        <input
+                          type="number" min={1} value={taskForm.required_count}
+                          onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))}
+                          className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#7070a0] mb-1 block">
+                        Points per submission <span className="font-normal">(optional — partial credit before tile completion)</span>
+                      </label>
+                      <input
+                        type="number" min={1} value={taskForm.points_per_submission}
+                        onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))}
+                        placeholder={`e.g. ${Math.round(taskForm.points / Math.max(taskForm.required_count, 1))}`}
+                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                      />
+                    </div>
+
+                    {/* Position indicator — driven by board click */}
+                    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-[#141427] border border-[#252540]">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-dashed border-[#c89b3c] bg-[#c89b3c]/10 text-[#c89b3c] text-xs font-bold shrink-0">
+                        {taskForm.position}
+                      </div>
+                      <span className="text-xs text-[#6868a0]">Tile position — click any cell on the board →</span>
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={upsertTask}
+                        className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
+                      >
+                        {taskForm.id ? 'Save Changes' : 'Add Task'}
+                      </button>
+                      {taskForm.id && (
+                        <button
+                          onClick={() => setTaskForm({ ...EMPTY_TASK, position: tasks.length })}
+                          className="px-4 py-2 rounded-lg bg-[#141427] text-[#7070a0] text-sm border border-[#2a2a4a] hover:text-[#e8e8f0]"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={upsertTask}
-                    className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors">
-                    {taskForm.id ? 'Save' : 'Add Task'}
-                  </button>
-                  {taskForm.id && (
-                    <button onClick={() => setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })}
-                      className="px-4 py-2 rounded-lg bg-[#141427] text-[#7070a0] text-sm border border-[#2a2a4a] hover:text-[#e8e8f0]">
-                      Cancel
-                    </button>
-                  )}
+
+                {/* Visual board */}
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
+                      Board · {selectedEvent.board_size}×{selectedEvent.board_size}
+                    </h2>
+                    <p className="text-[10px] text-[#4a4a70]">Click to place · Drag to move</p>
+                  </div>
+
+                  <div
+                    className="grid gap-1"
+                    style={{ gridTemplateColumns: `repeat(${selectedEvent.board_size}, minmax(0, 1fr))` }}
+                  >
+                    {Array.from({ length: selectedEvent.board_size ** 2 }).map((_, pos) => {
+                      const task = tasks.find(t => t.position === pos)
+                      const isSelectedPos = taskForm.position === pos
+                      const isEditingThis = task?.id === taskForm.id
+                      const isDraggingThis = task?.id === dragTaskId
+
+                      if (task) {
+                        return (
+                          <div
+                            key={pos}
+                            draggable
+                            onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragTaskId(task.id) }}
+                            onDragEnd={() => setDragTaskId(null)}
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={e => { e.preventDefault(); if (dragTaskId && dragTaskId !== task.id) moveTaskTo(dragTaskId, pos) }}
+                            onClick={() => loadTaskIntoForm(task)}
+                            className={`aspect-square rounded-lg border p-1.5 flex flex-col overflow-hidden transition-all select-none
+                              ${isEditingThis
+                                ? 'border-[#c89b3c] bg-[#c89b3c]/15 cursor-grab'
+                                : isDraggingThis
+                                  ? 'border-[#3a3a60] bg-[#141427] opacity-40 scale-95 cursor-grabbing'
+                                  : 'border-[#2a2a4a] bg-[#141427] hover:border-[#5a5a8a] hover:bg-[#1a1a30] cursor-grab'
+                              }`}
+                          >
+                            <p className="text-[9px] font-semibold text-[#e8e8f0] leading-tight line-clamp-3 flex-1">{task.title}</p>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <span className="text-[8px] font-bold text-[#c89b3c]">{task.points}pt</span>
+                              <span className="text-[7px] text-[#4a4a70]">#{pos}</span>
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div
+                          key={pos}
+                          onDragOver={e => e.preventDefault()}
+                          onDrop={e => { e.preventDefault(); if (dragTaskId) moveTaskTo(dragTaskId, pos) }}
+                          onClick={() => setTaskForm(f => ({ ...f, position: pos }))}
+                          className={`aspect-square rounded-lg border flex items-center justify-center cursor-pointer transition-all
+                            ${isSelectedPos
+                              ? 'border-[#c89b3c] border-dashed bg-[#c89b3c]/10'
+                              : dragTaskId
+                                ? 'border-[#3a3a60] border-dashed bg-[#141427]/60 hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/5'
+                                : 'border-[#1a1a30] bg-[#0a0a18] hover:border-[#3a3a60] hover:bg-[#141427]'
+                            }`}
+                        >
+                          <span className={`text-[9px] font-mono ${isSelectedPos ? 'text-[#c89b3c]' : 'text-[#252540]'}`}>
+                            {pos}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Tasks</h2>
-                {tasks.length === 0 ? (
-                  <p className="text-sm text-[#7070a0]">No tasks yet.</p>
-                ) : (
-                  <ul className="divide-y divide-[#2a2a4a]">
-                    {tasks.map(t => (
-                      <li key={t.id} className="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm text-[#e8e8f0]">
-                            <span className="text-[#7070a0] text-xs mr-2">#{t.position}</span>
-                            {t.title}
-                          </p>
-                          <p className="text-xs text-[#7070a0]">
-                            {t.points}pt · ×{t.required_count}
-                            {t.points_per_submission ? ` · ${t.points_per_submission}pt/sub` : ''}
-                          </p>
+              {/* Task list */}
+              {tasks.length > 0 && (
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">
+                    All Tasks ({tasks.length})
+                  </h2>
+                  <ul className="divide-y divide-[#1a1a30]">
+                    {[...tasks].sort((a, b) => a.position - b.position).map(t => (
+                      <li key={t.id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-[10px] font-mono text-[#4a4a70] w-6 text-center shrink-0">#{t.position}</span>
+                          <span className={`text-sm truncate ${t.id === taskForm.id ? 'text-[#c89b3c]' : 'text-[#e8e8f0]'}`}>{t.title}</span>
+                          <span className="text-xs text-[#6868a0] shrink-0">{t.points}pt · ×{t.required_count}</span>
                         </div>
-                        <div className="flex gap-2 shrink-0">
-                          <button onClick={() => setTaskForm({ id: t.id, position: t.position, title: t.title, description: t.description ?? '', image_url: t.image_url ?? '', points: t.points, required_count: t.required_count, points_per_submission: t.points_per_submission?.toString() ?? '' })}
-                            className="text-xs px-2 py-1 rounded bg-[#141427] text-[#7070a0] border border-[#2a2a4a] hover:text-[#e8e8f0]">
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            onClick={() => loadTaskIntoForm(t)}
+                            className="text-xs px-2 py-1 rounded bg-[#141427] text-[#7070a0] border border-[#2a2a4a] hover:text-[#e8e8f0]"
+                          >
                             Edit
                           </button>
-                          <button onClick={() => deleteTask(t.id)}
-                            className="text-xs px-2 py-1 rounded bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50">
+                          <button
+                            onClick={() => deleteTask(t.id)}
+                            className="text-xs px-2 py-1 rounded bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50"
+                          >
                             Del
                           </button>
                         </div>
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
+                </div>
+              )}
             </>
           )}
         </div>

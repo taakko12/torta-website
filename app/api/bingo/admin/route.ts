@@ -88,6 +88,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    if (action === 'swap_tasks') {
+      const { id_a, id_b } = body
+      const { data: pair } = await db.from('bingo_tasks').select('id, position').in('id', [id_a, id_b])
+      if (!pair || pair.length !== 2) return NextResponse.json({ error: 'Tasks not found' }, { status: 404 })
+      const a = pair.find((t: { id: string }) => t.id === id_a)!
+      const b = pair.find((t: { id: string }) => t.id === id_b)!
+      // Use a temp position outside board range to avoid UNIQUE conflict during swap
+      const TEMP = 999999
+      const steps = [
+        db.from('bingo_tasks').update({ position: TEMP }).eq('id', id_a),
+        db.from('bingo_tasks').update({ position: a.position }).eq('id', id_b),
+        db.from('bingo_tasks').update({ position: b.position }).eq('id', id_a),
+      ]
+      for (const step of steps) {
+        const { error } = await step
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+      return NextResponse.json({ ok: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (e) {
     console.error('[bingo/admin]', e)
