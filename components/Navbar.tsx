@@ -6,6 +6,7 @@ const links = [
   { href: '/planks', label: 'Planks' },
   { href: '/achievements', label: 'Achievements' },
   { href: '/player', label: 'Players' },
+  { href: '/bingo', label: 'Bingo' },
 ]
 
 export default function Navbar() {
