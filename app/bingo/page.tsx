@@ -96,13 +96,13 @@ export default async function BingoPage({ searchParams }: Props) {
                   style={done ? { borderColor: activeTeam?.team.color, backgroundColor: activeTeam?.team.color + '18' } : {}}
                 >
                   {task.image_url && (
-                    <div className="w-full aspect-[4/3] overflow-hidden shrink-0">
+                    <div className="w-full flex-1 overflow-hidden shrink-0 bg-[#07070f] flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={task.image_url} alt="" className="w-full h-full object-cover opacity-60" />
+                      <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-70" />
                     </div>
                   )}
-                  <div className="flex-1 flex flex-col justify-between p-1.5 gap-1 min-h-0">
-                    <p className="text-[10px] leading-tight font-medium text-[#e8e8f0] line-clamp-3">{task.title}</p>
+                  <div className={`flex flex-col justify-between p-1.5 gap-1 shrink-0 ${task.image_url ? '' : 'flex-1'}`}>
+                    <p className="text-[10px] leading-tight font-medium text-[#e8e8f0] line-clamp-2">{task.title}</p>
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-[9px] text-[#7070a0]">{count}/{task.required_count}</span>
