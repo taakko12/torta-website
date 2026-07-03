@@ -152,6 +152,22 @@ export async function getActiveCompetitionsWithStandings(): Promise<CompetitionW
   return out
 }
 
+// Returns EHB gained per player (username lowercased) since startDate
+export async function getGroupEhbGained(startDate: string): Promise<Record<string, number>> {
+  const endDate = new Date().toISOString()
+  const data = await womFetch(
+    `/groups/${GROUP_ID}/gained?metric=ehb&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+  )
+  const rows: unknown[] = Array.isArray(data) ? data : ((data as { results?: unknown[] })?.results ?? [])
+  const out: Record<string, number> = {}
+  for (const row of rows) {
+    const r = row as { player?: { username?: string }; data?: { ehb?: { gained?: number } } }
+    const rsn = r.player?.username?.toLowerCase() ?? ''
+    if (rsn) out[rsn] = r.data?.ehb?.gained ?? 0
+  }
+  return out
+}
+
 export function formatMetric(metric: string): string {
   return metric.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }

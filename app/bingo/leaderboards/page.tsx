@@ -2,6 +2,8 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
+import { getGroupEhbGained } from '@/lib/wom'
+import BingoLeaderboards from '@/components/BingoLeaderboards'
 
 export const revalidate = 15
 
@@ -11,81 +13,72 @@ export default async function LeaderboardsPage() {
   if (!event) {
     return (
       <div className="px-6 py-20 text-center">
-        <p className="text-[#6868a0] text-sm">No active event.</p>
+        <p className="text-[#6868a0] text-sm">No active bingo event.</p>
       </div>
     )
   }
 
-  const [tasks, teams, submissions] = await Promise.all([
+  const [tasks, teams, submissions, ehbGainedRaw] = await Promise.all([
     getEventTasks(event.id),
     getEventTeams(event.id),
     getApprovedSubmissions(event.id),
+    getGroupEhbGained(event.created_at),
   ])
 
   const teamIds = teams.map(t => t.id)
   const allMembers = teamIds.length ? await getTeamMembers(teamIds) : []
   const membersByTeam = Object.fromEntries(teamIds.map(id => [id, allMembers.filter(m => m.team_id === id)]))
   const progress = computeTeamProgress(teams, membersByTeam, tasks, submissions)
-  const sorted = [...progress].sort((a, b) => b.totalPoints - a.totalPoints)
-  const totalPossible = tasks.reduce((s, t) => s + t.points, 0)
+
+  // Per-member task submission counts
+  const taskProgressByMember: Record<string, Record<string, number>> = {}
+  for (const sub of submissions) {
+    const rsn = sub.rsn.toLowerCase()
+    taskProgressByMember[rsn] ??= {}
+    taskProgressByMember[rsn][sub.task_id] = (taskProgressByMember[rsn][sub.task_id] ?? 0) + 1
+  }
+
+  // Per-player bingo points: proportional credit per submission
+  const playerPoints: Record<string, number> = {}
+  for (const [rsn, taskCounts] of Object.entries(taskProgressByMember)) {
+    let pts = 0
+    for (const [taskId, count] of Object.entries(taskCounts)) {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) continue
+      const pps = task.points_per_submission ?? (task.points / task.required_count)
+      pts += Math.min(count * pps, task.points)
+    }
+    playerPoints[rsn] = Math.round(pts * 100) / 100
+  }
+
+  // Team stats
+  const teamStats = Object.fromEntries(
+    progress.map(p => [p.team.id, { points: p.totalPoints, completedCount: p.completedTasks.size }])
+  )
+
+  // EHB gained per member (rsn lowercased → EHB)
+  const memberEhb: Record<string, number> = {}
+  for (const m of allMembers) {
+    const rsn = m.rsn.toLowerCase()
+    memberEhb[rsn] = ehbGainedRaw[rsn] ?? 0
+  }
+
+  const womAvailable = !!process.env.WOM_GROUP_ID
 
   return (
-    <div className="px-6 py-8 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-black uppercase tracking-tight text-white mb-1">Leaderboards</h1>
-        <p className="text-sm text-[#6868a0]">{event.title} · {totalPossible} total points possible</p>
-      </div>
-
-      {sorted.length === 0 ? (
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-10 text-center">
-          <p className="text-[#4a4a70] text-sm">No teams have been created yet.</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
-          {sorted.map((p, i) => {
-            const pct = totalPossible > 0 ? Math.round((p.totalPoints / totalPossible) * 100) : 0
-            const medals = ['🥇', '🥈', '🥉']
-            return (
-              <div key={p.team.id} className="px-5 py-4 border-b border-[#1a1a30] last:border-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl w-8 text-center shrink-0">{medals[i] ?? `#${i + 1}`}</span>
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-[#07070f] shrink-0"
-                    style={{ backgroundColor: p.team.color }}
-                  >
-                    {p.team.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-[#e8e8f0] truncate">{p.team.name}</p>
-                    <p className="text-xs text-[#4a4a70]">{p.members.join(', ') || 'No members'}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xl font-black" style={{ color: p.team.color }}>
-                      {p.totalPoints.toLocaleString()}
-                    </p>
-                    <p className="text-[11px] text-[#4a4a70]">pts</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 pl-11">
-                  <div className="flex-1 h-2 rounded-full bg-[#141427] overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700 bar-shimmer"
-                      style={{
-                        width: `${pct}%`,
-                        background: `linear-gradient(90deg, ${p.team.color}80, ${p.team.color})`,
-                        boxShadow: i === 0 ? `0 0 10px ${p.team.color}50` : undefined,
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-[#6868a0] shrink-0 w-28 text-right">
-                    {pct}% · {p.completedTasks.size}/{tasks.length} tiles
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+    <BingoLeaderboards
+      tasks={tasks.map(t => ({
+        id: t.id, position: t.position, title: t.title,
+        image_url: t.image_url ?? null, points: t.points,
+        required_count: t.required_count,
+      }))}
+      teams={teams.map(t => ({ id: t.id, name: t.name, color: t.color }))}
+      members={allMembers.map(m => ({ rsn: m.rsn, teamId: m.team_id }))}
+      playerPoints={playerPoints}
+      teamStats={teamStats}
+      memberEhb={memberEhb}
+      taskProgressByMember={taskProgressByMember}
+      womAvailable={womAvailable}
+    />
   )
 }
