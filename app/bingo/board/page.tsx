@@ -3,6 +3,7 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
+import BingoBoardGrid from '@/components/BingoBoardGrid'
 
 export const revalidate = 15
 
@@ -33,15 +34,33 @@ export default async function BingoBoardPage({ searchParams }: Props) {
   const progress = computeTeamProgress(teams, membersByTeam, tasks, submissions)
   const sorted = [...progress].sort((a, b) => b.totalPoints - a.totalPoints)
 
-  const activeTeam = progress.find(p => p.team.id === selectedTeamId) ?? progress[0]
-  const totalCells = event.board_size * event.board_size
+  const activeTeamProgress = progress.find(p => p.team.id === selectedTeamId) ?? progress[0]
   const totalPossible = tasks.reduce((s, t) => s + t.points, 0)
+
+  // Serialize for client component (Set → array, Map → object)
+  const activeTeamProp = activeTeamProgress ? {
+    team: { id: activeTeamProgress.team.id, name: activeTeamProgress.team.name, color: activeTeamProgress.team.color },
+    taskProgress: activeTeamProgress.taskProgress,
+    completedTaskIds: [...activeTeamProgress.completedTasks],
+  } : null
+
+  const rsnTeamMap: Record<string, { name: string; color: string }> = {}
+  for (const team of teams) {
+    for (const m of membersByTeam[team.id] ?? []) {
+      rsnTeamMap[m.rsn.toLowerCase()] = { name: team.name, color: team.color }
+    }
+  }
+
+  const submissionsProp = submissions.map(s => ({
+    id: s.id, task_id: s.task_id, rsn: s.rsn,
+    screenshot_url: s.screenshot_url, notes: s.notes, submitted_at: s.submitted_at,
+  }))
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest">{event.title}</h1>
-        <p className="text-xs text-[#6868a0] mt-1">{event.board_size}×{event.board_size} board · {tasks.length} tasks</p>
+        <p className="text-xs text-[#6868a0] mt-1">{event.board_size}×{event.board_size} board · {tasks.length} tasks · click any tile for details</p>
       </div>
 
       {/* Team tabs */}
@@ -52,11 +71,11 @@ export default async function BingoBoardPage({ searchParams }: Props) {
               key={p.team.id}
               href={`/bingo/board?team=${p.team.id}`}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-                activeTeam?.team.id === p.team.id
+                activeTeamProgress?.team.id === p.team.id
                   ? 'text-[#07070f] border-transparent'
                   : 'bg-[#141427] text-[#a0a0c0] border-[#2a2a4a] hover:text-[#e8e8f0]'
               }`}
-              style={activeTeam?.team.id === p.team.id ? { backgroundColor: p.team.color, borderColor: p.team.color } : {}}
+              style={activeTeamProgress?.team.id === p.team.id ? { backgroundColor: p.team.color, borderColor: p.team.color } : {}}
             >
               {p.team.name} · {p.totalPoints}pts
             </Link>
@@ -65,58 +84,15 @@ export default async function BingoBoardPage({ searchParams }: Props) {
       )}
 
       <div className="flex flex-col xl:flex-row gap-8">
-        {/* Board grid */}
+        {/* Board grid — client component handles clicks + modal */}
         <div className="flex-1 min-w-0">
-          <div
-            className="grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${event.board_size}, minmax(0, 1fr))` }}
-          >
-            {Array.from({ length: totalCells }).map((_, i) => {
-              const task = tasks.find(t => t.position === i)
-              if (!task) {
-                return <div key={i} className="aspect-square rounded-lg bg-[#0a0a18] border border-[#1a1a30]" />
-              }
-              const count = activeTeam?.taskProgress[task.id] ?? 0
-              const done = activeTeam?.completedTasks.has(task.id) ?? false
-              const pct = Math.min(100, Math.round((count / task.required_count) * 100))
-              const teamColor = activeTeam?.team.color ?? '#c89b3c'
-
-              return (
-                <div
-                  key={task.id}
-                  className="aspect-square rounded-xl border-2 relative overflow-hidden transition-all"
-                  style={{ borderColor: done ? teamColor : '#2a2a4a' }}
-                >
-                  <div className="absolute inset-0 bg-[#0d0d1e]" />
-                  {task.image_url && (
-                    <div className="absolute inset-0 flex items-center justify-center p-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-40" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#07070f]/95 via-[#07070f]/30 to-transparent" />
-                  {done && <div className="absolute inset-0 opacity-10 transition-all" style={{ backgroundColor: teamColor }} />}
-
-                  <div className="absolute inset-x-0 bottom-0 p-2 flex flex-col gap-1">
-                    <p className="text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow">{task.title}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-[#9090b0]">{count}/{task.required_count}</span>
-                      <span className="text-[11px] font-bold" style={{ color: teamColor }}>
-                        {task.points}pt{task.points !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-[#1a1a30] overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: teamColor }} />
-                    </div>
-                  </div>
-
-                  {done && (
-                    <div className="absolute top-2 right-2 text-base leading-none" style={{ color: teamColor }}>✓</div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <BingoBoardGrid
+            boardSize={event.board_size}
+            tasks={tasks}
+            activeTeam={activeTeamProp}
+            submissions={submissionsProp}
+            rsnTeamMap={rsnTeamMap}
+          />
         </div>
 
         {/* Leaderboard sidebar */}
@@ -165,17 +141,17 @@ export default async function BingoBoardPage({ searchParams }: Props) {
             )}
           </div>
 
-          {activeTeam && (
+          {activeTeamProgress && (
             <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: activeTeam.team.color }}>
-                {activeTeam.team.name}
+              <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: activeTeamProgress.team.color }}>
+                {activeTeamProgress.team.name}
               </h2>
               <p className="text-xs text-[#6868a0] mb-2">Members</p>
-              {activeTeam.members.length === 0 ? (
+              {activeTeamProgress.members.length === 0 ? (
                 <p className="text-xs text-[#6868a0] italic">None assigned</p>
               ) : (
                 <ul className="space-y-1">
-                  {activeTeam.members.map(rsn => (
+                  {activeTeamProgress.members.map(rsn => (
                     <li key={rsn} className="text-xs text-[#e8e8f0]">{rsn}</li>
                   ))}
                 </ul>
