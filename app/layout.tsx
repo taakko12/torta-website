@@ -17,7 +17,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text)' }}>
         <Navbar />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-[#2a2a4a] py-6 text-center text-xs text-[#7070a0]">
+        <footer className="relative mt-10 py-8 text-center text-xs text-[#4a4a70]">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#252540] to-transparent" />
           Torta · Built with Next.js &amp; Supabase
         </footer>
       </body>

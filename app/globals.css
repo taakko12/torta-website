@@ -6,22 +6,79 @@
 }
 
 :root {
-  --bg-base: #07070f;
-  --bg-surface: #0e0e1c;
-  --bg-elevated: #141427;
-  --border: #2a2a4a;
-  --gold: #c89b3c;
-  --gold-light: #f0c060;
-  --red: #cc5555;
-  --text: #e8e8f0;
-  --text-muted: #7070a0;
+  --bg-base:     #07070f;
+  --bg-surface:  #0d0d1e;
+  --bg-elevated: #12122a;
+  --border:      #252540;
+  --border-bright: #3a3a60;
+  --gold:        #c89b3c;
+  --gold-light:  #f0c060;
+  --gold-dim:    #a07828;
+  --purple:      #7c5ce8;
+  --purple-dim:  rgba(124, 92, 232, 0.15);
+  --red:         #cc5555;
+  --text:        #e8e8f0;
+  --text-muted:  #6868a0;
+  --text-dim:    #4a4a70;
 }
 
+/* ── Background ─────────────────────────────────────────────── */
 body {
   background-color: var(--bg-base);
+  background-image:
+    radial-gradient(ellipse 90% 55% at 5% 0%,  rgba(124, 92, 232, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 90%, rgba(200, 155, 60, 0.05) 0%, transparent 55%);
+  background-attachment: fixed;
   color: var(--text);
 }
 
-::-webkit-scrollbar { width: 6px; }
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+/* ── Card surface upgrade ────────────────────────────────────── */
+/* Pages that use bg-[#0e0e1c] still look fine — these only fire
+   on elements that opt in via .card or .card-hover */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.card-hover {
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.card-hover:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 92, 232, 0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+  transform: translateY(-1px);
+}
+
+/* ── Gradient text utility ────────────────────────────────────── */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow utilities ───────────────────────────────────────────── */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(200, 155, 60, 0.25), 0 0 60px rgba(200, 155, 60, 0.08);
+}
+.glow-purple {
+  box-shadow: 0 0 20px rgba(124, 92, 232, 0.3), 0 0 60px rgba(124, 92, 232, 0.1);
+}
+
+/* ── Progress bar shimmer ─────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.bar-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}

@@ -173,8 +173,12 @@ export default async function BingoPage({ searchParams }: Props) {
                       </div>
                       <div className="relative h-2 rounded-full bg-[#141427] overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, backgroundColor: p.team.color }}
+                          className="h-full rounded-full transition-all duration-700 bar-shimmer"
+                          style={{
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${p.team.color}aa, ${p.team.color}, ${p.team.color}cc)`,
+                            boxShadow: `0 0 8px ${p.team.color}60`,
+                          }}
                         />
                       </div>
                       <p className="text-[11px] text-[#7070a0] mt-1">

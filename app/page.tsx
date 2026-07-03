@@ -51,11 +51,13 @@ export default async function Home() {
     <div className="mx-auto max-w-5xl px-4 py-10">
 
       {/* Hero */}
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold tracking-widest uppercase text-[#c89b3c] mb-2">
+      <div className="mb-14 text-center relative">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-32 bg-gradient-to-r from-transparent via-[#7c5ce8]/8 to-transparent blur-2xl pointer-events-none" />
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#6868a0] mb-3">Old School RuneScape</p>
+        <h1 className="text-gradient-gold text-5xl font-black tracking-widest uppercase mb-4">
           Torta
         </h1>
-        <p className="text-[#7070a0] text-sm tracking-wide uppercase">Old School RuneScape</p>
+        <div className="w-16 h-px mx-auto bg-gradient-to-r from-transparent via-[#c89b3c]/50 to-transparent" />
       </div>
 
       {/* Competitions — Active + Upcoming */}
