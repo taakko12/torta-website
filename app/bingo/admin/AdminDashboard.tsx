@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 type BingoEvent = { id: string; title: string; board_size: number; active: boolean; created_at: string }
-type BingoTask = { id: string; position: number; title: string; description: string | null; image_url: string | null; points: number; required_count: number }
+type BingoTask = { id: string; position: number; title: string; description: string | null; image_url: string | null; points: number; required_count: number; points_per_submission: number | null }
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   // Forms
   const [newTitle, setNewTitle] = useState('')
   const [newSize, setNewSize] = useState(5)
-  const [taskForm, setTaskForm] = useState({ id: '', position: 0, title: '', description: '', image_url: '', points: 1, required_count: 1 })
+  const [taskForm, setTaskForm] = useState({ id: '', position: 0, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })
   const [teamName, setTeamName] = useState('')
   const [teamColor, setTeamColor] = useState(TEAM_COLORS[0])
   const [memberRsn, setMemberRsn] = useState('')
@@ -96,8 +96,9 @@ export default function AdminDashboard() {
 
   async function upsertTask() {
     if (!taskForm.title.trim() || !selectedEventId) return
-    await api('upsert_task', { ...taskForm, event_id: selectedEventId })
-    setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1 })
+    const pps = taskForm.points_per_submission ? Number(taskForm.points_per_submission) : null
+    await api('upsert_task', { ...taskForm, event_id: selectedEventId, points_per_submission: pps })
+    setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })
     if (selectedEventId) loadEventData(selectedEventId)
   }
 
@@ -181,23 +182,40 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Create Event</h2>
-            <div className="flex gap-2 flex-wrap">
+            <div className="space-y-3">
               <input
                 value={newTitle} onChange={e => setNewTitle(e.target.value)}
-                placeholder="Event title"
-                className="flex-1 min-w-48 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                placeholder="Event title (e.g. July Bingo)"
+                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
               />
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-[#7070a0]">Size</label>
-                <input
-                  type="number" min={3} max={10} value={newSize}
-                  onChange={e => setNewSize(Number(e.target.value))}
-                  className="w-16 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
-                />
+              <div>
+                <label className="text-xs text-[#7070a0] mb-2 block">Board Size</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { size: 3, label: '3×3', sub: '9 tiles · Quick' },
+                    { size: 4, label: '4×4', sub: '16 tiles · Standard' },
+                    { size: 5, label: '5×5', sub: '25 tiles · Classic' },
+                    { size: 6, label: '6×6', sub: '36 tiles · Marathon' },
+                  ].map(({ size, label, sub }) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setNewSize(size)}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        newSize === size
+                          ? 'border-[#c89b3c] bg-[#c89b3c]/10'
+                          : 'border-[#2a2a4a] bg-[#141427] hover:border-[#4a4a6a]'
+                      }`}
+                    >
+                      <p className={`text-sm font-bold ${newSize === size ? 'text-[#c89b3c]' : 'text-[#e8e8f0]'}`}>{label}</p>
+                      <p className="text-xs text-[#7070a0]">{sub}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
               <button onClick={createEvent}
                 className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors">
-                Create
+                Create Event
               </button>
             </div>
           </div>
@@ -283,6 +301,15 @@ export default function AdminDashboard() {
                       onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))}
                       className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none" />
                   </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-[#7070a0] mb-1 block">
+                      Points per submission <span className="font-normal">(optional — awards partial points before tile completion)</span>
+                    </label>
+                    <input type="number" min={1} value={taskForm.points_per_submission}
+                      onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))}
+                      placeholder={`e.g. ${Math.round(taskForm.points / Math.max(taskForm.required_count, 1))} (${taskForm.points}pts ÷ ${taskForm.required_count} subs)`}
+                      className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={upsertTask}
@@ -290,7 +317,7 @@ export default function AdminDashboard() {
                     {taskForm.id ? 'Save' : 'Add Task'}
                   </button>
                   {taskForm.id && (
-                    <button onClick={() => setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1 })}
+                    <button onClick={() => setTaskForm({ id: '', position: tasks.length, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' })}
                       className="px-4 py-2 rounded-lg bg-[#141427] text-[#7070a0] text-sm border border-[#2a2a4a] hover:text-[#e8e8f0]">
                       Cancel
                     </button>
@@ -311,10 +338,13 @@ export default function AdminDashboard() {
                             <span className="text-[#7070a0] text-xs mr-2">#{t.position}</span>
                             {t.title}
                           </p>
-                          <p className="text-xs text-[#7070a0]">{t.points}pt · ×{t.required_count}</p>
+                          <p className="text-xs text-[#7070a0]">
+                            {t.points}pt · ×{t.required_count}
+                            {t.points_per_submission ? ` · ${t.points_per_submission}pt/sub` : ''}
+                          </p>
                         </div>
                         <div className="flex gap-2 shrink-0">
-                          <button onClick={() => setTaskForm({ id: t.id, position: t.position, title: t.title, description: t.description ?? '', image_url: t.image_url ?? '', points: t.points, required_count: t.required_count })}
+                          <button onClick={() => setTaskForm({ id: t.id, position: t.position, title: t.title, description: t.description ?? '', image_url: t.image_url ?? '', points: t.points, required_count: t.required_count, points_per_submission: t.points_per_submission?.toString() ?? '' })}
                             className="text-xs px-2 py-1 rounded bg-[#141427] text-[#7070a0] border border-[#2a2a4a] hover:text-[#e8e8f0]">
                             Edit
                           </button>

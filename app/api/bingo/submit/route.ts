@@ -17,6 +17,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
+  if (url) {
+    try {
+      const u = new URL(url)
+      if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+        return NextResponse.json({ error: 'Screenshot URL must be http or https.' }, { status: 400 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid screenshot URL.' }, { status: 400 })
+    }
+  }
+
   let screenshotUrl: string | null = url
   let screenshotPath: string | null = null
 

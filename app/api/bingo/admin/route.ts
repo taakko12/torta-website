@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'upsert_task') {
-      const { id, event_id, position, title, description, image_url, points, required_count } = body
-      const payload = { event_id, position, title, description: description || null, image_url: image_url || null, points, required_count }
+      const { id, event_id, position, title, description, image_url, points, required_count, points_per_submission } = body
+      const payload = { event_id, position, title, description: description || null, image_url: image_url || null, points, required_count, points_per_submission: points_per_submission ?? null }
       let error
       if (id) {
         ;({ error } = await db.from('bingo_tasks').update(payload).eq('id', id))

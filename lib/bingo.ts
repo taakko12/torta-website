@@ -20,6 +20,7 @@ export interface BingoTask {
   image_url: string | null
   points: number
   required_count: number
+  points_per_submission: number | null
 }
 
 export interface BingoTeam {
@@ -140,9 +141,12 @@ export function computeTeamProgress(
     const completedTasks = new Set<string>()
     let totalPoints = 0
     for (const task of tasks) {
-      if ((taskProgress[task.id] ?? 0) >= task.required_count) {
+      const cnt = taskProgress[task.id] ?? 0
+      if (cnt >= task.required_count) {
         completedTasks.add(task.id)
         totalPoints += task.points
+      } else if (task.points_per_submission && cnt > 0) {
+        totalPoints += Math.min(cnt * task.points_per_submission, task.points)
       }
     }
 
