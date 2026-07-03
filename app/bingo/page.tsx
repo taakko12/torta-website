@@ -3,6 +3,7 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
+import { getServerSession } from '@/lib/auth'
 
 export const revalidate = 15
 
@@ -10,7 +11,7 @@ type Props = { searchParams: Promise<{ team?: string }> }
 
 export default async function BingoPage({ searchParams }: Props) {
   const { team: selectedTeamId } = await searchParams
-  const event = await getActiveEvent()
+  const [event, session] = await Promise.all([getActiveEvent(), getServerSession()])
 
   if (!event) {
     return (
@@ -43,12 +44,22 @@ export default async function BingoPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold text-[#c89b3c] uppercase tracking-widest">{event.title}</h1>
           <p className="text-xs text-[#7070a0] mt-1">{event.board_size}×{event.board_size} board · {tasks.length} tasks</p>
         </div>
-        <Link
-          href="/bingo/submit"
-          className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
-        >
-          Submit Drop
-        </Link>
+        <div className="flex flex-col items-end gap-2">
+          <Link
+            href="/bingo/submit"
+            className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
+          >
+            Submit Drop
+          </Link>
+          {session?.isAdmin && (
+            <Link
+              href="/bingo/admin"
+              className="text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors"
+            >
+              ⚙ Manage Board
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Team tabs */}
