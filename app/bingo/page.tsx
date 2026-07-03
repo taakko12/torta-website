@@ -98,39 +98,42 @@ export default async function BingoPage({ searchParams }: Props) {
               const done = activeTeam?.completedTasks.has(task.id) ?? false
               const pct = Math.min(100, Math.round((count / task.required_count) * 100))
 
+              const teamColor = activeTeam?.team.color ?? '#c89b3c'
               return (
                 <div
                   key={task.id}
-                  className={`aspect-square rounded-lg border flex flex-col overflow-hidden relative transition-all ${
-                    done ? 'border-2' : 'border-[#2a2a4a] bg-[#0e0e1c]'
-                  }`}
-                  style={done ? { borderColor: activeTeam?.team.color, backgroundColor: activeTeam?.team.color + '18' } : {}}
+                  className={`aspect-square rounded-xl border-2 relative overflow-hidden transition-all`}
+                  style={{ borderColor: done ? teamColor : '#2a2a4a' }}
                 >
+                  {/* Background */}
+                  <div className="absolute inset-0 bg-[#0d0d1e]" />
                   {task.image_url && (
-                    <div className="w-full flex-1 overflow-hidden shrink-0 bg-[#07070f] flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center p-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-70" />
+                      <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-40" />
                     </div>
                   )}
-                  <div className={`flex flex-col justify-between p-1.5 gap-1 shrink-0 ${task.image_url ? '' : 'flex-1'}`}>
-                    <p className="text-[10px] leading-tight font-medium text-[#e8e8f0] line-clamp-2">{task.title}</p>
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[9px] text-[#7070a0]">{count}/{task.required_count}</span>
-                        <span className="text-[9px] font-semibold" style={{ color: activeTeam?.team.color ?? '#c89b3c' }}>
-                          {task.points}pt{task.points !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div className="h-1 rounded-full bg-[#1a1a30] overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, backgroundColor: activeTeam?.team.color ?? '#c89b3c' }}
-                        />
-                      </div>
+                  {/* Gradient overlay so text is always readable */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#07070f]/95 via-[#07070f]/30 to-transparent" />
+                  {/* Done tint */}
+                  {done && <div className="absolute inset-0 opacity-10 transition-all" style={{ backgroundColor: teamColor }} />}
+
+                  {/* Content pinned to bottom */}
+                  <div className="absolute inset-x-0 bottom-0 p-2 flex flex-col gap-1">
+                    <p className="text-xs font-semibold text-white leading-tight line-clamp-2 drop-shadow">{task.title}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-[#9090b0]">{count}/{task.required_count}</span>
+                      <span className="text-[11px] font-bold" style={{ color: teamColor }}>
+                        {task.points}pt{task.points !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#1a1a30] overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: teamColor }} />
                     </div>
                   </div>
+
                   {done && (
-                    <div className="absolute top-1 right-1 text-[10px]">✓</div>
+                    <div className="absolute top-2 right-2 text-base leading-none" style={{ color: teamColor }}>✓</div>
                   )}
                 </div>
               )
