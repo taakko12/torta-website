@@ -36,6 +36,7 @@ export default async function BingoPage({ searchParams }: Props) {
 
   const activeTeam = progress.find(p => p.team.id === selectedTeamId) ?? progress[0]
   const totalCells = event.board_size * event.board_size
+  const totalPossible = tasks.reduce((s, t) => s + t.points, 0)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -144,27 +145,44 @@ export default async function BingoPage({ searchParams }: Props) {
         {/* Leaderboard */}
         <div className="xl:w-64 shrink-0">
           <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Leaderboard</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Leaderboard</h2>
+              <span className="text-xs text-[#7070a0]">{totalPossible} pts total</span>
+            </div>
             {sorted.length === 0 ? (
               <p className="text-xs text-[#7070a0]">No teams yet.</p>
             ) : (
-              <ul className="space-y-3">
-                {sorted.map((p, i) => (
-                  <li key={p.team.id} className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-[#7070a0] w-4 text-right shrink-0">
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.team.color }} />
-                        <span className="text-sm font-medium text-[#e8e8f0] truncate">{p.team.name}</span>
+              <ul className="space-y-4">
+                {sorted.map((p, i) => {
+                  const pct = totalPossible > 0 ? Math.round((p.totalPoints / totalPossible) * 100) : 0
+                  const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+                  return (
+                    <li key={p.team.id}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {medal
+                            ? <span className="text-sm shrink-0">{medal}</span>
+                            : <span className="text-xs text-[#7070a0] w-4 text-right shrink-0">{i + 1}</span>
+                          }
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.team.color }} />
+                          <span className="text-sm font-semibold text-[#e8e8f0] truncate">{p.team.name}</span>
+                        </div>
+                        <span className="text-xs font-bold shrink-0 ml-2" style={{ color: p.team.color }}>
+                          {p.totalPoints}
+                        </span>
                       </div>
-                      <p className="text-xs text-[#7070a0]">
-                        {p.totalPoints}pts · {p.completedTasks.size}/{tasks.length} tiles
+                      <div className="relative h-2 rounded-full bg-[#141427] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, backgroundColor: p.team.color }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-[#7070a0] mt-1">
+                        {pct}% · {p.completedTasks.size}/{tasks.length} tiles
                       </p>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
