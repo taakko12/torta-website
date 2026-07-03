@@ -3,10 +3,10 @@ import { getServerSession as _get } from 'next-auth'
 import DiscordProvider from 'next-auth/providers/discord'
 
 declare module 'next-auth' {
-  interface Session { discordId?: string }
+  interface Session { discordId?: string; isAdmin?: boolean }
 }
 declare module 'next-auth/jwt' {
-  interface JWT { discordId?: string }
+  interface JWT { discordId?: string; isAdmin?: boolean }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -18,11 +18,15 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, profile }) {
-      if (profile) token.discordId = (profile as { id: string }).id
+      if (profile) {
+        token.discordId = (profile as { id: string }).id
+        token.isAdmin = await isAdmin(token.discordId!)
+      }
       return token
     },
     async session({ session, token }) {
       session.discordId = token.discordId
+      session.isAdmin = token.isAdmin
       return session
     },
   },
