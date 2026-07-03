@@ -16,7 +16,9 @@ async function api(action: string, extra: object = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, ...extra }),
   })
-  return res.json()
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+  return json
 }
 
 async function review(submissionId: string, action: 'approved' | 'rejected') {
@@ -77,9 +79,13 @@ export default function AdminDashboard() {
 
   async function createEvent() {
     if (!newTitle.trim()) return
-    await api('create_event', { title: newTitle.trim(), board_size: newSize })
-    setNewTitle('')
-    load()
+    try {
+      await api('create_event', { title: newTitle.trim(), board_size: newSize })
+      setNewTitle('')
+      load()
+    } catch (e) {
+      alert(`Error: ${(e as Error).message}`)
+    }
   }
 
   async function setActive(eventId: string | null) {
