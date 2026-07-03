@@ -16,8 +16,9 @@ async function api(action: string, extra: object = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, ...extra }),
   })
-  const json = await res.json()
-  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+  const text = await res.text()
+  const json = text ? JSON.parse(text) : {}
+  if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}: ${text}`)
   return json
 }
 

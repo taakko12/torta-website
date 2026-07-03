@@ -13,7 +13,12 @@ async function checkAdmin() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await checkAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  try {
+    const session = await checkAdmin()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  } catch (e) {
+    return NextResponse.json({ error: `Auth error: ${(e as Error).message}` }, { status: 500 })
+  }
   const db = getSupabaseAdmin()
   const body = await req.json()
   const { action } = body
