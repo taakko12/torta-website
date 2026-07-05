@@ -21,8 +21,10 @@ interface Props {
   memberEhb: Record<string, number>
   // rsn.toLowerCase() → taskId → submission count
   taskProgressByMember: Record<string, Record<string, number>>
-  // rsn.toLowerCase() → boss metric → KC gained during event (from WOM bulk-gained)
-  bossGains: Record<string, Record<string, number>>
+  // bosses active this event (had any KC gained) — determines which columns to show
+  activeBosses: string[]
+  // rsn.toLowerCase() → boss metric → current total KC from hiscores (accurate, matches WOM)
+  bossKills: Record<string, Record<string, number>>
   womAvailable: boolean
 }
 
@@ -206,7 +208,7 @@ function LineChart({ series }: { series: ChartSeries[] }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function BingoLeaderboards({
-  tasks, teams, members, playerPoints, teamStats, memberEhb, taskProgressByMember, bossGains, womAvailable,
+  tasks, teams, members, playerPoints, teamStats, memberEhb, taskProgressByMember, activeBosses, bossKills, womAvailable,
 }: Props) {
   const [view, setView] = useState<View>('players')
   const [matrixMode, setMatrixMode] = useState<'tasks' | 'bosses'>('tasks')
@@ -564,20 +566,15 @@ export default function BingoLeaderboards({
           KILL MATRIX
           ═══════════════════════════════════════════ */}
       {view === 'matrix' && (() => {
-        // Boss gains mode: collect all bosses with any gains across event members, sorted by total
-        const bossColumns = (() => {
-          const totals: Record<string, number> = {}
-          for (const rsn of members.map(m => m.rsn.toLowerCase())) {
-            for (const [boss, kc] of Object.entries(bossGains[rsn] ?? {})) {
-              totals[boss] = (totals[boss] ?? 0) + kc
-            }
-          }
-          return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([boss]) => boss)
-        })()
+        // Boss columns: active bosses sorted by total current KC across event members
+        const bossColumns = activeBosses
+          .map(boss => ({ boss, total: members.reduce((s, m) => s + (bossKills[m.rsn.toLowerCase()]?.[boss] ?? 0), 0) }))
+          .sort((a, b) => b.total - a.total)
+          .map(x => x.boss)
 
         const matrixMembers = matrixMode === 'tasks'
           ? members.filter(m => Object.keys(taskProgressByMember[m.rsn.toLowerCase()] ?? {}).length > 0)
-          : members.filter(m => Object.keys(bossGains[m.rsn.toLowerCase()] ?? {}).length > 0)
+          : members.filter(m => Object.keys(bossKills[m.rsn.toLowerCase()] ?? {}).length > 0)
 
         return (
           <div>
@@ -598,7 +595,7 @@ export default function BingoLeaderboards({
               <p className="text-xs text-[#4a4a70]">
                 {matrixMode === 'tasks'
                   ? 'Approved submissions per player per task'
-                  : 'Boss KC gained during event · synced from hiscores'}
+                  : 'Current total KC from hiscores · columns = bosses active this event'}
               </p>
             </div>
 
@@ -702,16 +699,16 @@ export default function BingoLeaderboards({
                     <tbody>
                       {matrixMembers
                         .sort((a, b) => {
-                          const aTotal = Object.values(bossGains[a.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
-                          const bTotal = Object.values(bossGains[b.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
+                          const aTotal = Object.values(bossKills[a.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
+                          const bTotal = Object.values(bossKills[b.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
                           return bTotal - aTotal
                         })
                         .map(m => {
                           const rsn = m.rsn.toLowerCase()
                           const teamColor = teamById[m.teamId]?.color ?? '#4a4a70'
-                          const gains = bossGains[rsn] ?? {}
-                          const totalKc = Object.values(gains).reduce((s, v) => s + v, 0)
-                          const maxKc = Math.max(...bossColumns.map(b => gains[b] ?? 0), 1)
+                          const kills = bossKills[rsn] ?? {}
+                          const totalKc = Object.values(kills).reduce((s, v) => s + v, 0)
+                          const maxKc = Math.max(...bossColumns.map(b => kills[b] ?? 0), 1)
                           return (
                             <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
                               <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
@@ -721,7 +718,7 @@ export default function BingoLeaderboards({
                                 </div>
                               </td>
                               {bossColumns.map(boss => {
-                                const kc = gains[boss] ?? 0
+                                const kc = kills[boss] ?? 0
                                 const intensity = kc / maxKc
                                 return (
                                   <td key={boss} className="px-1 py-3 text-center">

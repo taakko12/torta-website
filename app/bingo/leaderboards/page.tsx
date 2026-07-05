@@ -2,7 +2,7 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
-import { getGroupBulkGained, isBossMetric } from '@/lib/wom'
+import { getGroupBulkGained, getGroupBulkHiscores, isBossMetric } from '@/lib/wom'
 import BingoLeaderboards from '@/components/BingoLeaderboards'
 
 export const revalidate = 15
@@ -18,11 +18,12 @@ export default async function LeaderboardsPage() {
     )
   }
 
-  const [tasks, teams, submissions, bulkGains] = await Promise.all([
+  const [tasks, teams, submissions, bulkGains, bulkHiscores] = await Promise.all([
     getEventTasks(event.id),
     getEventTeams(event.id),
     getApprovedSubmissions(event.id),
     getGroupBulkGained(event.created_at),
+    getGroupBulkHiscores(),
   ])
 
   const teamIds = teams.map(t => t.id)
@@ -63,14 +64,26 @@ export default async function LeaderboardsPage() {
     memberEhb[rsn] = bulkGains[rsn]?.metrics['ehb'] ?? 0
   }
 
-  // Boss KC gains per member — used for the Kill Matrix "Boss Gains" view
-  const bossGains: Record<string, Record<string, number>> = {}
-  for (const [rsn, gains] of Object.entries(bulkGains)) {
-    const bosses: Record<string, number> = {}
+  // Which bosses to show in the matrix (any event member gained KC during event)
+  const activeBosses = new Set<string>()
+  for (const gains of Object.values(bulkGains)) {
     for (const [metric, gained] of Object.entries(gains.metrics)) {
-      if (isBossMetric(metric) && gained > 0) bosses[metric] = gained
+      if (isBossMetric(metric) && gained > 0) activeBosses.add(metric)
     }
-    if (Object.keys(bosses).length) bossGains[rsn] = bosses
+  }
+
+  // Current total KC per member per boss from hiscores (accurate, matches WOM)
+  const bossKills: Record<string, Record<string, number>> = {}
+  for (const m of allMembers) {
+    const rsn = m.rsn.toLowerCase()
+    const hiscores = bulkHiscores[rsn]
+    if (!hiscores) continue
+    const kills: Record<string, number> = {}
+    for (const boss of activeBosses) {
+      const kc = hiscores.bosses[boss]?.kills ?? -1
+      if (kc > 0) kills[boss] = kc
+    }
+    if (Object.keys(kills).length) bossKills[rsn] = kills
   }
 
   const womAvailable = !!process.env.WOM_GROUP_ID
@@ -88,7 +101,8 @@ export default async function LeaderboardsPage() {
       teamStats={teamStats}
       memberEhb={memberEhb}
       taskProgressByMember={taskProgressByMember}
-      bossGains={bossGains}
+      bossKills={bossKills}
+      activeBosses={[...activeBosses]}
       womAvailable={womAvailable}
     />
   )
