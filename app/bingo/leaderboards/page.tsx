@@ -2,7 +2,7 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
-import { getGroupEhbGained } from '@/lib/wom'
+import { getGroupBulkGained } from '@/lib/wom'
 import BingoLeaderboards from '@/components/BingoLeaderboards'
 
 export const revalidate = 15
@@ -18,11 +18,11 @@ export default async function LeaderboardsPage() {
     )
   }
 
-  const [tasks, teams, submissions, ehbGainedRaw] = await Promise.all([
+  const [tasks, teams, submissions, bulkGains] = await Promise.all([
     getEventTasks(event.id),
     getEventTeams(event.id),
     getApprovedSubmissions(event.id),
-    getGroupEhbGained(event.created_at),
+    getGroupBulkGained(event.created_at),
   ])
 
   const teamIds = teams.map(t => t.id)
@@ -56,11 +56,11 @@ export default async function LeaderboardsPage() {
     progress.map(p => [p.team.id, { points: p.totalPoints, completedCount: p.completedTasks.size }])
   )
 
-  // EHB gained per member (rsn lowercased → EHB)
+  // EHB gained per member — extracted from bulk gains response
   const memberEhb: Record<string, number> = {}
   for (const m of allMembers) {
     const rsn = m.rsn.toLowerCase()
-    memberEhb[rsn] = ehbGainedRaw[rsn] ?? 0
+    memberEhb[rsn] = bulkGains[rsn]?.metrics['ehb'] ?? 0
   }
 
   const womAvailable = !!process.env.WOM_GROUP_ID

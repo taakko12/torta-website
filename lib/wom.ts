@@ -152,18 +152,31 @@ export async function getActiveCompetitionsWithStandings(): Promise<CompetitionW
   return out
 }
 
-// Returns EHB gained per player (username lowercased) since startDate
-export async function getGroupEhbGained(startDate: string): Promise<Record<string, number>> {
+// All metric gains per player — one bulk call returns every metric for every member
+export type PlayerBulkGains = {
+  displayName: string
+  metrics: Record<string, number>
+}
+
+export async function getGroupBulkGained(startDate: string): Promise<Record<string, PlayerBulkGains>> {
   const endDate = new Date().toISOString()
   const data = await womFetch(
-    `/groups/${GROUP_ID}/gained?metric=ehb&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+    `/groups/${GROUP_ID}/bulk-gained?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
   )
-  const rows: unknown[] = Array.isArray(data) ? data : ((data as { results?: unknown[] })?.results ?? [])
-  const out: Record<string, number> = {}
+  const rows: unknown[] = Array.isArray(data) ? data : []
+  const out: Record<string, PlayerBulkGains> = {}
   for (const row of rows) {
-    const r = row as { player?: { username?: string }; data?: { ehb?: { gained?: number } } }
+    const r = row as {
+      player?: { username?: string; displayName?: string }
+      data?: Array<{ metric?: string; gained?: number }>
+    }
     const rsn = r.player?.username?.toLowerCase() ?? ''
-    if (rsn) out[rsn] = r.data?.ehb?.gained ?? 0
+    if (!rsn) continue
+    const metrics: Record<string, number> = {}
+    for (const d of r.data ?? []) {
+      if (d.metric) metrics[d.metric] = d.gained ?? 0
+    }
+    out[rsn] = { displayName: r.player?.displayName ?? rsn, metrics }
   }
   return out
 }
