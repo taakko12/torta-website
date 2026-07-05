@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { formatMetric } from '@/lib/wom'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ interface Props {
   memberEhb: Record<string, number>
   // rsn.toLowerCase() → taskId → submission count
   taskProgressByMember: Record<string, Record<string, number>>
+  // rsn.toLowerCase() → boss metric → KC gained during event (from WOM bulk-gained)
+  bossGains: Record<string, Record<string, number>>
   womAvailable: boolean
 }
 
@@ -203,9 +206,10 @@ function LineChart({ series }: { series: ChartSeries[] }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function BingoLeaderboards({
-  tasks, teams, members, playerPoints, teamStats, memberEhb, taskProgressByMember, womAvailable,
+  tasks, teams, members, playerPoints, teamStats, memberEhb, taskProgressByMember, bossGains, womAvailable,
 }: Props) {
   const [view, setView] = useState<View>('players')
+  const [matrixMode, setMatrixMode] = useState<'tasks' | 'bosses'>('tasks')
   const [playerSort, setPlayerSort] = useState<{ col: ColKey; dir: SortDir }>({ col: 'points', dir: 'desc' })
   const [teamSort, setTeamSort] = useState<{ col: ColKey; dir: SortDir }>({ col: 'points', dir: 'desc' })
   const [search, setSearch] = useState('')
@@ -559,91 +563,203 @@ export default function BingoLeaderboards({
       {/* ═══════════════════════════════════════════
           KILL MATRIX
           ═══════════════════════════════════════════ */}
-      {view === 'matrix' && (
-        <div>
-          <p className="text-xs text-[#4a4a70] mb-4">
-            Approved submissions per player per task. Filled = task completed by that player's contribution.
-          </p>
-          <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
-            <table className="border-collapse" style={{ minWidth: `${120 + tasks.length * 52}px` }}>
-              <thead>
-                <tr className="border-b border-[#1a1a30]">
-                  <th className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3 text-left w-36">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</span>
-                  </th>
-                  {tasks.map(t => (
-                    <th key={t.id} className="px-1 py-2 w-12 text-center" title={`#${t.position} — ${t.title}`}>
-                      <div className="flex flex-col items-center gap-1">
-                        {t.image_url
-                          ? <img src={t.image_url} alt="" className="w-8 h-8 rounded-lg object-cover" /> // eslint-disable-line @next/next/no-img-element
-                          : <div className="w-8 h-8 rounded-lg bg-[#141427] flex items-center justify-center text-[10px] text-[#3a3a60]">#{t.position}</div>
-                        }
-                        <span className="text-[9px] text-[#3a3a60] font-mono">{t.required_count}kc</span>
-                      </div>
-                    </th>
-                  ))}
-                  <th className="px-4 py-3 text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Total</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {members
-                  .filter(m => Object.keys(taskProgressByMember[m.rsn.toLowerCase()] ?? {}).length > 0)
-                  .map(m => {
-                    const rsn = m.rsn.toLowerCase()
-                    const teamColor = teamById[m.teamId]?.color ?? '#4a4a70'
-                    const prog = taskProgressByMember[rsn] ?? {}
-                    const totalKills = Object.values(prog).reduce((s, v) => s + v, 0)
-                    return (
-                      <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
-                        <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
-                            <span className="text-sm font-semibold text-[#e8e8f0] truncate">{m.rsn}</span>
+      {view === 'matrix' && (() => {
+        // Boss gains mode: collect all bosses with any gains across event members, sorted by total
+        const bossColumns = (() => {
+          const totals: Record<string, number> = {}
+          for (const rsn of members.map(m => m.rsn.toLowerCase())) {
+            for (const [boss, kc] of Object.entries(bossGains[rsn] ?? {})) {
+              totals[boss] = (totals[boss] ?? 0) + kc
+            }
+          }
+          return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([boss]) => boss)
+        })()
+
+        const matrixMembers = matrixMode === 'tasks'
+          ? members.filter(m => Object.keys(taskProgressByMember[m.rsn.toLowerCase()] ?? {}).length > 0)
+          : members.filter(m => Object.keys(bossGains[m.rsn.toLowerCase()] ?? {}).length > 0)
+
+        return (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex rounded-lg border border-[#252540] overflow-hidden">
+                {(['tasks', 'bosses'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setMatrixMode(mode)}
+                    className={`px-4 py-2 text-sm font-semibold transition-colors capitalize ${
+                      matrixMode === mode ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'bg-[#0d0d1e] text-[#6868a0] hover:text-[#e8e8f0]'
+                    }`}
+                  >
+                    {mode === 'tasks' ? 'Bingo Tasks' : 'Boss KC (WOM)'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-[#4a4a70]">
+                {matrixMode === 'tasks'
+                  ? 'Approved submissions per player per task'
+                  : 'Boss KC gained during event · synced from hiscores'}
+              </p>
+            </div>
+
+            {matrixMode === 'tasks' && (
+              <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
+                <table className="border-collapse" style={{ minWidth: `${120 + tasks.length * 52}px` }}>
+                  <thead>
+                    <tr className="border-b border-[#1a1a30]">
+                      <th className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3 text-left w-36">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</span>
+                      </th>
+                      {tasks.map(t => (
+                        <th key={t.id} className="px-1 py-2 w-12 text-center" title={`#${t.position} — ${t.title}`}>
+                          <div className="flex flex-col items-center gap-1">
+                            {t.image_url
+                              ? <img src={t.image_url} alt="" className="w-8 h-8 rounded-lg object-cover" /> // eslint-disable-line @next/next/no-img-element
+                              : <div className="w-8 h-8 rounded-lg bg-[#141427] flex items-center justify-center text-[10px] text-[#3a3a60]">#{t.position}</div>
+                            }
+                            <span className="text-[9px] text-[#3a3a60] font-mono">{t.required_count}kc</span>
                           </div>
-                        </td>
-                        {tasks.map(t => {
-                          const count = prog[t.id] ?? 0
-                          const pct = Math.min(1, count / t.required_count)
-                          const done = count >= t.required_count
-                          return (
-                            <td key={t.id} className="px-1 py-3 text-center">
-                              <div className="flex items-center justify-center">
-                                {count === 0 ? (
-                                  <div className="w-8 h-8 rounded-lg border border-[#1a1a30] bg-[#0a0a18] flex items-center justify-center">
-                                    <div className="w-2 h-2 rounded-full bg-[#1a1a30]" />
-                                  </div>
-                                ) : (
-                                  <div
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold relative overflow-hidden"
-                                    title={`${count}/${t.required_count} ${t.title}`}
-                                    style={{ border: `1.5px solid ${done ? teamColor : `${teamColor}60`}` }}
-                                  >
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 text-right"><span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Total</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matrixMembers.map(m => {
+                      const rsn = m.rsn.toLowerCase()
+                      const teamColor = teamById[m.teamId]?.color ?? '#4a4a70'
+                      const prog = taskProgressByMember[rsn] ?? {}
+                      const totalKills = Object.values(prog).reduce((s, v) => s + v, 0)
+                      return (
+                        <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
+                          <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
+                              <span className="text-sm font-semibold text-[#e8e8f0] truncate">{m.rsn}</span>
+                            </div>
+                          </td>
+                          {tasks.map(t => {
+                            const count = prog[t.id] ?? 0
+                            const pct = Math.min(1, count / t.required_count)
+                            const done = count >= t.required_count
+                            return (
+                              <td key={t.id} className="px-1 py-3 text-center">
+                                <div className="flex items-center justify-center">
+                                  {count === 0 ? (
+                                    <div className="w-8 h-8 rounded-lg border border-[#1a1a30] bg-[#0a0a18] flex items-center justify-center">
+                                      <div className="w-2 h-2 rounded-full bg-[#1a1a30]" />
+                                    </div>
+                                  ) : (
                                     <div
-                                      className="absolute inset-0"
-                                      style={{ backgroundColor: teamColor, opacity: done ? 0.3 : 0.1 * pct * 3 }}
-                                    />
-                                    <span className="relative z-10" style={{ color: done ? teamColor : '#a0a0c0' }}>
-                                      {count >= 100 ? '99+' : count}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
+                                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold relative overflow-hidden"
+                                      title={`${count}/${t.required_count} ${t.title}`}
+                                      style={{ border: `1.5px solid ${done ? teamColor : `${teamColor}60`}` }}
+                                    >
+                                      <div className="absolute inset-0" style={{ backgroundColor: teamColor, opacity: done ? 0.3 : 0.1 * pct * 3 }} />
+                                      <span className="relative z-10" style={{ color: done ? teamColor : '#a0a0c0' }}>
+                                        {count >= 100 ? '99+' : count}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            )
+                          })}
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-sm font-bold text-[#c89b3c]">{totalKills}</span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {matrixMode === 'bosses' && (
+              bossColumns.length === 0 ? (
+                <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] py-14 text-center">
+                  <p className="text-sm text-[#4a4a70]">No boss KC data for this event period. WOM_GROUP_ID must be configured.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
+                  <table className="border-collapse" style={{ minWidth: `${140 + bossColumns.length * 60}px` }}>
+                    <thead>
+                      <tr className="border-b border-[#1a1a30]">
+                        <th className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3 text-left w-36">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</span>
+                        </th>
+                        {bossColumns.map(boss => (
+                          <th key={boss} className="px-1 py-2 w-14 text-center" title={formatMetric(boss)}>
+                            <div className="text-[9px] text-[#6868a0] font-semibold leading-tight px-1 w-12 mx-auto">
+                              {formatMetric(boss).split(' ').map((w, i) => <div key={i}>{w}</div>)}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="px-4 py-3 text-right"><span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Total KC</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matrixMembers
+                        .sort((a, b) => {
+                          const aTotal = Object.values(bossGains[a.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
+                          const bTotal = Object.values(bossGains[b.rsn.toLowerCase()] ?? {}).reduce((s, v) => s + v, 0)
+                          return bTotal - aTotal
+                        })
+                        .map(m => {
+                          const rsn = m.rsn.toLowerCase()
+                          const teamColor = teamById[m.teamId]?.color ?? '#4a4a70'
+                          const gains = bossGains[rsn] ?? {}
+                          const totalKc = Object.values(gains).reduce((s, v) => s + v, 0)
+                          const maxKc = Math.max(...bossColumns.map(b => gains[b] ?? 0), 1)
+                          return (
+                            <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
+                              <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
+                                  <span className="text-sm font-semibold text-[#e8e8f0] truncate">{m.rsn}</span>
+                                </div>
+                              </td>
+                              {bossColumns.map(boss => {
+                                const kc = gains[boss] ?? 0
+                                const intensity = kc / maxKc
+                                return (
+                                  <td key={boss} className="px-1 py-3 text-center">
+                                    <div className="flex items-center justify-center">
+                                      {kc === 0 ? (
+                                        <div className="w-10 h-8 rounded-lg border border-[#1a1a30] bg-[#0a0a18] flex items-center justify-center">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a30]" />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className="w-10 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold relative overflow-hidden"
+                                          title={`${kc.toLocaleString()} KC — ${formatMetric(boss)}`}
+                                          style={{ border: `1.5px solid ${teamColor}80` }}
+                                        >
+                                          <div className="absolute inset-0" style={{ backgroundColor: teamColor, opacity: 0.08 + intensity * 0.25 }} />
+                                          <span className="relative z-10 text-[#e8e8f0]">
+                                            {kc >= 10000 ? `${Math.round(kc / 1000)}k` : kc >= 1000 ? `${(kc / 1000).toFixed(1)}k` : kc}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                )
+                              })}
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-bold text-[#c89b3c]">{totalKc.toLocaleString()}</span>
+                              </td>
+                            </tr>
                           )
                         })}
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-sm font-bold text-[#c89b3c]">{totalKills}</span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ═══════════════════════════════════════════
           EHB PROGRESS

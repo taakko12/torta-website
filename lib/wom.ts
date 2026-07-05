@@ -40,6 +40,20 @@ const SKILL_METRICS = new Set([
   'slayer', 'farming', 'runecrafting', 'hunter', 'construction', 'sailing',
 ])
 
+// Non-boss metrics: computed values and activities that aren't boss KCs
+const NON_BOSS_METRICS = new Set([
+  'ehb', 'ehp', 'ttm', 'tt200m',
+  'league_points', 'bounty_hunter_hunter', 'bounty_hunter_rogue',
+  'clue_scrolls_all', 'clue_scrolls_beginner', 'clue_scrolls_easy',
+  'clue_scrolls_medium', 'clue_scrolls_hard', 'clue_scrolls_elite', 'clue_scrolls_master',
+  'last_man_standing', 'pvp_arena', 'soul_wars_zeal',
+  'guardians_of_the_rift', 'colosseum_glory', 'collections_logged',
+])
+
+export function isBossMetric(metric: string): boolean {
+  return !SKILL_METRICS.has(metric) && !NON_BOSS_METRICS.has(metric)
+}
+
 export interface Competition {
   id: number
   title: string
@@ -177,6 +191,54 @@ export async function getGroupBulkGained(startDate: string): Promise<Record<stri
       if (d.metric) metrics[d.metric] = d.gained ?? 0
     }
     out[rsn] = { displayName: r.player?.displayName ?? rsn, metrics }
+  }
+  return out
+}
+
+export type MemberHiscores = {
+  displayName: string
+  ehb: number
+  ehp: number
+  skills: Record<string, { level: number; xp: number; rank: number }>
+  bosses: Record<string, { kills: number; rank: number }>
+  activities: Record<string, { score: number; rank: number }>
+}
+
+// Full current snapshot for every group member in one call
+export async function getGroupBulkHiscores(): Promise<Record<string, MemberHiscores>> {
+  const data = await womFetch(`/groups/${GROUP_ID}/bulk-hiscores`)
+  const rows: unknown[] = Array.isArray(data) ? data : []
+  const out: Record<string, MemberHiscores> = {}
+  for (const row of rows) {
+    const r = row as {
+      player?: { username?: string; displayName?: string; ehb?: number; ehp?: number }
+      data?: { data?: {
+        skills?: Record<string, { experience?: number; rank?: number; level?: number }>
+        bosses?: Record<string, { kills?: number; rank?: number }>
+        activities?: Record<string, { score?: number; rank?: number }>
+      }}
+    }
+    const rsn = r.player?.username?.toLowerCase() ?? ''
+    if (!rsn) continue
+    const snap = r.data?.data ?? {}
+    const skills: Record<string, { level: number; xp: number; rank: number }> = {}
+    for (const [k, v] of Object.entries(snap.skills ?? {})) {
+      skills[k] = { level: v.level ?? 0, xp: v.experience ?? 0, rank: v.rank ?? -1 }
+    }
+    const bosses: Record<string, { kills: number; rank: number }> = {}
+    for (const [k, v] of Object.entries(snap.bosses ?? {})) {
+      bosses[k] = { kills: v.kills ?? -1, rank: v.rank ?? -1 }
+    }
+    const activities: Record<string, { score: number; rank: number }> = {}
+    for (const [k, v] of Object.entries(snap.activities ?? {})) {
+      activities[k] = { score: v.score ?? -1, rank: v.rank ?? -1 }
+    }
+    out[rsn] = {
+      displayName: r.player?.displayName ?? rsn,
+      ehb: r.player?.ehb ?? 0,
+      ehp: r.player?.ehp ?? 0,
+      skills, bosses, activities,
+    }
   }
   return out
 }

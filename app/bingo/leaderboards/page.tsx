@@ -2,7 +2,7 @@ import {
   getActiveEvent, getEventTasks, getEventTeams,
   getTeamMembers, getApprovedSubmissions, computeTeamProgress,
 } from '@/lib/bingo'
-import { getGroupBulkGained } from '@/lib/wom'
+import { getGroupBulkGained, isBossMetric } from '@/lib/wom'
 import BingoLeaderboards from '@/components/BingoLeaderboards'
 
 export const revalidate = 15
@@ -63,6 +63,16 @@ export default async function LeaderboardsPage() {
     memberEhb[rsn] = bulkGains[rsn]?.metrics['ehb'] ?? 0
   }
 
+  // Boss KC gains per member — used for the Kill Matrix "Boss Gains" view
+  const bossGains: Record<string, Record<string, number>> = {}
+  for (const [rsn, gains] of Object.entries(bulkGains)) {
+    const bosses: Record<string, number> = {}
+    for (const [metric, gained] of Object.entries(gains.metrics)) {
+      if (isBossMetric(metric) && gained > 0) bosses[metric] = gained
+    }
+    if (Object.keys(bosses).length) bossGains[rsn] = bosses
+  }
+
   const womAvailable = !!process.env.WOM_GROUP_ID
 
   return (
@@ -78,6 +88,7 @@ export default async function LeaderboardsPage() {
       teamStats={teamStats}
       memberEhb={memberEhb}
       taskProgressByMember={taskProgressByMember}
+      bossGains={bossGains}
       womAvailable={womAvailable}
     />
   )
