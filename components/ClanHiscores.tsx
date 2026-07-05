@@ -49,7 +49,7 @@ export default function ClanHiscores({ members }: Props) {
         if (kills > 0) totals[boss] = (totals[boss] ?? 0) + kills
       }
     }
-    return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([boss]) => boss)
+    return Object.keys(totals).sort((a, b) => a.localeCompare(b))
   })()
 
   const selectedBoss = activeBoss ?? bossRanking[0] ?? null
