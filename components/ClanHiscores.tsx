@@ -122,21 +122,15 @@ export default function ClanHiscores({ members }: Props) {
           {bossRanking.length === 0 ? (
             <p className="text-sm text-[#4a4a70]">No boss KC data available. Make sure WOM_GROUP_ID is set.</p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
+            <select
+              value={selectedBoss ?? ''}
+              onChange={e => setActiveBoss(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-[#0d0d1e] border border-[#252540] text-sm text-[#e8e8f0] focus:outline-none focus:border-[#4a4a70] w-56"
+            >
               {bossRanking.map(boss => (
-                <button
-                  key={boss}
-                  onClick={() => setActiveBoss(boss)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${
-                    selectedBoss === boss
-                      ? 'bg-[#7c5ce8]/20 text-[#c89b3c] border-[#7c5ce8]/40'
-                      : 'bg-[#141427] text-[#6868a0] border-[#252540] hover:text-[#e8e8f0]'
-                  }`}
-                >
-                  {formatMetric(boss)}
-                </button>
+                <option key={boss} value={boss}>{formatMetric(boss)}</option>
               ))}
-            </div>
+            </select>
           )}
         </div>
       )}
