@@ -767,9 +767,8 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
-        </div>
 
-        {/* Send Embed */}
+          {/* Send Embed */}
         <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Send Embed to Discord</h2>
           <div className="space-y-3 max-w-lg">
@@ -825,7 +824,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   )
