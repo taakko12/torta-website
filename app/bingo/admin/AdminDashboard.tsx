@@ -9,6 +9,7 @@ type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
 type DiscordActivity = { discord_id: string; display_name: string | null; message_count: number; last_message_at: string | null }
 type IngameActivity = { rsn: string; message_count: number; last_message_at: string | null }
+type Channel = { id: string; name: string }
 
 const TEAM_COLORS = ['#c89b3c', '#5865F2', '#57F287', '#ED4245', '#FEE75C', '#EB459E', '#3498db']
 
@@ -35,7 +36,8 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 }
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue' | 'activity'>('events')
+  const [section, setSection] = useState<'bingo' | 'tools'>('bingo')
+  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
@@ -45,6 +47,13 @@ export default function AdminDashboard() {
   const [discordActivity, setDiscordActivity] = useState<DiscordActivity[]>([])
   const [ingameActivity, setIngameActivity] = useState<IngameActivity[]>([])
   const [activityLoaded, setActivityLoaded] = useState(false)
+  const [channels, setChannels] = useState<Channel[]>([])
+  const [embedChannel, setEmbedChannel] = useState('')
+  const [embedTitle, setEmbedTitle] = useState('')
+  const [embedDesc, setEmbedDesc] = useState('')
+  const [embedColor, setEmbedColor] = useState('#7c5ce8')
+  const [embedSending, setEmbedSending] = useState(false)
+  const [embedStatus, setEmbedStatus] = useState<string | null>(null)
 
   // Forms
   const [newTitle, setNewTitle] = useState('')
@@ -191,52 +200,97 @@ export default function AdminDashboard() {
     { key: 'tasks', label: `Tasks (${tasks.length})` },
     { key: 'teams', label: `Teams (${teams.length})` },
     { key: 'queue', label: `Queue (${subs.length})` },
-    { key: 'activity', label: 'Activity' },
   ]
 
-  async function loadActivity() {
+  async function loadTools() {
     if (activityLoaded) return
-    const res = await fetch('/api/admin/activity')
-    const data = await res.json()
-    setDiscordActivity(data.discord ?? [])
-    setIngameActivity(data.ingame ?? [])
+    const [actRes, chRes] = await Promise.all([
+      fetch('/api/admin/activity'),
+      fetch('/api/admin/channels'),
+    ])
+    const actData = await actRes.json()
+    const chData = await chRes.json()
+    setDiscordActivity(actData.discord ?? [])
+    setIngameActivity(actData.ingame ?? [])
+    setChannels(chData.channels ?? [])
+    if (chData.channels?.length) setEmbedChannel(chData.channels[0].id)
     setActivityLoaded(true)
+  }
+
+  async function sendEmbed() {
+    if (!embedChannel) return
+    setEmbedSending(true)
+    setEmbedStatus(null)
+    try {
+      const res = await fetch('/api/admin/send-embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelId: embedChannel, title: embedTitle, description: embedDesc, color: embedColor }),
+      })
+      const data = await res.json()
+      setEmbedStatus(res.ok ? '✅ Sent!' : `❌ ${data.error}`)
+      if (res.ok) { setEmbedTitle(''); setEmbedDesc('') }
+    } catch {
+      setEmbedStatus('❌ Network error')
+    }
+    setEmbedSending(false)
   }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest">Bingo Admin</h1>
-        {events.length > 0 && (
-          <select
-            value={selectedEventId ?? ''}
-            onChange={e => setSelectedEventId(e.target.value || null)}
-            className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none"
-          >
-            {events.map(ev => (
-              <option key={ev.id} value={ev.id}>{ev.title} {ev.active ? '(active)' : ''}</option>
-            ))}
-          </select>
-        )}
+        <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest">Staff Panel</h1>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 mb-6 border-b border-[#2a2a4a]">
-        {tabs.map(t => (
+      {/* Section switcher */}
+      <div className="flex gap-2 mb-6">
+        {(['bingo', 'tools'] as const).map(s => (
           <button
-            key={t.key}
-            onClick={() => { setTab(t.key); if (t.key === 'activity') loadActivity() }}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === t.key
-                ? 'border-[#c89b3c] text-[#c89b3c]'
-                : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'
+            key={s}
+            onClick={() => { setSection(s); if (s === 'tools') loadTools() }}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold border transition-all ${
+              section === s
+                ? 'bg-[#c89b3c]/12 text-[#c89b3c] border-[#c89b3c]/40'
+                : 'bg-[#0e0e1c] text-[#7070a0] border-[#2a2a4a] hover:text-[#e8e8f0]'
             }`}
           >
-            {t.label}
+            {s === 'bingo' ? 'Bingo' : 'Tools'}
           </button>
         ))}
       </div>
 
+      {/* Bingo section */}
+      {section === 'bingo' && (<>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          {events.length > 0 && (
+            <select
+              value={selectedEventId ?? ''}
+              onChange={e => setSelectedEventId(e.target.value || null)}
+              className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none"
+            >
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id}>{ev.title} {ev.active ? '(active)' : ''}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 mb-6 border-b border-[#2a2a4a]">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                tab === t.key
+                  ? 'border-[#c89b3c] text-[#c89b3c]'
+                  : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       {/* EVENTS TAB */}
       {tab === 'events' && (
         <div className="space-y-6">
@@ -643,7 +697,9 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
-      {tab === 'activity' && (
+      </>}
+
+      {section === 'tools' && (
         <div className="space-y-6">
           <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
             <div className="px-5 py-3 border-b border-[#2a2a4a]">
@@ -712,6 +768,64 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Send Embed */}
+        <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Send Embed to Discord</h2>
+          <div className="space-y-3 max-w-lg">
+            <div>
+              <label className="text-xs text-[#7070a0] mb-1 block">Channel</label>
+              <select
+                value={embedChannel}
+                onChange={e => setEmbedChannel(e.target.value)}
+                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+              >
+                {channels.length === 0
+                  ? <option value="">Loading channels…</option>
+                  : channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)
+                }
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#7070a0] mb-1 block">Title</label>
+              <input
+                value={embedTitle}
+                onChange={e => setEmbedTitle(e.target.value)}
+                placeholder="Embed title"
+                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60]"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[#7070a0] mb-1 block">Description</label>
+              <textarea
+                value={embedDesc}
+                onChange={e => setEmbedDesc(e.target.value)}
+                placeholder="Embed description (markdown supported)"
+                rows={4}
+                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60] resize-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[#7070a0] mb-1 block">Color</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={embedColor} onChange={e => setEmbedColor(e.target.value)}
+                  className="h-9 w-12 rounded cursor-pointer bg-transparent border border-[#2a2a4a]" />
+                <span className="text-xs text-[#4a4a70]">{embedColor}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={sendEmbed}
+                disabled={embedSending || !embedChannel || (!embedTitle && !embedDesc)}
+                className="px-4 py-2 rounded-lg bg-[#5865F2] text-white text-sm font-semibold hover:bg-[#4752c4] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {embedSending ? 'Sending…' : 'Send Embed'}
+              </button>
+              {embedStatus && <span className="text-sm text-[#a0a0c0]">{embedStatus}</span>}
+            </div>
+          </div>
+        </div>
+      </div>
       )}
     </div>
   )
