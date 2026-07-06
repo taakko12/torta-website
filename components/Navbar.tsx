@@ -43,7 +43,7 @@ export default async function Navbar() {
           <div className="flex items-center gap-2">
             {session?.isAdmin && (
               <Link
-                href="/bingo/admin"
+                href="/admin"
                 className="text-xs px-3 py-1.5 rounded-lg border border-[#3a3a60] bg-[#12122a] text-[#c89b3c] hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/8 transition-all font-medium"
               >
                 Staff Login
