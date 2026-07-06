@@ -697,7 +697,7 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
-      </>}
+      </>)}
 
       {section === 'tools' && (
         <div className="space-y-6">
