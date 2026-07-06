@@ -7,6 +7,8 @@ type BingoTask = { id: string; position: number; title: string; description: str
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
+type DiscordActivity = { discord_id: string; display_name: string | null; message_count: number; last_message_at: string | null }
+type IngameActivity = { rsn: string; message_count: number; last_message_at: string | null }
 
 const TEAM_COLORS = ['#c89b3c', '#5865F2', '#57F287', '#ED4245', '#FEE75C', '#EB459E', '#3498db']
 
@@ -33,13 +35,16 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 }
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
+  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue' | 'activity'>('events')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
   const [teams, setTeams] = useState<BingoTeam[]>([])
   const [members, setMembers] = useState<BingoMember[]>([])
   const [subs, setSubs] = useState<BingoSub[]>([])
+  const [discordActivity, setDiscordActivity] = useState<DiscordActivity[]>([])
+  const [ingameActivity, setIngameActivity] = useState<IngameActivity[]>([])
+  const [activityLoaded, setActivityLoaded] = useState(false)
 
   // Forms
   const [newTitle, setNewTitle] = useState('')
@@ -186,7 +191,17 @@ export default function AdminDashboard() {
     { key: 'tasks', label: `Tasks (${tasks.length})` },
     { key: 'teams', label: `Teams (${teams.length})` },
     { key: 'queue', label: `Queue (${subs.length})` },
+    { key: 'activity', label: 'Activity' },
   ]
+
+  async function loadActivity() {
+    if (activityLoaded) return
+    const res = await fetch('/api/admin/activity')
+    const data = await res.json()
+    setDiscordActivity(data.discord ?? [])
+    setIngameActivity(data.ingame ?? [])
+    setActivityLoaded(true)
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -210,7 +225,7 @@ export default function AdminDashboard() {
         {tabs.map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); if (t.key === 'activity') loadActivity() }}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               tab === t.key
                 ? 'border-[#c89b3c] text-[#c89b3c]'
@@ -626,6 +641,76 @@ export default function AdminDashboard() {
               )
             })
           )}
+        </div>
+      )}
+      {tab === 'activity' && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#2a2a4a]">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#1a1a30]">
+                    <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
+                    <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
+                    <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Messages</th>
+                    <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discordActivity.length === 0 ? (
+                    <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                  ) : discordActivity.map((row, i) => (
+                    <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                      <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{i + 1}</td>
+                      <td className="px-4 py-2.5">
+                        <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
+                        <span className="text-xs text-[#4a4a70] ml-2">{row.discord_id}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.message_count.toLocaleString()}</td>
+                      <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">
+                        {row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#2a2a4a]">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#1a1a30]">
+                    <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
+                    <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
+                    <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Messages</th>
+                    <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ingameActivity.length === 0 ? (
+                    <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                  ) : ingameActivity.map((row, i) => (
+                    <tr key={row.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                      <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{i + 1}</td>
+                      <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
+                      <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.message_count.toLocaleString()}</td>
+                      <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">
+                        {row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>
