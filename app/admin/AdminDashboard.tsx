@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 type BingoEvent = { id: string; title: string; board_size: number; active: boolean; created_at: string }
 type BingoTask = { id: string; position: number; title: string; description: string | null; image_url: string | null; points: number; required_count: number; points_per_submission: number | null }
@@ -59,6 +59,21 @@ export default function AdminDashboard() {
   const [embedColor, setEmbedColor] = useState('#7c5ce8')
   const [embedSending, setEmbedSending] = useState(false)
   const [embedStatus, setEmbedStatus] = useState<string | null>(null)
+  const descRef = useRef<HTMLTextAreaElement>(null)
+
+  function wrapText(before: string, after = before) {
+    const el = descRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const selected = embedDesc.substring(start, end)
+    const next = embedDesc.substring(0, start) + before + selected + after + embedDesc.substring(end)
+    setEmbedDesc(next)
+    setTimeout(() => {
+      el.focus()
+      el.setSelectionRange(start + before.length, end + before.length)
+    }, 0)
+  }
 
   // Forms
   const [newTitle, setNewTitle] = useState('')
@@ -852,13 +867,36 @@ export default function AdminDashboard() {
             </div>
             <div>
               <label className="text-xs text-[#7070a0] mb-1 block">Description</label>
-              <textarea
-                value={embedDesc}
-                onChange={e => setEmbedDesc(e.target.value)}
-                placeholder="Embed description (markdown supported)"
-                rows={4}
-                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60] resize-none"
-              />
+              <div className="rounded-lg border border-[#2a2a4a] bg-[#141427] overflow-hidden">
+                <div className="flex flex-wrap gap-px p-1 border-b border-[#2a2a4a] bg-[#0e0e1c]">
+                  {([
+                    ['B', '**', '**', 'font-bold'],
+                    ['I', '*', '*', 'italic'],
+                    ['U', '__', '__', 'underline'],
+                    ['S', '~~', '~~', 'line-through'],
+                    ['`', '`', '`', 'font-mono'],
+                    ['> ', '> ', '', ''],
+                  ] as [string, string, string, string][]).map(([label, before, after, cls]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onMouseDown={e => { e.preventDefault(); wrapText(before, after) }}
+                      className="px-2.5 py-1 rounded text-xs text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors"
+                    >
+                      <span className={cls}>{label}</span>
+                    </button>
+                  ))}
+                  <span className="ml-auto text-[10px] text-[#3a3a60] self-center pr-1">markdown</span>
+                </div>
+                <textarea
+                  ref={descRef}
+                  value={embedDesc}
+                  onChange={e => setEmbedDesc(e.target.value)}
+                  placeholder="Embed description…"
+                  rows={5}
+                  className="w-full bg-transparent text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60] resize-none"
+                />
+              </div>
             </div>
             <div>
               <label className="text-xs text-[#7070a0] mb-1 block">Color</label>
