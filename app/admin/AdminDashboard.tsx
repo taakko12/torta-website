@@ -7,7 +7,7 @@ type BingoTask = { id: string; position: number; title: string; description: str
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
-type DiscordActivity = { discord_id: string; display_name: string | null; message_count: number; last_message_at: string | null }
+type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; message_count: number; last_message_at: string | null }
 type IngameActivity = { rsn: string; message_count: number; last_message_at: string | null }
 type Channel = { id: string; name: string }
 
@@ -765,13 +765,14 @@ export default function AdminDashboard() {
                         <tr className="border-b border-[#1a1a30]">
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
+                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
                           <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Messages</th>
                           <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
                         </tr>
                       </thead>
                       <tbody>
                         {slice.length === 0 ? (
-                          <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                          <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                         ) : slice.map((row, i) => (
                           <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
                             <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
@@ -779,6 +780,7 @@ export default function AdminDashboard() {
                               <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
                               <span className="text-xs text-[#4a4a70] ml-2">{row.discord_id}</span>
                             </td>
+                            <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
                             <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.message_count.toLocaleString()}</td>
                             <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">
                               {row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}

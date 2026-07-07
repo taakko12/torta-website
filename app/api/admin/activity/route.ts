@@ -9,7 +9,7 @@ export async function GET() {
 
   const supabase = getSupabaseAdmin()
   const [{ data: discord }, { data: ingame }] = await Promise.all([
-    supabase.from('discord_activity').select('discord_id, display_name, message_count, last_message_at').order('message_count', { ascending: false }).limit(200),
+    supabase.from('discord_activity').select('discord_id, display_name, role_name, message_count, last_message_at').order('message_count', { ascending: false }).limit(200),
     supabase.from('ingame_activity').select('rsn, message_count, last_message_at').order('message_count', { ascending: false }).limit(200),
   ])
 
