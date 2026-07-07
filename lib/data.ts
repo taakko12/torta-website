@@ -185,6 +185,26 @@ export interface PlayerActivity {
   discord: { display_name: string | null; message_count: number; month_count: number; last_message_at: string | null } | null
 }
 
+export interface CompWinEntry { name: string; wins: number }
+export interface CompWinsLeaderboard { botw: CompWinEntry[]; sotw: CompWinEntry[] }
+
+export async function getCompWinsLeaderboard(): Promise<CompWinsLeaderboard> {
+  const admin = getSupabaseAdmin()
+  const [{ data: gd }, { data: discord }] = await Promise.all([
+    admin.from('guild_data').select('data').eq('guild_id', GUILD_ID).maybeSingle(),
+    admin.from('discord_activity').select('discord_id, display_name').eq('guild_id', GUILD_ID),
+  ])
+  const boards = gd?.data?.boards ?? {}
+  const nameMap = Object.fromEntries((discord ?? []).map((d: { discord_id: string; display_name: string | null }) => [d.discord_id, d.display_name ?? d.discord_id]))
+  const toBoard = (users: Record<string, { wins: number }> = {}) =>
+    Object.entries(users)
+      .map(([id, v]) => ({ name: nameMap[id] ?? id, wins: v.wins }))
+      .filter(e => e.wins > 0)
+      .sort((a, b) => b.wins - a.wins)
+      .slice(0, 3)
+  return { botw: toBoard(boards.botw?.users), sotw: toBoard(boards.sotw?.users) }
+}
+
 export async function getPlayerActivity(rsn: string): Promise<PlayerActivity> {
   const admin = getSupabaseAdmin()
   const [{ data: ingame }, { data: link }] = await Promise.all([
