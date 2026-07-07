@@ -33,15 +33,28 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [noteValue, setNoteValue] = useState('')
   const [discordRows, setDiscordRows] = useState(discord)
+  const [localLinks, setLocalLinks] = useState<LinkRow[]>(links)
+  const [quickLinkRsn, setQuickLinkRsn] = useState<string | null>(null)
+  const [quickLinkDiscordId, setQuickLinkDiscordId] = useState('')
 
   // Enrich discord rows with RSN from links
-  const linkMap = Object.fromEntries(links.map(l => [l.discord_id, l.rsn]))
+  const linkMap = Object.fromEntries(localLinks.map(l => [l.discord_id, l.rsn]))
+  const linkedRsns = new Map(localLinks.map(l => [l.rsn.toLowerCase(), l]))
   const enriched = discordRows.map(d => ({ ...d, rsn: d.rsn ?? linkMap[d.discord_id] ?? null }))
+  const unlinkedDiscord = discordRows.filter(d => !linkMap[d.discord_id])
 
   async function saveNote(discordId: string, note: string) {
     setEditingNoteId(null)
     await fetch('/api/admin/activity', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ discord_id: discordId, note }) })
     setDiscordRows(rows => rows.map(d => d.discord_id === discordId ? { ...d, promotion_note: note || null } : d))
+  }
+
+  async function doQuickLink(rsn: string) {
+    if (!quickLinkDiscordId) return
+    const member = discordRows.find(d => d.discord_id === quickLinkDiscordId)
+    await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ discord_id: quickLinkDiscordId, rsn }) })
+    setLocalLinks(l => [...l.filter(x => x.discord_id !== quickLinkDiscordId), { discord_id: quickLinkDiscordId, rsn, linked_at: new Date().toISOString(), display_name: member?.display_name ?? null }])
+    setQuickLinkRsn(null)
   }
 
   const ingameByRsn = new Map(ingame.map(ig => [ig.rsn.toLowerCase(), ig]))
@@ -180,18 +193,45 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
               <table className="w-full">
                 <thead><tr className="border-b border-[#21213c]">
                   <th className={`${th} text-left`}>#</th><th className={`${th} text-left`}>RSN</th>
+                  <th className={`${th} text-left`}>Discord</th>
                   <th className={`${th} text-right`}>This Month</th><th className={`${th} text-right`}>All Time</th><th className={`${th} text-right`}>Last Seen</th>
                 </tr></thead>
                 <tbody>
-                  {ingame.slice(ingamePage * PAGE, (ingamePage + 1) * PAGE).map((row, i) => (
+                  {ingame.slice(ingamePage * PAGE, (ingamePage + 1) * PAGE).map((row, i) => {
+                    const linked = linkedRsns.get(row.rsn.toLowerCase())
+                    const isLinking = quickLinkRsn === row.rsn
+                    return (
                     <tr key={row.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                       <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{ingamePage * PAGE + i + 1}</td>
                       <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
+                      <td className="px-4 py-2.5 min-w-[200px]">
+                        {linked ? (
+                          <span className="text-xs text-[#5865F2]">⚯ {linked.display_name ?? linked.discord_id}</span>
+                        ) : isLinking ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <select value={quickLinkDiscordId} onChange={e => setQuickLinkDiscordId(e.target.value)} autoFocus
+                              className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none">
+                              <option value="">Select member…</option>
+                              {unlinkedDiscord.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
+                            </select>
+                            <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
+                              className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
+                            <button onClick={() => setQuickLinkRsn(null)}
+                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setQuickLinkRsn(row.rsn); setQuickLinkDiscordId('') }}
+                            className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#c89b3c] border border-[#333358] hover:border-[#c89b3c]/40 transition-colors">
+                            + Link
+                          </button>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
                       <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
                       <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}</td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
