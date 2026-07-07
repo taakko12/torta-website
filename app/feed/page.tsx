@@ -23,6 +23,7 @@ const SECTIONS = [
   { key: 'loot', label: '💰 Loot' },
   { key: 'deaths', label: '💀 Deaths' },
   { key: 'achievements', label: '🏆 Achievements' },
+  { key: 'recent', label: '📜 Recent Drops' },
 ] as const
 type Section = typeof SECTIONS[number]['key']
 
@@ -42,9 +43,8 @@ function tabCls(active: boolean, color = '#7c5ce8') {
 
 export default async function FeedPage({ searchParams }: Props) {
   const sp = await searchParams
-  const section: Section = sp.section === 'deaths' ? 'deaths' : sp.section === 'achievements' ? 'achievements' : 'loot'
-  const lootTab = sp.tab === 'alltime' ? 'alltime' : sp.tab === 'recent' ? 'recent' : 'monthly'
-  const isAlltime = lootTab === 'alltime'
+  const section: Section = sp.section === 'deaths' ? 'deaths' : sp.section === 'achievements' ? 'achievements' : sp.section === 'recent' ? 'recent' : 'loot'
+  const isAlltime = sp.tab === 'alltime'
   const type = sp.type ?? ''
   const month = currentMonthLabel()
 
@@ -67,48 +67,44 @@ export default async function FeedPage({ searchParams }: Props) {
         ))}
       </div>
 
-      {section === 'loot' && <LootSection lootTab={lootTab} isAlltime={isAlltime} month={month} />}
+      {section === 'loot' && <LootSection isAlltime={isAlltime} month={month} />}
       {section === 'deaths' && <DeathsSection isAlltime={isAlltime} month={month} />}
       {section === 'achievements' && <AchievementsSection type={type} />}
+      {section === 'recent' && <RecentSection />}
     </div>
   )
 }
 
-async function LootSection({ lootTab, isAlltime, month }: { lootTab: string; isAlltime: boolean; month: string }) {
-  const entries = lootTab === 'recent' ? null
-    : isAlltime ? await getAlltimeDropLeaderboard()
-    : await getMonthlyDropLeaderboard()
-  const recentDrops = lootTab === 'recent' ? await getRecentDrops(60) : null
-
+async function LootSection({ isAlltime, month }: { isAlltime: boolean; month: string }) {
+  const entries = isAlltime ? await getAlltimeDropLeaderboard() : await getMonthlyDropLeaderboard()
   return (
     <>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <p className="text-sm text-[#7070a0]">
-          {lootTab === 'recent' ? 'Most recent individual drops' : isAlltime ? 'All time totals' : `${month} totals`}
-        </p>
+        <p className="text-sm text-[#7070a0]">{isAlltime ? 'All time totals' : `${month} totals`}</p>
         <div className="flex gap-2">
           <Link href="/feed?section=loot&tab=monthly"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${!isAlltime && lootTab !== 'recent' ? 'bg-[#c89b3c] text-[#0f0f1e]' : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${!isAlltime ? 'bg-[#c89b3c] text-[#0f0f1e]' : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
             Monthly
           </Link>
           <Link href="/feed?section=loot&tab=alltime"
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isAlltime ? 'bg-[#c89b3c] text-[#0f0f1e]' : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
             All Time
           </Link>
-          <Link href="/feed?section=loot&tab=recent"
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${lootTab === 'recent' ? 'bg-[#c89b3c] text-[#0f0f1e]' : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
-            Recent
-          </Link>
         </div>
       </div>
+      <div className="rounded-xl border border-[#333358] bg-[#161628] px-5 py-4">
+        <DropLeaderboardTable entries={entries} />
+      </div>
+    </>
+  )
+}
 
-      {lootTab === 'recent' && recentDrops ? (
-        <RecentDropFeed drops={recentDrops} />
-      ) : (
-        <div className="rounded-xl border border-[#333358] bg-[#161628] px-5 py-4">
-          <DropLeaderboardTable entries={entries ?? []} />
-        </div>
-      )}
+async function RecentSection() {
+  const drops = await getRecentDrops(60)
+  return (
+    <>
+      <p className="text-sm text-[#7070a0] mb-4">Most recent individual drops</p>
+      <RecentDropFeed drops={drops} />
     </>
   )
 }

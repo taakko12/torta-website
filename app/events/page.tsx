@@ -1,4 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { getActiveCompetitionsWithStandings, getUpcomingCompetitions } from '@/lib/wom'
+import type { Competition, CompetitionWithStandings } from '@/lib/wom'
 import { ClientDate } from '@/components/ClientDate'
 
 export const revalidate = 60
@@ -34,11 +36,13 @@ type Row =
 
 async function fetchEvents() {
   const db = getSupabaseAdmin()
-  const [{ data: events }, { data: raids }] = await Promise.all([
+  const [{ data: events }, { data: raids }, activeComps, upcomingComps] = await Promise.all([
     db.from('clan_events').select('id, title, description, event_type, scheduled_at, event_rsvps(count)').eq('guild_id', GUILD_ID).order('scheduled_at', { ascending: true, nullsFirst: false }),
     db.from('raids').select('id, name, description, timestamp, signups, attendees').eq('guild_id', GUILD_ID).order('timestamp', { ascending: true }),
+    getActiveCompetitionsWithStandings(),
+    getUpcomingCompetitions(),
   ])
-  return { events: (events ?? []) as ClanEvent[], raids: (raids ?? []) as Raid[] }
+  return { events: (events ?? []) as ClanEvent[], raids: (raids ?? []) as Raid[], activeComps, upcomingComps }
 }
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -66,7 +70,7 @@ function timeLabel(date: Date) {
 }
 
 export default async function EventsPage() {
-  const { events, raids } = await fetchEvents()
+  const { events, raids, activeComps, upcomingComps } = await fetchEvents()
   const now = Date.now()
 
   const rows: Row[] = [
@@ -90,6 +94,16 @@ export default async function EventsPage() {
         <h1 className="text-3xl font-black uppercase tracking-widest text-gradient-gold">Events</h1>
       </div>
 
+      {(activeComps.length > 0 || upcomingComps.length > 0) && (
+        <div className="mb-10">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#4a4a70] mb-3">⚔️ WOM Competitions</h2>
+          <div className="space-y-3">
+            {activeComps.map(c => <CompCard key={c.id} comp={c} live />)}
+            {upcomingComps.map(c => <CompCard key={c.id} comp={c} />)}
+          </div>
+        </div>
+      )}
+
       {upcoming.length === 0 ? (
         <div className="rounded-xl border border-[#333358] bg-[#161628] px-6 py-12 text-center">
           <p className="text-[#4a4a70]">No upcoming events scheduled.</p>
@@ -107,6 +121,30 @@ export default async function EventsPage() {
             {past.slice(0, 10).map(row => <EventCard key={row.data.id} row={row} past />)}
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+function CompCard({ comp, live = false }: { comp: Competition | CompetitionWithStandings; live?: boolean }) {
+  const leader = 'participations' in comp ? comp.participations[0] : null
+  return (
+    <div className="rounded-xl border border-[#5865F2]/30 bg-[#161628] p-5">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <span className="text-base font-semibold text-[#e8e8f0]">{comp.title}</span>
+        <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${live ? 'bg-[#57F287]/15 text-[#57F287]' : 'bg-[#5865F2]/15 text-[#7c8cf8]'}`}>
+          {live ? 'LIVE' : 'SOON'}
+        </span>
+      </div>
+      <div className="flex items-center gap-4 text-xs text-[#4a4a70]">
+        <span className="capitalize">{comp.metric.replace(/_/g, ' ')}</span>
+        <span><ClientDate iso={comp.startsAt} /> → <ClientDate iso={comp.endsAt} /></span>
+      </div>
+      {leader && (
+        <p className="mt-2 text-xs text-[#7070a0]">
+          Leading: <span className="text-[#c89b3c] font-medium">{leader.player.displayName}</span>
+          {' '}({leader.progress.gained.toLocaleString()} gained)
+        </p>
       )}
     </div>
   )

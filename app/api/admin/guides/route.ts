@@ -64,13 +64,20 @@ export async function POST(req: Request) {
   if (guides.length === 0) return NextResponse.json({ imported: 0, message: 'Could not read messages from threads.' })
 
   const db = getSupabaseAdmin()
-  const { error } = await db.from('raid_guides').upsert(
-    guides.map(g => ({ guild_id: GUILD_ID, ...g, updated_at: new Date().toISOString() })),
-    { onConflict: 'guild_id,thread_id' }
-  )
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ imported: guides.length })
+  let imported = 0
+  for (const g of guides) {
+    const { data: existing } = await db.from('raid_guides')
+      .select('id').eq('guild_id', GUILD_ID).eq('thread_id', g.thread_id).maybeSingle()
+    if (existing) {
+      await db.from('raid_guides')
+        .update({ title: g.title, content: g.content, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+    } else {
+      await db.from('raid_guides').insert({ guild_id: GUILD_ID, ...g, updated_at: new Date().toISOString() })
+    }
+    imported++
+  }
+  return NextResponse.json({ imported })
 }
 
 export async function DELETE(req: Request) {
