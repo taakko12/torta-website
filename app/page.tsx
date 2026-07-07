@@ -14,6 +14,7 @@ import {
   getUpcomingCompetitions,
   formatMetric,
   formatGained,
+  isBossMetric,
 } from '@/lib/wom'
 import { formatGp, currentMonthLabel, MEDALS } from '@/lib/utils'
 import { ClientDate } from '@/components/ClientDate'
@@ -141,6 +142,87 @@ export default async function Home() {
         </p>
       </div>
 
+      {/* ── Competition Banner ── */}
+      {hasEvents && (
+        <div className="mb-12 xl:mb-16">
+          <div className="flex items-center gap-4 mb-5">
+            <div className="flex-1 h-px bg-gradient-to-r from-[#c89b3c]/30 to-transparent" />
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#4a4a70]">Weekly Competitions</p>
+            <div className="flex-1 h-px bg-gradient-to-l from-[#c89b3c]/30 to-transparent" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {activeComps.map(comp => {
+              const boss = isBossMetric(comp.metric)
+              const accent = boss ? '#ED4245' : '#57F287'
+              const label = boss ? '💀 Boss of the Week' : '📈 Skill of the Week'
+              const daysLeft = Math.ceil((new Date(comp.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              const top3 = (comp.participations ?? []).filter(p => p.progress.gained > 0).slice(0, 3)
+              return (
+                <div key={comp.id} className="relative rounded-2xl bg-[#0d0d1a] overflow-hidden"
+                  style={{ border: `1px solid ${accent}28` }}>
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: `radial-gradient(ellipse 80% 60% at 0% 0%, ${accent}0d 0%, transparent 60%)` }} />
+                  <div className="relative p-6 md:p-7 flex flex-col h-full">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1.5" style={{ color: accent }}>{label}</p>
+                        <p className="text-2xl md:text-3xl font-black text-[#f0f0ff] leading-none">{formatMetric(comp.metric)}</p>
+                      </div>
+                      <div className="shrink-0 flex flex-col items-end gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-[#050510]"
+                          style={{ backgroundColor: accent }}>LIVE</span>
+                        <span className="text-[10px] text-[#4a4a70]">{daysLeft}d left</span>
+                      </div>
+                    </div>
+                    {top3.length > 0 ? (
+                      <ul className="space-y-2.5 mt-auto">
+                        {top3.map((p, i) => (
+                          <li key={p.player.displayName} className="flex items-center gap-3">
+                            <span className="text-lg w-7 text-center shrink-0">{MEDALS[i]}</span>
+                            <span className={`flex-1 text-sm font-semibold capitalize truncate ${i === 0 ? 'text-[#c89b3c]' : 'text-[#d0d0e8]'}`}>
+                              {p.player.displayName}
+                            </span>
+                            <span className={`font-mono text-sm shrink-0 ${i === 0 ? 'text-[#c89b3c]' : 'text-[#6868a0]'}`}>
+                              {formatGained(comp.metric, p.progress.gained)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-[#4a4a70] mt-auto">No progress recorded yet.</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            {activeComps.length === 0 && upcomingComps.map(comp => {
+              const boss = isBossMetric(comp.metric)
+              const accent = boss ? '#ED4245' : '#57F287'
+              const label = boss ? '💀 Boss of the Week' : '📈 Skill of the Week'
+              return (
+                <div key={comp.id} className="relative rounded-2xl bg-[#0d0d1a] overflow-hidden"
+                  style={{ border: `1px solid ${accent}18` }}>
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: `radial-gradient(ellipse 80% 60% at 0% 0%, ${accent}07 0%, transparent 60%)` }} />
+                  <div className="relative p-6 md:p-7">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1.5" style={{ color: accent }}>{label}</p>
+                        <p className="text-2xl md:text-3xl font-black text-[#f0f0ff] leading-none">{formatMetric(comp.metric)}</p>
+                        <p className="text-xs text-[#4a4a70] mt-3">Starts <ClientDate iso={comp.startsAt} /></p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-[#333358] text-[#6868a0] mt-0.5">
+                        in {timeUntilLabel(comp.startsAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ── Recent Activity (mobile + tablet — hidden at xl, shown in sidebar) ── */}
       <div className="xl:hidden grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
         <RecentDropCard drop={recentDrop} />
@@ -152,71 +234,6 @@ export default async function Home() {
 
         {/* Left column */}
         <div className="flex-1 min-w-0 space-y-8">
-
-          {/* Competitions */}
-          {hasEvents && (
-            <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
-              <h2 className="font-semibold text-[#e8e8f0] mb-4">⚔️ Competitions</h2>
-
-              {activeComps.length > 0 && (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[#57f287] mb-3">🟢 Live Now</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                    {activeComps.map(comp => {
-                      const daysLeft = Math.ceil((new Date(comp.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                      const top5 = (comp.participations ?? []).filter(p => p.progress.gained > 0).slice(0, 5)
-                      return (
-                        <div key={comp.id} className="rounded-lg bg-[#0f0f1e] border border-[#333358] p-4">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{comp.title}</p>
-                            <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-[#57f287]/10 text-[#57f287]">LIVE</span>
-                          </div>
-                          <p className="text-lg font-bold text-[#e8e8f0]">{formatMetric(comp.metric)}</p>
-                          <p className="text-xs text-[#7070a0] mt-1 mb-3">
-                            Ends <ClientDate iso={comp.endsAt} /> · {daysLeft}d left
-                          </p>
-                          {top5.length > 0 ? (
-                            <ul className="space-y-1">
-                              {top5.map((p, i) => (
-                                <li key={p.player.displayName} className="flex items-center justify-between gap-2 text-sm">
-                                  <span className="w-5 shrink-0">{MEDALS[i] ?? `${i + 1}.`}</span>
-                                  <span className="flex-1 truncate text-[#e8e8f0] capitalize">{p.player.displayName}</span>
-                                  <span className="font-mono text-[#c89b3c]">{formatGained(comp.metric, p.progress.gained)}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-xs text-[#7070a0]">No progress yet.</p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
-              )}
-
-              {upcomingComps.length > 0 && (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[#7070a0] mb-3">🕐 Upcoming</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {upcomingComps.map(comp => (
-                      <div key={comp.id} className="rounded-lg bg-[#0f0f1e] border border-[#333358] p-4">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{comp.title}</p>
-                          <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-[#7070a0]/15 text-[#7070a0]">
-                            in {timeUntilLabel(comp.startsAt)}
-                          </span>
-                        </div>
-                        <p className="text-lg font-bold text-[#e8e8f0]">{formatMetric(comp.metric)}</p>
-                        <p className="text-xs text-[#7070a0] mt-1">Starts <ClientDate iso={comp.startsAt} /></p>
-                        <p className="text-xs text-[#7070a0]">Ends <ClientDate iso={comp.endsAt} /></p>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
 
           {/* Mini leaderboards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

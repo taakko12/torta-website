@@ -13,7 +13,7 @@ const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['Welcome Channel',           'welcome_channel_id',       'New member welcome messages'],
   ['Welcome Mod Channel',       'welcome_mod_channel_id',   'Staff review for welcomes'],
   ['Weekly Recap Channel',      'recap_channel_id',         'Sunday activity recap post'],
-  ['Inactivity Alerts Channel', 'inactivity_channel_id',    'Monday inactive members list'],
+  ['Moderator Recap Channel',   'inactivity_channel_id',    'Monday moderator recap post'],
 ]
 
 export default function SettingsPanel({ config: initialConfig, channels, roles }: Props) {
@@ -193,6 +193,50 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
           {rolePanel.channelId && (
             <p className="text-xs text-[#4a4a70]">Currently posted in #{channels.find(c => c.id === rolePanel.channelId)?.name ?? rolePanel.channelId}</p>
           )}
+        </div>
+      </div>
+
+      {/* Scheduled Posts */}
+      <div className={card}>
+        <div className="px-5 py-3 border-b border-[#333358]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Scheduled Posts</h2>
+          <p className="text-xs text-[#4a4a70] mt-1">Automated recaps posted by the bot on a fixed schedule. Channels are configured above.</p>
+        </div>
+        <div className="px-5 divide-y divide-[#1c1c36]">
+          {[
+            {
+              icon: '📊',
+              name: 'Weekly Activity Recap',
+              schedule: 'Every Sunday at 8:00 PM UTC',
+              desc: 'Top Discord chatters, in-game chatters, VC time, and top drops of the week.',
+              channelKey: 'recap_channel_id' as keyof GuildConfig,
+            },
+            {
+              icon: '📋',
+              name: 'Moderator Recap',
+              schedule: 'Every Monday at 9:00 AM UTC',
+              desc: 'Inactive members, unlinked Discord/RSN accounts.',
+              channelKey: 'inactivity_channel_id' as keyof GuildConfig,
+            },
+          ].map(({ icon, name, schedule, desc, channelKey }) => {
+            const channelId = config[channelKey] as string | null | undefined
+            const ch = channels.find(c => c.id === channelId)
+            return (
+              <div key={channelKey} className="py-4 flex items-start gap-4">
+                <span className="text-2xl mt-0.5">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
+                  <div className="text-xs text-[#7c5ce8] font-mono mt-0.5">{schedule}</div>
+                  <div className="text-xs text-[#4a4a70] mt-1">{desc}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  {ch
+                    ? <span className="text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
+                    : <span className="text-xs text-[#4a4a70]">Channel not set</span>}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

@@ -114,7 +114,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
           </select>
           <div>
             <label className="text-xs text-[#7070a0] mb-1 block">Date &amp; Time</label>
-            <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className={`w-full ${inp}`} />
+            <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className={`w-full [color-scheme:dark] ${inp}`} />
           </div>
           <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className={inp}>
             {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
@@ -174,7 +174,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
         <div className="px-5 py-4 flex flex-col gap-3">
           <div className="flex gap-3">
             <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className={`flex-1 ${inp}`} />
-            <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className={inp} />
+            <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
           </div>
           <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className={inp} />
           <div className="flex gap-3">
