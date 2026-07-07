@@ -37,15 +37,25 @@ export const getServerSession = () => _get(authOptions)
 
 export async function isAdmin(discordId: string): Promise<boolean> {
   const guildId = process.env.NEXT_PUBLIC_GUILD_ID!
-  const adminRoleId = process.env.DISCORD_ADMIN_ROLE_ID!
+  const adminRoleId = process.env.DISCORD_ADMIN_ROLE_ID
   const botToken = process.env.DISCORD_BOT_TOKEN!
   try {
-    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, {
-      headers: { Authorization: `Bot ${botToken}` },
-      cache: 'no-store',
-    })
-    if (!res.ok) return false
-    const member = await res.json()
+    const [memberRes, guildRes] = await Promise.all([
+      fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`, {
+        headers: { Authorization: `Bot ${botToken}` },
+        cache: 'no-store',
+      }),
+      fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${botToken}` },
+        cache: 'no-store',
+      }),
+    ])
+    if (guildRes.ok) {
+      const guild = await guildRes.json()
+      if (guild.owner_id === discordId) return true
+    }
+    if (!memberRes.ok || !adminRoleId) return false
+    const member = await memberRes.json()
     return (member.roles as string[]).includes(adminRoleId)
   } catch {
     return false
