@@ -1,15 +1,33 @@
 import { supabase } from './supabase'
+import { getSupabaseAdmin } from './supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
+
+async function getRsnDisplayNames(): Promise<Map<string, string>> {
+  const admin = getSupabaseAdmin()
+  const [{ data: links }, { data: activity }] = await Promise.all([
+    admin.from('rsn_links').select('discord_id, rsn').eq('guild_id', GUILD_ID),
+    admin.from('discord_activity').select('discord_id, display_name').eq('guild_id', GUILD_ID),
+  ])
+  const nameById = new Map((activity ?? []).filter(a => a.display_name).map(a => [a.discord_id, a.display_name as string]))
+  const map = new Map<string, string>()
+  for (const link of links ?? []) {
+    const name = nameById.get(link.discord_id)
+    if (name) map.set(link.rsn.toLowerCase(), name)
+  }
+  return map
+}
 
 export interface DropEntry {
   name: string
   total: number
+  discordName?: string | null
 }
 
 export interface PlankEntry {
   name: string
   count: number
+  discordName?: string | null
 }
 
 export interface RecentDrop {
@@ -30,38 +48,34 @@ export interface RecentPlank {
 }
 
 export async function getMonthlyDropLeaderboard(): Promise<DropEntry[]> {
-  const { data, error } = await supabase.rpc('monthly_drop_leaderboard', { p_guild_id: GUILD_ID })
+  const [{ data, error }, names] = await Promise.all([supabase.rpc('monthly_drop_leaderboard', { p_guild_id: GUILD_ID }), getRsnDisplayNames()])
   if (error) { console.error(error); return [] }
   return (data ?? []).map((r: { player_name: string; total: string | number }) => ({
-    name: r.player_name,
-    total: Number(r.total),
+    name: r.player_name, total: Number(r.total), discordName: names.get(r.player_name) ?? null,
   }))
 }
 
 export async function getAlltimeDropLeaderboard(): Promise<DropEntry[]> {
-  const { data, error } = await supabase.rpc('alltime_drop_leaderboard', { p_guild_id: GUILD_ID })
+  const [{ data, error }, names] = await Promise.all([supabase.rpc('alltime_drop_leaderboard', { p_guild_id: GUILD_ID }), getRsnDisplayNames()])
   if (error) { console.error(error); return [] }
   return (data ?? []).map((r: { player_name: string; total: string | number }) => ({
-    name: r.player_name,
-    total: Number(r.total),
+    name: r.player_name, total: Number(r.total), discordName: names.get(r.player_name) ?? null,
   }))
 }
 
 export async function getMonthlyPlankLeaderboard(): Promise<PlankEntry[]> {
-  const { data, error } = await supabase.rpc('monthly_plank_leaderboard', { p_guild_id: GUILD_ID })
+  const [{ data, error }, names] = await Promise.all([supabase.rpc('monthly_plank_leaderboard', { p_guild_id: GUILD_ID }), getRsnDisplayNames()])
   if (error) { console.error(error); return [] }
   return (data ?? []).map((r: { player_name: string; count: string | number }) => ({
-    name: r.player_name,
-    count: Number(r.count),
+    name: r.player_name, count: Number(r.count), discordName: names.get(r.player_name) ?? null,
   }))
 }
 
 export async function getAlltimePlankLeaderboard(): Promise<PlankEntry[]> {
-  const { data, error } = await supabase.rpc('alltime_plank_leaderboard', { p_guild_id: GUILD_ID })
+  const [{ data, error }, names] = await Promise.all([supabase.rpc('alltime_plank_leaderboard', { p_guild_id: GUILD_ID }), getRsnDisplayNames()])
   if (error) { console.error(error); return [] }
   return (data ?? []).map((r: { player_name: string; count: string | number }) => ({
-    name: r.player_name,
-    count: Number(r.count),
+    name: r.player_name, count: Number(r.count), discordName: names.get(r.player_name) ?? null,
   }))
 }
 

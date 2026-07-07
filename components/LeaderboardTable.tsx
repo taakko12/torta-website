@@ -28,7 +28,10 @@ export function DropLeaderboardTable({ entries }: { entries: DropEntry[] }) {
             <td className="py-3 pr-3">
               <Rank i={i} />
             </td>
-            <td className="py-3 font-medium capitalize text-[#e8e8f0]">{e.name}</td>
+            <td className="py-3">
+              <span className="font-medium capitalize text-[#e8e8f0]">{e.discordName ?? e.name}</span>
+              {e.discordName && <span className="block text-xs text-[#4a4a70] capitalize">{e.name}</span>}
+            </td>
             <td className="py-3 text-right font-mono font-semibold text-[#c89b3c]">
               {formatGp(e.total)}
             </td>
@@ -61,7 +64,10 @@ export function PlankLeaderboardTable({ entries }: { entries: PlankEntry[] }) {
             <td className="py-3 pr-3">
               <Rank i={i} />
             </td>
-            <td className="py-3 font-medium capitalize text-[#e8e8f0]">{e.name}</td>
+            <td className="py-3">
+              <span className="font-medium capitalize text-[#e8e8f0]">{e.discordName ?? e.name}</span>
+              {e.discordName && <span className="block text-xs text-[#4a4a70] capitalize">{e.name}</span>}
+            </td>
             <td className="py-3 text-right font-mono font-semibold text-[#cc5555]">
               {e.count} 💀
             </td>

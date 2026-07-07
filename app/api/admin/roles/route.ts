@@ -15,7 +15,11 @@ export async function GET() {
   const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
     headers: { Authorization: `Bot ${token}` },
   })
-  if (!res.ok) return NextResponse.json({ roles: [] })
+  if (!res.ok) {
+    const err = await res.text()
+    console.error(`[roles] Discord API ${res.status}:`, err)
+    return NextResponse.json({ roles: [], _error: `Discord ${res.status}` })
+  }
 
   const raw: { id: string; name: string; position: number; managed: boolean }[] = await res.json()
   const roles = raw
@@ -23,5 +27,6 @@ export async function GET() {
     .sort((a, b) => b.position - a.position)
     .map(r => ({ id: r.id, name: r.name }))
 
+  if (roles.length === 0) console.warn(`[roles] 0 assignable roles found (raw: ${raw.length} total)`)
   return NextResponse.json({ roles })
 }

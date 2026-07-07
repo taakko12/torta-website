@@ -66,14 +66,15 @@ export default function AdminDashboard() {
   const [ingameActivity, setIngameActivity] = useState<IngameActivity[]>([])
   const [vcActivity, setVcActivity] = useState<VcActivity[]>([])
   const [activityLoaded, setActivityLoaded] = useState(false)
-  const [discordOpen, setDiscordOpen] = useState(true)
-  const [ingameOpen, setIngameOpen] = useState(true)
+  const [discordOpen, setDiscordOpen] = useState(false)
+  const [ingameOpen, setIngameOpen] = useState(false)
   const [vcOpen, setVcOpen] = useState(true)
   const [discordPage, setDiscordPage] = useState(0)
   const [ingamePage, setIngamePage] = useState(0)
   const [vcPage, setVcPage] = useState(0)
   const [combined, setCombined] = useState(false)
   const [combinedPage, setCombinedPage] = useState(0)
+  const [combinedOpen, setCombinedOpen] = useState(true)
   const [clanEvents, setClanEvents] = useState<ClanEvent[]>([])
   const [guildConfig, setGuildConfig] = useState<GuildConfig>({})
   const [eventTitle, setEventTitle] = useState('')
@@ -283,6 +284,12 @@ export default function AdminDashboard() {
     { key: 'teams', label: `Teams (${teams.length})` },
     { key: 'queue', label: `Queue (${subs.length})` },
   ]
+
+  async function loadRoles() {
+    const res = await fetch('/api/admin/roles')
+    const data = await res.json()
+    setRoles(data.roles ?? [])
+  }
 
   async function loadTools() {
     if (activityLoaded) return
@@ -921,11 +928,27 @@ export default function AdminDashboard() {
 
           {toolsTab === 'activity' && (() => {
             const PAGE = 25
-            type CombinedRow = { key: string; name: string; type: 'Discord' | 'In-Game'; role: string | null; month_count: number; message_count: number; last_at: string | null }
-            const combinedData: CombinedRow[] = combined ? [
-              ...discordActivity.map(d => ({ key: `d-${d.discord_id}`, name: d.display_name ?? d.discord_id, type: 'Discord' as const, role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })),
-              ...ingameActivity.map(ig => ({ key: `i-${ig.rsn}`, name: ig.rsn, type: 'In-Game' as const, role: null, month_count: ig.month_count, message_count: ig.message_count, last_at: ig.last_message_at })),
-            ].sort((a, b) => b.month_count - a.month_count) : []
+            type CombinedRow = { key: string; name: string; rsn: string | null; type: 'Discord' | 'In-Game' | 'Linked'; role: string | null; month_count: number; message_count: number; last_at: string | null }
+            const ingameByRsn = new Map(ingameActivity.map(ig => [ig.rsn.toLowerCase(), ig]))
+            const matchedRsns = new Set<string>()
+            const combinedData: CombinedRow[] = combined ? (() => {
+              const rows: CombinedRow[] = []
+              for (const d of discordActivity) {
+                if (d.rsn) {
+                  const rsnKey = d.rsn.toLowerCase()
+                  const ig = ingameByRsn.get(rsnKey)
+                  matchedRsns.add(rsnKey)
+                  rows.push({ key: `l-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: d.rsn, type: ig ? 'Linked' : 'Discord', role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })
+                } else {
+                  rows.push({ key: `d-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: null, type: 'Discord', role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })
+                }
+              }
+              for (const ig of ingameActivity) {
+                if (!matchedRsns.has(ig.rsn.toLowerCase()))
+                  rows.push({ key: `i-${ig.rsn}`, name: ig.rsn, rsn: ig.rsn, type: 'In-Game', role: null, month_count: ig.month_count, message_count: ig.message_count, last_at: ig.last_message_at })
+              }
+              return rows.sort((a, b) => b.month_count - a.month_count)
+            })() : []
             const combinedPages = Math.ceil(combinedData.length / PAGE)
             const combinedSlice = combinedData.slice(combinedPage * PAGE, (combinedPage + 1) * PAGE)
             const discordPages = Math.ceil(discordActivity.length / PAGE)
@@ -945,10 +968,11 @@ export default function AdminDashboard() {
 
               {combined ? (
                 <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                  <div className="flex items-center px-5 py-3 border-b border-[#2a2a4a]">
+                  <button onClick={() => setCombinedOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#4a4a70] normal-case">({combinedData.length})</span>}</h2>
-                  </div>
-                  <div className="overflow-x-auto">
+                    <span className="text-[#4a4a70] text-sm">{combinedOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {combinedOpen && <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-[#1a1a30]">
@@ -968,10 +992,11 @@ export default function AdminDashboard() {
                             <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{combinedPage * PAGE + i + 1}</td>
                             <td className="px-4 py-2.5">
                               <span className="text-sm font-medium text-[#e8e8f0]">{row.name}</span>
+                              {row.rsn && row.type !== 'In-Game' && <span className="text-xs text-[#3d9970] ml-2">⚔️ {row.rsn}</span>}
                               {row.role && <span className="text-xs text-[#7c5ce8] ml-2">{row.role}</span>}
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === 'Discord' ? 'bg-[#5865F2]/20 text-[#8ea0f8]' : 'bg-[#3d9970]/20 text-[#5cbf87]'}`}>{row.type}</span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === 'Discord' ? 'bg-[#5865F2]/20 text-[#8ea0f8]' : row.type === 'Linked' ? 'bg-[#c89b3c]/20 text-[#c89b3c]' : 'bg-[#3d9970]/20 text-[#5cbf87]'}`}>{row.type}</span>
                             </td>
                             <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
                             <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
@@ -980,8 +1005,8 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                  {combinedPages > 1 && (
+                  </div>}
+                  {combinedOpen && combinedPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
                       <button onClick={() => setCombinedPage(p => Math.max(0, p - 1))} disabled={combinedPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
                       <span className="text-xs text-[#4a4a70]">Page {combinedPage + 1} of {combinedPages}</span>
@@ -1247,11 +1272,12 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 gap-3 max-w-lg">
                   <input value={eventTitle} onChange={e => setEventTitle(e.target.value)} placeholder="Event title" className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                   <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)} placeholder="Description (optional)" rows={2} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none resize-none focus:border-[#7c5ce8]/60" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <select value={eventType} onChange={e => setEventType(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
-                      {['Event', 'Raid', 'PvM Session', 'Social', 'Competition', 'Other'].map(t => <option key={t}>{t}</option>)}
-                    </select>
-                    <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <select value={eventType} onChange={e => setEventType(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    {['Event', 'Raid', 'PvM Session', 'Social', 'Competition', 'Other'].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                  <div>
+                    <label className="text-xs text-[#7070a0] mb-1 block">Date &amp; Time</label>
+                    <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                   </div>
                   <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {channels.length === 0 ? <option value="">Loading channels…</option> : channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
@@ -1387,9 +1413,12 @@ export default function AdminDashboard() {
             </div>
 
             <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Settings</h2>
-                <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
+              <div className="px-5 py-3 border-b border-[#2a2a4a] flex items-center gap-3">
+                <div>
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Settings</h2>
+                  <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection. {roles.length > 0 ? `${roles.length} roles loaded.` : <span className="text-[#ED4245]">No roles loaded.</span>}</p>
+                </div>
+                <button onClick={loadRoles} className="ml-auto text-xs text-[#7070a0] hover:text-[#e8e8f0] border border-[#2a2a4a] px-2 py-1 rounded transition-colors">↻ Reload</button>
               </div>
               <div className="px-5">
                 <div className="flex items-center gap-4 py-3">
