@@ -75,6 +75,19 @@ export default function AdminDashboard() {
     }, 0)
   }
 
+  function prefixLine(prefix: string) {
+    const el = descRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const lineStart = embedDesc.lastIndexOf('\n', start - 1) + 1
+    const next = embedDesc.substring(0, lineStart) + prefix + embedDesc.substring(lineStart)
+    setEmbedDesc(next)
+    setTimeout(() => {
+      el.focus()
+      el.setSelectionRange(start + prefix.length, start + prefix.length)
+    }, 0)
+  }
+
   // Forms
   const [newTitle, setNewTitle] = useState('')
   const [newSize, setNewSize] = useState(5)
@@ -870,20 +883,37 @@ export default function AdminDashboard() {
               <div className="rounded-lg border border-[#2a2a4a] bg-[#141427] overflow-hidden">
                 <div className="flex flex-wrap gap-px p-1 border-b border-[#2a2a4a] bg-[#0e0e1c]">
                   {([
+                    ['H1', '# '], ['H2', '## '], ['H3', '### '],
+                  ] as [string, string][]).map(([label, prefix]) => (
+                    <button key={label} type="button"
+                      onMouseDown={e => { e.preventDefault(); prefixLine(prefix) }}
+                      className="px-2.5 py-1 rounded text-xs font-bold text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
+                      {label}
+                    </button>
+                  ))}
+                  <span className="self-center text-[#2a2a4a] mx-1">|</span>
+                  {([
                     ['B', '**', '**', 'font-bold'],
                     ['I', '*', '*', 'italic'],
                     ['U', '__', '__', 'underline'],
                     ['S', '~~', '~~', 'line-through'],
                     ['`', '`', '`', 'font-mono'],
-                    ['> ', '> ', '', ''],
                   ] as [string, string, string, string][]).map(([label, before, after, cls]) => (
-                    <button
-                      key={label}
-                      type="button"
+                    <button key={label} type="button"
                       onMouseDown={e => { e.preventDefault(); wrapText(before, after) }}
-                      className="px-2.5 py-1 rounded text-xs text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors"
-                    >
+                      className="px-2.5 py-1 rounded text-xs text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
                       <span className={cls}>{label}</span>
+                    </button>
+                  ))}
+                  <span className="self-center text-[#2a2a4a] mx-1">|</span>
+                  {([
+                    ['> ', '> ', ''],
+                    ['- ', '- ', ''],
+                  ] as [string, string, string][]).map(([label, before, after]) => (
+                    <button key={label} type="button"
+                      onMouseDown={e => { e.preventDefault(); wrapText(before, after) }}
+                      className="px-2.5 py-1 rounded text-xs font-mono text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
+                      {label}
                     </button>
                   ))}
                   <span className="ml-auto text-[10px] text-[#3a3a60] self-center pr-1">markdown</span>
