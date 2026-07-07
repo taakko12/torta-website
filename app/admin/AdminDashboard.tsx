@@ -7,9 +7,12 @@ type BingoTask = { id: string; position: number; title: string; description: str
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
-type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; message_count: number; month_count: number; last_message_at: string | null }
+type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; rsn: string | null; promotion_note: string | null; message_count: number; month_count: number; last_message_at: string | null }
 type IngameActivity = { rsn: string; message_count: number; month_count: number; last_message_at: string | null }
 type VcActivity = { discord_id: string; display_name: string | null; role_name: string | null; total_minutes: number; month_minutes: number; last_seen_at: string | null }
+type ClanEvent = { id: string; title: string; description: string | null; event_type: string; scheduled_at: string | null; channel_id: string | null; created_at: string; event_rsvps: { count: number }[] }
+type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string }
+type GuildConfig = { planks_channel_id?: string | null; drops_channel_id?: string | null; welcome_channel_id?: string | null; welcome_mod_channel_id?: string | null; clanchat_channel_id?: string | null; broadcast_channel_id?: string | null; inactivity_channel_id?: string | null; recap_channel_id?: string | null }
 type Channel = { id: string; name: string }
 
 function formatMinutes(mins: number): string {
@@ -48,7 +51,7 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 export default function AdminDashboard() {
   const [section, setSection] = useState<'bingo' | 'tools'>('tools')
   const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
-  const [toolsTab, setToolsTab] = useState<'activity' | 'messenger'>('activity')
+  const [toolsTab, setToolsTab] = useState<'activity' | 'messenger' | 'events' | 'settings'>('activity')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
@@ -67,6 +70,17 @@ export default function AdminDashboard() {
   const [vcPage, setVcPage] = useState(0)
   const [combined, setCombined] = useState(false)
   const [combinedPage, setCombinedPage] = useState(0)
+  const [clanEvents, setClanEvents] = useState<ClanEvent[]>([])
+  const [guildConfig, setGuildConfig] = useState<GuildConfig>({})
+  const [eventTitle, setEventTitle] = useState('')
+  const [eventDesc, setEventDesc] = useState('')
+  const [eventType, setEventType] = useState('Event')
+  const [eventDate, setEventDate] = useState('')
+  const [eventChannel, setEventChannel] = useState('')
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [noteValue, setNoteValue] = useState('')
+  const [rsvpEventId, setRsvpEventId] = useState<string | null>(null)
+  const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [channels, setChannels] = useState<Channel[]>([])
   const [embedChannel, setEmbedChannel] = useState('')
   const [embedTitle, setEmbedTitle] = useState('')
@@ -253,18 +267,66 @@ export default function AdminDashboard() {
 
   async function loadTools() {
     if (activityLoaded) return
-    const [actRes, chRes] = await Promise.all([
+    const [actRes, chRes, evRes, cfgRes] = await Promise.all([
       fetch('/api/admin/activity'),
       fetch('/api/admin/channels'),
+      fetch('/api/admin/events'),
+      fetch('/api/admin/config'),
     ])
     const actData = await actRes.json()
     const chData = await chRes.json()
+    const evData = await evRes.json()
+    const cfgData = await cfgRes.json()
     setDiscordActivity(actData.discord ?? [])
     setIngameActivity(actData.ingame ?? [])
     setVcActivity(actData.vc ?? [])
     setChannels(chData.channels ?? [])
-    if (chData.channels?.length) setEmbedChannel(chData.channels[0].id)
+    if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id) }
+    setClanEvents(evData.events ?? [])
+    setGuildConfig(cfgData.config ?? {})
     setActivityLoaded(true)
+  }
+
+  async function createEvent() {
+    if (!eventTitle.trim() || !eventChannel) return
+    const res = await fetch('/api/admin/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDate || null, channel_id: eventChannel }),
+    })
+    if (res.ok) {
+      const { event } = await res.json()
+      setClanEvents(ev => [...ev, { ...event, event_rsvps: [{ count: 0 }] }])
+      setEventTitle('')
+      setEventDesc('')
+      setEventDate('')
+    }
+  }
+
+  async function deleteEvent(id: string) {
+    await fetch('/api/admin/events', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    setClanEvents(ev => ev.filter(e => e.id !== id))
+    if (rsvpEventId === id) setRsvpEventId(null)
+  }
+
+  async function loadRsvps(eventId: string) {
+    setRsvpEventId(eventId === rsvpEventId ? null : eventId)
+    if (eventId === rsvpEventId) return
+    const res = await fetch(`/api/admin/events?rsvps=${eventId}`)
+    const { rsvps: data } = await res.json()
+    setRsvps(data ?? [])
+  }
+
+  async function saveNote(discordId: string, note: string) {
+    setEditingNoteId(null)
+    await fetch('/api/admin/activity', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ discord_id: discordId, note }) })
+    setDiscordActivity(da => da.map(d => d.discord_id === discordId ? { ...d, promotion_note: note || null } : d))
+  }
+
+  async function saveConfig(patch: Partial<GuildConfig>) {
+    const updated = { ...guildConfig, ...patch }
+    setGuildConfig(updated)
+    await fetch('/api/admin/config', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
   }
 
   async function sendEmbed() {
@@ -753,7 +815,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           {/* Tools sub-nav */}
           <div className="flex gap-1 border-b border-[#2a2a4a]">
-            {([['activity', 'Activity Logs'], ['messenger', 'Bot Messenger']] as const).map(([key, label]) => (
+            {([['activity', 'Activity Logs'], ['events', 'Events'], ['messenger', 'Bot Messenger'], ['settings', 'Settings']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setToolsTab(key)}
                 className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   toolsTab === key ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'
@@ -848,6 +910,7 @@ export default function AdminDashboard() {
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Note</th>
                             <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
                             <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">All Time</th>
                             <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
@@ -855,15 +918,25 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {discordSlice.length === 0 ? (
-                            <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                            <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                           ) : discordSlice.map((row, i) => (
                             <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
                               <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
                               <td className="px-4 py-2.5">
                                 <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
-                                <span className="text-xs text-[#4a4a70] ml-2">{row.discord_id}</span>
+                                {row.rsn && <span className="text-xs text-[#3d9970] ml-2">⚔️ {row.rsn}</span>}
+                                <span className="text-xs text-[#4a4a70] block">{row.discord_id}</span>
                               </td>
                               <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
+                              <td className="px-4 py-2.5 max-w-[160px]">
+                                {editingNoteId === row.discord_id ? (
+                                  <input autoFocus defaultValue={noteValue} onBlur={e => saveNote(row.discord_id, e.target.value)} onKeyDown={e => e.key === 'Enter' && saveNote(row.discord_id, (e.target as HTMLInputElement).value)} className="w-full bg-[#1a1a30] border border-[#7c5ce8]/50 rounded px-2 py-1 text-xs text-[#e8e8f0] outline-none" />
+                                ) : (
+                                  <button onClick={() => { setEditingNoteId(row.discord_id); setNoteValue(row.promotion_note ?? '') }} className="text-xs text-left w-full truncate text-[#6868a0] hover:text-[#e8e8f0] transition-colors">
+                                    {row.promotion_note ?? <span className="text-[#3a3a60]">add note…</span>}
+                                  </button>
+                                )}
+                              </td>
                               <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
                               <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
                               <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}</td>
@@ -1071,6 +1144,113 @@ export default function AdminDashboard() {
           </div>
         </div>
           </>}
+
+          {toolsTab === 'events' && (
+            <div className="space-y-6">
+              {/* Create event */}
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Schedule Event</h2>
+                <div className="grid grid-cols-1 gap-3 max-w-lg">
+                  <input value={eventTitle} onChange={e => setEventTitle(e.target.value)} placeholder="Event title" className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)} placeholder="Description (optional)" rows={2} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none resize-none focus:border-[#7c5ce8]/60" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={eventType} onChange={e => setEventType(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                      {['Event', 'Raid', 'PvM Session', 'Social', 'Competition', 'Other'].map(t => <option key={t}>{t}</option>)}
+                    </select>
+                    <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  </div>
+                  <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    {channels.length === 0 ? <option value="">Loading channels…</option> : channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                  </select>
+                  <button onClick={createEvent} disabled={!eventTitle.trim() || !eventChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
+                    Post Event + RSVP Buttons
+                  </button>
+                </div>
+              </div>
+
+              {/* Event list */}
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Upcoming Events {clanEvents.length > 0 && <span className="text-[#4a4a70] normal-case">({clanEvents.length})</span>}</h2>
+                </div>
+                {clanEvents.length === 0 ? (
+                  <p className="px-5 py-8 text-center text-sm text-[#4a4a70]">No events yet.</p>
+                ) : clanEvents.map(ev => {
+                  const rsvpCount = ev.event_rsvps?.[0]?.count ?? 0
+                  const isOpen = rsvpEventId === ev.id
+                  return (
+                    <div key={ev.id} className="border-b border-[#141427] last:border-0">
+                      <div className="flex items-center gap-3 px-5 py-3 hover:bg-[#141427]/50">
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-[#e8e8f0]">{ev.title}</span>
+                          <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-[#7c5ce8]/20 text-[#b09cf8]">{ev.event_type}</span>
+                          <div className="text-xs text-[#4a4a70] mt-0.5">
+                            {ev.scheduled_at ? new Date(ev.scheduled_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                          </div>
+                        </div>
+                        <button onClick={() => loadRsvps(ev.id)} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#4a4a70]">
+                          {rsvpCount} going {isOpen ? '▲' : '▼'}
+                        </button>
+                        <button onClick={() => deleteEvent(ev.id)} className="text-xs text-[#4a4a70] hover:text-[#ED4245] transition-colors px-2">✕</button>
+                      </div>
+                      {isOpen && (
+                        <div className="px-5 pb-3">
+                          {rsvps.length === 0 ? <p className="text-xs text-[#4a4a70]">No RSVPs yet.</p> : (
+                            <div className="flex flex-wrap gap-2">
+                              {rsvps.map(r => <span key={r.discord_id} className="text-xs px-2 py-1 rounded-full bg-[#141427] text-[#a0a0c0]">{r.display_name ?? r.discord_id}</span>)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {toolsTab === 'settings' && (() => {
+            const chOpts = (val: string | null | undefined) => (
+              <>
+                <option value="">— Not set —</option>
+                {channels.map(c => <option key={c.id} value={c.id} selected={c.id === val}>#{c.name}</option>)}
+              </>
+            )
+            const row = (label: string, configKey: keyof GuildConfig, hint?: string) => (
+              <div key={configKey} className="flex items-center gap-4 py-3 border-b border-[#141427] last:border-0">
+                <div className="w-52 shrink-0">
+                  <div className="text-sm text-[#c0c0e0]">{label}</div>
+                  {hint && <div className="text-xs text-[#4a4a70] mt-0.5">{hint}</div>}
+                </div>
+                <select
+                  value={guildConfig[configKey] ?? ''}
+                  onChange={e => saveConfig({ [configKey]: e.target.value || null })}
+                  className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+                >
+                  {chOpts(guildConfig[configKey])}
+                </select>
+              </div>
+            )
+            return (
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
+                  <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
+                </div>
+                <div className="px-5">
+                  {row('TrackScape Clan Chat', 'clanchat_channel_id', 'In-game clan chat relay')}
+                  {row('TrackScape Broadcasts', 'broadcast_channel_id', 'Drops, pets, achievements')}
+                  {row('Planks Channel', 'planks_channel_id', 'Death notifications (Dink)')}
+                  {row('Drops Channel', 'drops_channel_id', 'Loot drops (Dink)')}
+                  {row('Welcome Channel', 'welcome_channel_id', 'New member welcome messages')}
+                  {row('Welcome Mod Channel', 'welcome_mod_channel_id', 'Staff review for welcomes')}
+                  {row('Weekly Recap Channel', 'recap_channel_id', 'Sunday activity recap post')}
+                  {row('Inactivity Alerts Channel', 'inactivity_channel_id', 'Monday inactive members list')}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
       </div>
       )}
     </div>
