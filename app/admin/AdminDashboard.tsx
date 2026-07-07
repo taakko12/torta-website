@@ -144,6 +144,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { load() }, [load])
   useEffect(() => { if (selectedEventId) loadEventData(selectedEventId) }, [selectedEventId, loadEventData])
+  useEffect(() => { loadTools() }, [])
 
   async function createEvent() {
     if (!newTitle.trim()) return
