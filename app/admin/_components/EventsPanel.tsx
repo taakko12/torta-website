@@ -19,12 +19,14 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
   const [eventTitle, setEventTitle] = useState('')
   const [eventDesc, setEventDesc] = useState('')
   const [eventType, setEventType] = useState('Event')
-  const [eventDate, setEventDate] = useState('')
+  const [eventDateD, setEventDateD] = useState('')
+  const [eventDateT, setEventDateT] = useState('')
   const [eventChannel, setEventChannel] = useState(channels[0]?.id ?? '')
   const [rsvpEventId, setRsvpEventId] = useState<string | null>(null)
   const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [raidName, setRaidName] = useState('')
-  const [raidTimestamp, setRaidTimestamp] = useState('')
+  const [raidDate, setRaidDate] = useState('')
+  const [raidTime, setRaidTime] = useState('')
   const [raidDesc, setRaidDesc] = useState('')
   const [raidChannel, setRaidChannel] = useState(channels[0]?.id ?? '')
 
@@ -32,12 +34,12 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     if (!eventTitle.trim() || !eventChannel) return
     const res = await fetch('/api/admin/events', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDate || null, channel_id: eventChannel }),
+      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDateD && eventDateT ? `${eventDateD}T${eventDateT}` : null, channel_id: eventChannel }),
     })
     if (res.ok) {
       const { event } = await res.json()
       setClanEvents(ev => [...ev, { ...event, event_rsvps: [{ count: 0 }] }])
-      setEventTitle(''); setEventDesc(''); setEventDate('')
+      setEventTitle(''); setEventDesc(''); setEventDateD(''); setEventDateT('')
     }
   }
 
@@ -56,8 +58,8 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
   }
 
   async function scheduleRaid() {
-    if (!raidName.trim() || !raidTimestamp || !raidChannel) return
-    const timestamp = Math.floor(new Date(raidTimestamp).getTime() / 1000)
+    if (!raidName.trim() || !raidDate || !raidTime || !raidChannel) return
+    const timestamp = Math.floor(new Date(`${raidDate}T${raidTime}`).getTime() / 1000)
     const res = await fetch('/api/admin/raids', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: raidName.trim(), timestamp, description: raidDesc || null, channel_id: raidChannel }),
@@ -65,7 +67,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     if (res.ok) {
       const data = await res.json()
       setRaids(r => [...r, data.raid].sort((a, b) => a.timestamp - b.timestamp))
-      setRaidName(''); setRaidTimestamp(''); setRaidDesc('')
+      setRaidName(''); setRaidDate(''); setRaidTime(''); setRaidDesc('')
     }
   }
 
@@ -114,7 +116,10 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
           </select>
           <div>
             <label className="text-xs text-[#7070a0] mb-1 block">Date &amp; Time</label>
-            <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className={`w-full [color-scheme:dark] ${inp}`} />
+            <div className="flex gap-2">
+              <input type="date" value={eventDateD} onChange={e => setEventDateD(e.target.value)} className={`flex-1 [color-scheme:dark] ${inp}`} />
+              <input type="time" value={eventDateT} onChange={e => setEventDateT(e.target.value)} className={`w-32 [color-scheme:dark] ${inp}`} />
+            </div>
           </div>
           <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className={inp}>
             {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
@@ -172,16 +177,17 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
           <p className="text-xs text-[#4a4a70] mt-1">Posts a raid signup embed with Discord buttons.</p>
         </div>
         <div className="px-5 py-4 flex flex-col gap-3">
-          <div className="flex gap-3">
-            <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className={`flex-1 ${inp}`} />
-            <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
+          <div className="flex gap-2 flex-wrap">
+            <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className={`flex-1 min-w-[180px] ${inp}`} />
+            <input type="date" value={raidDate} onChange={e => setRaidDate(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
+            <input type="time" value={raidTime} onChange={e => setRaidTime(e.target.value)} className={`w-32 [color-scheme:dark] ${inp}`} />
           </div>
           <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className={inp} />
           <div className="flex gap-3">
             <select value={raidChannel} onChange={e => setRaidChannel(e.target.value)} className={`flex-1 ${inp}`}>
               {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
             </select>
-            <button onClick={scheduleRaid} disabled={!raidName.trim() || !raidTimestamp || !raidChannel}
+            <button onClick={scheduleRaid} disabled={!raidName.trim() || !raidDate || !raidTime || !raidChannel}
               className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] disabled:opacity-40">Schedule Raid</button>
           </div>
         </div>

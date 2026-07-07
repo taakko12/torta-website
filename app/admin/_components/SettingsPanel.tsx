@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Channel, Role, GuildConfig, RolePanel } from '../_lib/data'
 
 type Props = { config: GuildConfig; channels: Channel[]; roles: Role[] }
@@ -27,6 +27,27 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
   const [panelEmoji, setPanelEmoji] = useState('')
   const [panelLabel, setPanelLabel] = useState('')
   const [panelChannel, setPanelChannel] = useState('')
+
+  type SchedKey = 'weeklyRecap' | 'modRecap'
+  type SchedJobs = Record<SchedKey, { day: number; hour: number }>
+  const [schedJobs, setSchedJobs] = useState<SchedJobs>({ weeklyRecap: { day: 0, hour: 20 }, modRecap: { day: 1, hour: 9 } })
+  const [schedSaving, setSchedSaving] = useState<SchedKey | null>(null)
+  const [schedMsg, setSchedMsg] = useState<Partial<Record<SchedKey, string>>>({})
+
+  useEffect(() => {
+    fetch('/api/admin/scheduled-jobs').then(r => r.json()).then(setSchedJobs)
+  }, [])
+
+  async function saveSchedJob(key: SchedKey) {
+    setSchedSaving(key)
+    await fetch('/api/admin/scheduled-jobs', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, ...schedJobs[key] }),
+    })
+    setSchedSaving(null)
+    setSchedMsg(m => ({ ...m, [key]: '✅ Saved' }))
+    setTimeout(() => setSchedMsg(m => ({ ...m, [key]: undefined })), 2000)
+  }
 
   async function saveConfig(patch: Partial<GuildConfig>) {
     const updated = { ...config, ...patch }
@@ -196,47 +217,73 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
         </div>
       </div>
 
-      {/* Scheduled Posts */}
+      {/* Scheduled Jobs */}
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Scheduled Posts</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">Automated recaps posted by the bot on a fixed schedule. Channels are configured above.</p>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Scheduled Jobs</h2>
+          <p className="text-xs text-[#4a4a70] mt-1">All bot & website automation. Changes take effect on the next hourly check. Times are UTC.</p>
         </div>
         <div className="px-5 divide-y divide-[#1c1c36]">
-          {[
-            {
-              icon: '📊',
-              name: 'Weekly Activity Recap',
-              schedule: 'Every Sunday at 8:00 PM UTC',
-              desc: 'Top Discord chatters, in-game chatters, VC time, and top drops of the week.',
-              channelKey: 'recap_channel_id' as keyof GuildConfig,
-            },
-            {
-              icon: '📋',
-              name: 'Moderator Recap',
-              schedule: 'Every Monday at 9:00 AM UTC',
-              desc: 'Inactive members, unlinked Discord/RSN accounts.',
-              channelKey: 'inactivity_channel_id' as keyof GuildConfig,
-            },
-          ].map(({ icon, name, schedule, desc, channelKey }) => {
-            const channelId = config[channelKey] as string | null | undefined
-            const ch = channels.find(c => c.id === channelId)
+          {/* Configurable jobs */}
+          {([
+            { key: 'weeklyRecap' as SchedKey, icon: '📊', name: 'Weekly Activity Recap', desc: 'Top chatters, VC time, and top drops of the week.', channelKey: 'recap_channel_id' as keyof GuildConfig },
+            { key: 'modRecap'    as SchedKey, icon: '📋', name: 'Moderator Recap',        desc: 'Inactive members and unlinked Discord/RSN accounts.', channelKey: 'inactivity_channel_id' as keyof GuildConfig },
+          ] as const).map(({ key, icon, name, desc, channelKey }) => {
+            const ch = channels.find(c => c.id === (config[channelKey] as string | null | undefined))
+            const job = schedJobs[key]
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
             return (
-              <div key={channelKey} className="py-4 flex items-start gap-4">
-                <span className="text-2xl mt-0.5">{icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
-                  <div className="text-xs text-[#7c5ce8] font-mono mt-0.5">{schedule}</div>
-                  <div className="text-xs text-[#4a4a70] mt-1">{desc}</div>
-                </div>
-                <div className="shrink-0 text-right">
+              <div key={key} className="py-4 flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl mt-0.5 shrink-0">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
+                    <div className="text-xs text-[#4a4a70] mt-0.5">{desc}</div>
+                  </div>
                   {ch
-                    ? <span className="text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
-                    : <span className="text-xs text-[#4a4a70]">Channel not set</span>}
+                    ? <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
+                    : <span className="shrink-0 text-xs text-[#4a4a70]">Channel not set</span>}
+                </div>
+                <div className="flex items-center gap-2 ml-8 flex-wrap">
+                  <span className="text-xs text-[#4a4a70]">Every</span>
+                  <select value={job.day} onChange={e => setSchedJobs(j => ({ ...j, [key]: { ...j[key], day: +e.target.value } }))}
+                    className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
+                    {days.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                  </select>
+                  <span className="text-xs text-[#4a4a70]">at</span>
+                  <select value={job.hour} onChange={e => setSchedJobs(j => ({ ...j, [key]: { ...j[key], hour: +e.target.value } }))}
+                    className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <option key={h} value={h}>{String(h).padStart(2, '0')}:00 UTC</option>
+                    ))}
+                  </select>
+                  <button onClick={() => saveSchedJob(key)} disabled={schedSaving === key}
+                    className="px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white text-xs font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors">
+                    {schedSaving === key ? 'Saving…' : 'Save'}
+                  </button>
+                  {schedMsg[key] && <span className="text-xs text-[#57F287]">{schedMsg[key]}</span>}
                 </div>
               </div>
             )
           })}
+
+          {/* Fixed jobs (info only) */}
+          {[
+            { icon: '🎲', name: 'BOTW/SOTW Poll Roll',       schedule: 'Every Saturday at 12:00 UTC',    desc: 'Posts competition polls to poll channel.' },
+            { icon: '🔄', name: 'WOM Group Sync',             schedule: 'Every hour',                     desc: 'Syncs member RSNs with Wise Old Man.' },
+            { icon: '🔁', name: 'Monthly Activity Reset',     schedule: '1st of month at 00:00 UTC',      desc: 'Zeros out monthly message and VC counts.' },
+            { icon: '🎙️', name: 'VC Session Flush',           schedule: 'Every 5 minutes',                desc: 'Commits active voice channel session minutes to DB.' },
+          ].map(({ icon, name, schedule, desc }) => (
+            <div key={name} className="py-3 flex items-start gap-3 opacity-60">
+              <span className="text-xl mt-0.5 shrink-0">{icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
+                <div className="text-xs text-[#7c5ce8] font-mono mt-0.5">{schedule}</div>
+                <div className="text-xs text-[#4a4a70] mt-0.5">{desc}</div>
+              </div>
+              <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] border border-[#333358] px-2 py-1 rounded mt-0.5">Fixed</span>
+            </div>
+          ))}
         </div>
       </div>
 
