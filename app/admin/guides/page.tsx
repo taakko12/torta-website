@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-type Guide = { id: string; title: string; created_at: string; thread_id: string | null; forum_channel_id: string | null }
+type Guide = { id: string; title: string; created_at: string; thread_id: string | null; forum_channel_id: string | null; forum_title: string | null }
 
 export default function GuidesAdminPage() {
   const [guides, setGuides] = useState<Guide[]>([])
@@ -84,28 +84,37 @@ export default function GuidesAdminPage() {
         ) : guides.length === 0 ? (
           <p className="px-5 py-8 text-center text-sm text-[#4a4a70]">No guides yet. Import from Discord above.</p>
         ) : (
-          <div className="divide-y divide-[#1c1c36]">
-            {guides.map(g => (
-              <div key={g.id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#1c1c36]/50">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#e8e8f0] truncate">{g.title}</p>
-                  <p className="text-xs text-[#4a4a70]">{new Date(g.created_at).toLocaleDateString()}</p>
+          <div>
+            {Array.from(new Map(guides.map(g => [g.forum_channel_id ?? '', g.forum_title ?? g.forum_channel_id ?? 'Ungrouped'])).entries()).map(([fid, ftitle]) => (
+              <div key={fid}>
+                <div className="px-5 py-2 bg-[#111124] border-b border-[#333358]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{ftitle}</p>
                 </div>
-                <a href={`/guides/${g.id}`} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-[#7070a0] hover:text-[#c89b3c] px-2 py-1 rounded border border-[#333358] hover:border-[#c89b3c]/40">
-                  View
-                </a>
-                {g.thread_id && (
-                  <a href={`https://discord.com/channels/${process.env.NEXT_PUBLIC_GUILD_ID}/${g.thread_id}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-[#7070a0] hover:text-[#5865F2] px-2 py-1 rounded border border-[#333358] hover:border-[#5865F2]/40">
-                    Discord
-                  </a>
-                )}
-                <button onClick={() => deleteGuide(g.id)}
-                  className="text-xs text-[#4a4a70] hover:text-white px-2 py-1 rounded bg-[#ED4245]/0 hover:bg-[#ED4245] border border-[#ED4245]/30 hover:border-[#ED4245]">
-                  Delete
-                </button>
+                {guides.filter(g => (g.forum_channel_id ?? '') === fid).map(g => (
+                  <div key={g.id} className="flex items-center gap-3 px-5 py-3 border-b border-[#1c1c36] hover:bg-[#1c1c36]/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#e8e8f0] truncate">{g.title}</p>
+                      <p className="text-xs text-[#4a4a70]">{new Date(g.created_at).toLocaleDateString()}</p>
+                    </div>
+                    {g.forum_channel_id && (
+                      <a href={`/guides/${g.forum_channel_id}/${g.id}`} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-[#7070a0] hover:text-[#c89b3c] px-2 py-1 rounded border border-[#333358] hover:border-[#c89b3c]/40">
+                        View
+                      </a>
+                    )}
+                    {g.thread_id && (
+                      <a href={`https://discord.com/channels/${process.env.NEXT_PUBLIC_GUILD_ID}/${g.thread_id}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-[#7070a0] hover:text-[#5865F2] px-2 py-1 rounded border border-[#333358] hover:border-[#5865F2]/40">
+                        Discord
+                      </a>
+                    )}
+                    <button onClick={() => deleteGuide(g.id)}
+                      className="text-xs text-[#4a4a70] hover:text-white px-2 py-1 rounded bg-[#ED4245]/0 hover:bg-[#ED4245] border border-[#ED4245]/30 hover:border-[#ED4245]">
+                      Delete
+                    </button>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

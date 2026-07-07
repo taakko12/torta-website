@@ -205,14 +205,41 @@ export interface RaidGuide {
   title: string
   content: string
   thread_id: string | null
+  forum_channel_id: string | null
+  forum_title: string | null
   created_at: string
 }
 
-export async function getRaidGuides(): Promise<RaidGuide[]> {
-  const { data } = await supabase
+export interface RaidForum {
+  forum_channel_id: string
+  forum_title: string | null
+  thread_count: number
+}
+
+export async function getRaidGuides(forumChannelId?: string): Promise<RaidGuide[]> {
+  let q = supabase
     .from('raid_guides')
-    .select('id, title, content, thread_id, created_at')
+    .select('id, title, content, thread_id, forum_channel_id, forum_title, created_at')
     .eq('guild_id', GUILD_ID)
     .order('title', { ascending: true })
+  if (forumChannelId) q = q.eq('forum_channel_id', forumChannelId)
+  const { data } = await q
   return (data ?? []) as RaidGuide[]
+}
+
+export async function getRaidForums(): Promise<RaidForum[]> {
+  const { data } = await supabase
+    .from('raid_guides')
+    .select('forum_channel_id, forum_title')
+    .eq('guild_id', GUILD_ID)
+  if (!data) return []
+  const map = new Map<string, { title: string | null; count: number }>()
+  for (const row of data) {
+    if (!row.forum_channel_id) continue
+    const e = map.get(row.forum_channel_id)
+    if (e) { e.count++ } else { map.set(row.forum_channel_id, { title: row.forum_title, count: 1 }) }
+  }
+  return Array.from(map.entries()).map(([id, { title, count }]) => ({
+    forum_channel_id: id, forum_title: title, thread_count: count,
+  }))
 }

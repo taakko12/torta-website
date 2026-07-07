@@ -20,7 +20,7 @@ export async function GET() {
   if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { data } = await getSupabaseAdmin()
     .from('raid_guides')
-    .select('id, title, created_at, thread_id, forum_channel_id')
+    .select('id, title, created_at, thread_id, forum_channel_id, forum_title')
     .eq('guild_id', GUILD_ID)
     .order('title', { ascending: true })
   return NextResponse.json({ guides: data ?? [] })
@@ -34,11 +34,15 @@ export async function POST(req: Request) {
 
   const headers = botHeaders()
 
-  // Fetch active threads (filtered by parent) + archived threads from the forum
-  const [activeRes, archivedRes] = await Promise.all([
+  // Fetch channel name + active/archived threads in parallel
+  const [chanRes, activeRes, archivedRes] = await Promise.all([
+    fetch(`${DISCORD}/channels/${forum_channel_id}`, { headers }),
     fetch(`${DISCORD}/guilds/${GUILD_ID}/threads/active`, { headers }),
     fetch(`${DISCORD}/channels/${forum_channel_id}/threads/archived/public?limit=100`, { headers }),
   ])
+
+  const chanData = chanRes.ok ? await chanRes.json() : {}
+  const forum_title: string | null = (chanData.name as string | undefined) ?? null
 
   const activeData = activeRes.ok ? await activeRes.json() : { threads: [] }
   const archivedData = archivedRes.ok ? await archivedRes.json() : { threads: [] }
@@ -50,16 +54,28 @@ export async function POST(req: Request) {
 
   if (threads.length === 0) return NextResponse.json({ imported: 0, message: 'No threads found in that channel.' })
 
-  // Fetch starter message from each thread (oldest message = after snowflake 1)
+  // Fetch ALL messages per thread (paginate via after=snowflake)
+  async function fetchAllMessages(threadId: string): Promise<string> {
+    const segments: string[] = []
+    let after = '1'
+    while (true) {
+      const res = await fetch(`${DISCORD}/channels/${threadId}/messages?after=${after}&limit=100`, { headers })
+      if (!res.ok) break
+      const msgs = await res.json() as { id: string; content: string }[]
+      if (!msgs.length) break
+      for (const m of msgs) { if (m.content.trim()) segments.push(m.content.trim()) }
+      if (msgs.length < 100) break
+      after = msgs[msgs.length - 1].id
+    }
+    return segments.join('\n\n')
+  }
+
   const guides = (await Promise.all(threads.map(async thread => {
     try {
-      const msgRes = await fetch(`${DISCORD}/channels/${thread.id}/messages?after=1&limit=1`, { headers })
-      if (!msgRes.ok) return null
-      const messages = await msgRes.json()
-      const content: string = messages[0]?.content ?? ''
-      return { title: thread.name, content, thread_id: thread.id, forum_channel_id }
+      const content = await fetchAllMessages(thread.id)
+      return { title: thread.name, content, thread_id: thread.id, forum_channel_id, forum_title }
     } catch { return null }
-  }))).filter(Boolean) as { title: string; content: string; thread_id: string; forum_channel_id: string }[]
+  }))).filter(Boolean) as { title: string; content: string; thread_id: string; forum_channel_id: string; forum_title: string | null }[]
 
   if (guides.length === 0) return NextResponse.json({ imported: 0, message: 'Could not read messages from threads.' })
 
@@ -70,7 +86,7 @@ export async function POST(req: Request) {
       .select('id').eq('guild_id', GUILD_ID).eq('thread_id', g.thread_id).maybeSingle()
     if (existing) {
       await db.from('raid_guides')
-        .update({ title: g.title, content: g.content, updated_at: new Date().toISOString() })
+        .update({ title: g.title, content: g.content, forum_title: g.forum_title, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
     } else {
       await db.from('raid_guides').insert({ guild_id: GUILD_ID, ...g, updated_at: new Date().toISOString() })
