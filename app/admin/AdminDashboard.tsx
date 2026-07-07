@@ -287,7 +287,7 @@ export default function AdminDashboard() {
     setActivityLoaded(true)
   }
 
-  async function createEvent() {
+  async function createClanEvent() {
     if (!eventTitle.trim() || !eventChannel) return
     const res = await fetch('/api/admin/events', {
       method: 'POST',
@@ -1162,7 +1162,7 @@ export default function AdminDashboard() {
                   <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {channels.length === 0 ? <option value="">Loading channels…</option> : channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                   </select>
-                  <button onClick={createEvent} disabled={!eventTitle.trim() || !eventChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
+                  <button onClick={createClanEvent} disabled={!eventTitle.trim() || !eventChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
                     Post Event + RSVP Buttons
                   </button>
                 </div>
