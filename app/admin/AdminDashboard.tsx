@@ -1209,49 +1209,42 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {toolsTab === 'settings' && (() => {
-            const chOpts = (val: string | null | undefined) => (
-              <>
-                <option value="">— Not set —</option>
-                {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
-              </>
-            )
-            const row = (label: string, configKey: keyof GuildConfig, hint?: string) => (
-              <div key={configKey} className="flex items-center gap-4 py-3 border-b border-[#141427] last:border-0">
-                <div className="w-52 shrink-0">
-                  <div className="text-sm text-[#c0c0e0]">{label}</div>
-                  {hint && <div className="text-xs text-[#4a4a70] mt-0.5">{hint}</div>}
-                </div>
-                <select
-                  value={guildConfig[configKey] ?? ''}
-                  onChange={e => saveConfig({ [configKey]: e.target.value || null })}
-                  className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
-                >
-                  {chOpts(guildConfig[configKey])}
-                </select>
+          {toolsTab === 'settings' && (
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
               </div>
-            )
-            return (
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#2a2a4a]">
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
-                  <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
-                </div>
-                <div className="px-5">
-                  {row('TrackScape Clan Chat', 'clanchat_channel_id', 'In-game clan chat relay')}
-                  {row('TrackScape Broadcasts', 'broadcast_channel_id', 'Drops, pets, achievements')}
-                  {row('Planks Channel', 'planks_channel_id', 'Death notifications (Dink)')}
-                  {row('Drops Channel', 'drops_channel_id', 'Loot drops (Dink)')}
-                  {row('Welcome Channel', 'welcome_channel_id', 'New member welcome messages')}
-                  {row('Welcome Mod Channel', 'welcome_mod_channel_id', 'Staff review for welcomes')}
-                  {row('Weekly Recap Channel', 'recap_channel_id', 'Sunday activity recap post')}
-                  {row('Inactivity Alerts Channel', 'inactivity_channel_id', 'Monday inactive members list')}
-                </div>
+              <div className="px-5">
+                {([
+                  ['TrackScape Clan Chat', 'clanchat_channel_id', 'In-game clan chat relay'],
+                  ['TrackScape Broadcasts', 'broadcast_channel_id', 'Drops, pets, achievements'],
+                  ['Planks Channel', 'planks_channel_id', 'Death notifications (Dink)'],
+                  ['Drops Channel', 'drops_channel_id', 'Loot drops (Dink)'],
+                  ['Welcome Channel', 'welcome_channel_id', 'New member welcome messages'],
+                  ['Welcome Mod Channel', 'welcome_mod_channel_id', 'Staff review for welcomes'],
+                  ['Weekly Recap Channel', 'recap_channel_id', 'Sunday activity recap post'],
+                  ['Inactivity Alerts Channel', 'inactivity_channel_id', 'Monday inactive members list'],
+                ] as [string, keyof GuildConfig, string][]).map(([label, key, hint]) => (
+                  <div key={key} className="flex items-center gap-4 py-3 border-b border-[#141427] last:border-0">
+                    <div className="w-52 shrink-0">
+                      <div className="text-sm text-[#c0c0e0]">{label}</div>
+                      <div className="text-xs text-[#4a4a70] mt-0.5">{hint}</div>
+                    </div>
+                    <select
+                      value={guildConfig[key] ?? ''}
+                      onChange={e => saveConfig({ [key]: e.target.value || null })}
+                      className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+                    >
+                      <option value="">— Not set —</option>
+                      {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                    </select>
+                  </div>
+                ))}
               </div>
-            )
-          })()}
+            </div>
+          )}
         </div>
-      </div>
       )}
     </div>
   )
