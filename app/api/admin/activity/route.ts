@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession, isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
+const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
+
 export async function GET() {
   const session = await getServerSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -9,10 +11,10 @@ export async function GET() {
 
   const supabase = getSupabaseAdmin()
   const [{ data: discord }, { data: ingame }, { data: vc }, { data: links }] = await Promise.all([
-    supabase.from('discord_activity').select('discord_id, display_name, role_name, promotion_note, message_count, month_count, last_message_at').order('month_count', { ascending: false }).limit(200),
-    supabase.from('ingame_activity').select('rsn, message_count, month_count, last_message_at').order('month_count', { ascending: false }).limit(200),
-    supabase.from('vc_activity').select('discord_id, display_name, role_name, total_minutes, month_minutes, last_seen_at').order('month_minutes', { ascending: false }).limit(200),
-    supabase.from('rsn_links').select('discord_id, rsn'),
+    supabase.from('discord_activity').select('discord_id, display_name, role_name, promotion_note, message_count, month_count, last_message_at').eq('guild_id', GUILD_ID).order('month_count', { ascending: false }).limit(200),
+    supabase.from('ingame_activity').select('rsn, message_count, month_count, last_message_at').eq('guild_id', GUILD_ID).order('month_count', { ascending: false }).limit(200),
+    supabase.from('vc_activity').select('discord_id, display_name, role_name, total_minutes, month_minutes, last_seen_at').eq('guild_id', GUILD_ID).order('month_minutes', { ascending: false }).limit(200),
+    supabase.from('rsn_links').select('discord_id, rsn').eq('guild_id', GUILD_ID),
   ])
 
   const rsnMap = Object.fromEntries((links ?? []).map(l => [l.discord_id, l.rsn]))
@@ -20,8 +22,6 @@ export async function GET() {
 
   return NextResponse.json({ discord: discordWithRsn, ingame: ingame ?? [], vc: vc ?? [] })
 }
-
-const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
 export async function PATCH(req: Request) {
   const session = await getServerSession()
