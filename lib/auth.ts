@@ -54,10 +54,20 @@ export async function isAdmin(discordId: string): Promise<boolean> {
       const guild = await guildRes.json()
       if (guild.owner_id === discordId) return true
     }
-    if (!memberRes.ok || !adminRoleId) return false
+    if (!memberRes.ok) {
+      console.warn(`[isAdmin] member fetch failed: ${memberRes.status} for user ${discordId}`)
+      return false
+    }
+    if (!adminRoleId) {
+      console.warn('[isAdmin] DISCORD_ADMIN_ROLE_ID not set')
+      return false
+    }
     const member = await memberRes.json()
-    return (member.roles as string[]).includes(adminRoleId)
-  } catch {
+    const has = (member.roles as string[]).includes(adminRoleId)
+    if (!has) console.warn(`[isAdmin] user ${discordId} roles [${member.roles}] does not include ${adminRoleId}`)
+    return has
+  } catch (e) {
+    console.error('[isAdmin] threw:', e)
     return false
   }
 }
