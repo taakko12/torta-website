@@ -21,7 +21,7 @@ function formatMinutes(mins: number) {
 type CombinedRow = { key: string; name: string; rsn: string | null; type: 'Discord' | 'In-Game' | 'Linked'; role: string | null; month_count: number; message_count: number; last_at: string | null }
 
 export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
-  const [combined, setCombined] = useState(false)
+  const [combined, setCombined] = useState(true)
   const [combinedPage, setCombinedPage] = useState(0)
   const [discordPage, setDiscordPage] = useState(0)
   const [ingamePage, setIngamePage] = useState(0)

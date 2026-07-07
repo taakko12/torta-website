@@ -1,10 +1,10 @@
 'use client'
 import { useState, useMemo } from 'react'
-import type { LinkRow, DiscordActivity } from '../_lib/data'
+import type { LinkRow, DiscordActivity, IngameActivity } from '../_lib/data'
 
-type Props = { initialLinks: LinkRow[]; discordActivity: DiscordActivity[] }
+type Props = { initialLinks: LinkRow[]; discordActivity: DiscordActivity[]; ingameActivity: IngameActivity[] }
 
-export default function MembersPanel({ initialLinks, discordActivity }: Props) {
+export default function MembersPanel({ initialLinks, discordActivity, ingameActivity }: Props) {
   const [links, setLinks] = useState<LinkRow[]>(initialLinks)
   const [linkSearch, setLinkSearch] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null) // `${discord_id}:${rsn}`
@@ -74,6 +74,11 @@ export default function MembersPanel({ initialLinks, discordActivity }: Props) {
     setLinks(prev => prev.map(l => l.discord_id === discord_id && l.rsn === oldRsn ? { ...l, rsn: newRsn } : l))
     setEditingKey(null)
   }
+
+  const linkedDiscordIds = useMemo(() => new Set(links.map(l => l.discord_id)), [links])
+  const linkedRsns = useMemo(() => new Set(links.map(l => l.rsn.toLowerCase())), [links])
+  const unlinkedDiscord = useMemo(() => discordActivity.filter(d => !linkedDiscordIds.has(d.discord_id)), [discordActivity, linkedDiscordIds])
+  const unlinkedIngame = useMemo(() => ingameActivity.filter(i => !linkedRsns.has(i.rsn.toLowerCase())), [ingameActivity, linkedRsns])
 
   const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
 
@@ -171,6 +176,62 @@ export default function MembersPanel({ initialLinks, discordActivity }: Props) {
           </table>
         </div>
       </div>
+      {/* Unlinked members */}
+      {(unlinkedDiscord.length > 0 || unlinkedIngame.length > 0) && (
+        <div className="rounded-xl border border-[#c89b3c]/30 bg-[#161628] overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#333358]">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
+              🔗 Unlinked Members
+            </h2>
+            <p className="text-xs text-[#4a4a70] mt-0.5">Discord members with no RSN, or in-game names with no Discord link.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#1c1c36]">
+            <div>
+              <div className="px-4 py-2 border-b border-[#1c1c36]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Discord → No RSN ({unlinkedDiscord.length})</p>
+              </div>
+              {unlinkedDiscord.length === 0 ? (
+                <p className="px-4 py-4 text-xs text-[#4a4a70]">All Discord members are linked.</p>
+              ) : (
+                <ul className="divide-y divide-[#1c1c36]">
+                  {unlinkedDiscord.map(d => (
+                    <li key={d.discord_id} className="px-4 py-2.5 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-sm text-[#e8e8f0]">{d.display_name ?? '—'}</span>
+                        <span className="text-xs text-[#4a4a70] block">{d.discord_id}</span>
+                      </div>
+                      <button onClick={() => { setLinkDiscordId(d.discord_id); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                        className="text-xs text-[#4a4a70] hover:text-[#7c5ce8] px-2 py-1 rounded border border-[#333358] hover:border-[#7c5ce8]/40 shrink-0">
+                        Link →
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <div className="px-4 py-2 border-b border-[#1c1c36]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">In-Game → No Discord ({unlinkedIngame.length})</p>
+              </div>
+              {unlinkedIngame.length === 0 ? (
+                <p className="px-4 py-4 text-xs text-[#4a4a70]">All in-game names are linked.</p>
+              ) : (
+                <ul className="divide-y divide-[#1c1c36]">
+                  {unlinkedIngame.map(i => (
+                    <li key={i.rsn} className="px-4 py-2.5 flex items-center justify-between gap-2">
+                      <span className="text-sm text-[#3d9970]">⚔️ {i.rsn}</span>
+                      <button onClick={() => { setLinkRsn(i.rsn); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                        className="text-xs text-[#4a4a70] hover:text-[#7c5ce8] px-2 py-1 rounded border border-[#333358] hover:border-[#7c5ce8]/40 shrink-0">
+                        Link →
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

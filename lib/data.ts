@@ -174,6 +174,7 @@ export async function getRecentDrops(limit = 50): Promise<RecentDropItem[]> {
     .from('drops')
     .select('id, player_name, gp_value, item_name, image_url, screenshot_url, discord_message_id, recorded_at')
     .eq('guild_id', GUILD_ID)
+    .gte('gp_value', 1_000_000)
     .order('recorded_at', { ascending: false })
     .limit(limit)
   return (data ?? []) as RecentDropItem[]
