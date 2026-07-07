@@ -109,6 +109,9 @@ export default function AdminDashboard() {
   const [linksLoaded, setLinksLoaded] = useState(false)
   const [linkDiscordId, setLinkDiscordId] = useState('')
   const [linkRsn, setLinkRsn] = useState('')
+  const [linkSearch, setLinkSearch] = useState('')
+  const [editingDiscordId, setEditingDiscordId] = useState<string | null>(null)
+  const [editRsn, setEditRsn] = useState('')
   const [logs, setLogs] = useState<CommandLog[]>([])
   const [logsLoaded, setLogsLoaded] = useState(false)
   const [logsLive, setLogsLive] = useState(false)
@@ -336,6 +339,17 @@ export default function AdminDashboard() {
       body: JSON.stringify({ discord_id: discordId }),
     })
     setLinks(l => l.filter(x => x.discord_id !== discordId))
+    if (editingDiscordId === discordId) setEditingDiscordId(null)
+  }
+
+  async function saveEditLink(discordId: string) {
+    if (!editRsn.trim()) return
+    await fetch('/api/admin/links', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discord_id: discordId, rsn: editRsn.trim() }),
+    })
+    setEditingDiscordId(null)
+    await loadLinks()
   }
 
   async function loadLogs() {
@@ -1429,28 +1443,34 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {toolsTab === 'members' && (
+          {toolsTab === 'members' && (() => {
+            const linkedIds = new Set(links.map(l => l.discord_id))
+            const unlinkedMembers = discordActivity.filter(d => !linkedIds.has(d.discord_id))
+            const q = linkSearch.toLowerCase()
+            const filteredLinks = q
+              ? links.filter(l => (l.display_name ?? '').toLowerCase().includes(q) || l.rsn.toLowerCase().includes(q) || l.discord_id.includes(q))
+              : links
+            return (
             <div className="space-y-6">
-              {/* Add / update link */}
+              {/* Add link — only unlinked members */}
               <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Link Member to RSN</h2>
                 <div className="flex gap-3 flex-wrap">
                   <select value={linkDiscordId} onChange={e => setLinkDiscordId(e.target.value)} className="flex-1 min-w-[180px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60">
                     <option value="">Select Discord member…</option>
-                    {discordActivity.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}{d.rsn ? ` (⚔️ ${d.rsn})` : ''}</option>)}
+                    {unlinkedMembers.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
                   </select>
                   <input value={linkRsn} onChange={e => setLinkRsn(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLink()} placeholder="RuneScape name" className="flex-1 min-w-[160px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
-                  <button onClick={addLink} disabled={!linkDiscordId || !linkRsn.trim()} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
-                    {links.some(l => l.discord_id === linkDiscordId) ? 'Update' : 'Link'}
-                  </button>
+                  <button onClick={addLink} disabled={!linkDiscordId || !linkRsn.trim()} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">Link</button>
                 </div>
-                <p className="text-xs text-[#4a4a70] mt-2">Selecting a member who already has a link will update their RSN. Press Enter to submit.</p>
+                <p className="text-xs text-[#4a4a70] mt-2">Only unlinked members are shown. To update an existing link, use the Edit button in the table below.</p>
               </div>
 
-              {/* Current links */}
+              {/* Current links + search */}
               <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#2a2a4a]">
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">RSN Links <span className="text-[#4a4a70] normal-case font-normal">({links.length})</span></h2>
+                <div className="px-5 py-3 border-b border-[#2a2a4a] flex items-center gap-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] shrink-0">RSN Links <span className="text-[#4a4a70] normal-case font-normal">({links.length})</span></h2>
+                  <input value={linkSearch} onChange={e => setLinkSearch(e.target.value)} placeholder="Search by name or RSN…" className="ml-auto w-48 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none focus:border-[#7c5ce8]/60" />
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1465,18 +1485,34 @@ export default function AdminDashboard() {
                     <tbody>
                       {!linksLoaded ? (
                         <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">Loading…</td></tr>
-                      ) : links.length === 0 ? (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">No links yet.</td></tr>
-                      ) : links.map(l => (
+                      ) : filteredLinks.length === 0 ? (
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{q ? 'No matches.' : 'No links yet.'}</td></tr>
+                      ) : filteredLinks.map(l => (
                         <tr key={l.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
                           <td className="px-4 py-2.5">
                             <span className="text-sm font-medium text-[#e8e8f0]">{l.display_name ?? '—'}</span>
                             <span className="text-xs text-[#4a4a70] block">{l.discord_id}</span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-[#3d9970] font-medium">⚔️ {l.rsn}</td>
-                          <td className="px-4 py-2.5 text-xs text-[#4a4a70]">{new Date(l.linked_at).toLocaleDateString()}</td>
+                          <td className="px-4 py-2.5">
+                            {editingDiscordId === l.discord_id ? (
+                              <input autoFocus value={editRsn} onChange={e => setEditRsn(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEditLink(l.discord_id); if (e.key === 'Escape') setEditingDiscordId(null) }} className="rounded bg-[#141427] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-sm outline-none w-36" />
+                            ) : (
+                              <span className="text-sm text-[#3d9970] font-medium">⚔️ {l.rsn}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-xs text-[#4a4a70] whitespace-nowrap">{new Date(l.linked_at).toLocaleDateString()}</td>
                           <td className="px-4 py-2.5 text-right">
-                            <button onClick={() => removeLink(l.discord_id)} className="text-xs text-[#4a4a70] hover:text-[#ED4245] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#ED4245]/40">Unlink</button>
+                            <div className="flex items-center justify-end gap-2">
+                              {editingDiscordId === l.discord_id ? (
+                                <>
+                                  <button onClick={() => saveEditLink(l.discord_id)} disabled={!editRsn.trim()} className="text-xs text-[#57F287] hover:text-[#57F287]/80 transition-colors px-2 py-1 rounded border border-[#57F287]/30 hover:border-[#57F287]/60 disabled:opacity-40">Save</button>
+                                  <button onClick={() => setEditingDiscordId(null)} className="text-xs text-[#4a4a70] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a4a]">Cancel</button>
+                                </>
+                              ) : (
+                                <button onClick={() => { setEditingDiscordId(l.discord_id); setEditRsn(l.rsn) }} className="text-xs text-[#4a4a70] hover:text-[#7c5ce8] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#7c5ce8]/40">Edit</button>
+                              )}
+                              <button onClick={() => removeLink(l.discord_id)} className="text-xs text-[#4a4a70] hover:text-white transition-colors px-2 py-1 rounded bg-[#ED4245]/0 hover:bg-[#ED4245] border border-[#ED4245]/30 hover:border-[#ED4245]">Unlink</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1485,7 +1521,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {toolsTab === 'logs' && (
             <div className="space-y-4">
