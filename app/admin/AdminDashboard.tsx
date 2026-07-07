@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
 
 type BingoEvent = { id: string; title: string; board_size: number; active: boolean; created_at: string }
 type BingoTask = { id: string; position: number; title: string; description: string | null; image_url: string | null; points: number; required_count: number; points_per_submission: number | null }
@@ -18,6 +19,8 @@ type Role = { id: string; name: string }
 type Raid = { id: string; name: string; timestamp: number; description: string | null; channel_id: string | null; signups: {id:string;username:string}[]; attendees: {id:string;username:string}[] | null; created_at: string }
 type PanelRole = { roleId: string; emoji: string; label: string }
 type RolePanel = { channelId: string | null; messageId: string | null; roles: PanelRole[] }
+type LinkRow = { discord_id: string; rsn: string; linked_at: string; display_name: string | null }
+type CommandLog = { id: number; discord_id: string; display_name: string | null; command: string; subcommand: string | null; channel_id: string | null; logged_at: string }
 
 function formatMinutes(mins: number): string {
   const d = Math.floor(mins / 1440)
@@ -55,7 +58,7 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 export default function AdminDashboard() {
   const [section, setSection] = useState<'bingo' | 'tools'>('tools')
   const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
-  const [toolsTab, setToolsTab] = useState<'activity' | 'messenger' | 'events' | 'settings'>('activity')
+  const [toolsTab, setToolsTab] = useState<'activity' | 'messenger' | 'events' | 'settings' | 'members' | 'logs'>('activity')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
@@ -102,6 +105,13 @@ export default function AdminDashboard() {
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
   const [welcomePosting, setWelcomePosting] = useState(false)
   const [welcomeStatus, setWelcomeStatus] = useState<string | null>(null)
+  const [links, setLinks] = useState<LinkRow[]>([])
+  const [linksLoaded, setLinksLoaded] = useState(false)
+  const [linkDiscordId, setLinkDiscordId] = useState('')
+  const [linkRsn, setLinkRsn] = useState('')
+  const [logs, setLogs] = useState<CommandLog[]>([])
+  const [logsLoaded, setLogsLoaded] = useState(false)
+  const [logsLive, setLogsLive] = useState(false)
   const [embedChannel, setEmbedChannel] = useState('')
   const [embedTitle, setEmbedTitle] = useState('')
   const [embedDesc, setEmbedDesc] = useState('')
@@ -179,6 +189,18 @@ export default function AdminDashboard() {
   useEffect(() => { load() }, [load])
   useEffect(() => { if (selectedEventId) loadEventData(selectedEventId) }, [selectedEventId, loadEventData])
   useEffect(() => { loadTools() }, [])
+  useEffect(() => { if (toolsTab === 'members' && !linksLoaded) loadLinks() }, [toolsTab])
+  useEffect(() => {
+    if (toolsTab !== 'logs') return
+    if (!logsLoaded) loadLogs()
+    const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
+    const ch = supabase.channel('command_logs_live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'command_logs', filter: `guild_id=eq.${GUILD_ID}` },
+        (payload) => setLogs(prev => [payload.new as CommandLog, ...prev].slice(0, 200))
+      )
+      .subscribe(status => setLogsLive(status === 'SUBSCRIBED'))
+    return () => { supabase.removeChannel(ch); setLogsLive(false) }
+  }, [toolsTab])
 
   async function createEvent() {
     if (!newTitle.trim()) return
@@ -289,6 +311,38 @@ export default function AdminDashboard() {
     const res = await fetch('/api/admin/roles')
     const data = await res.json()
     setRoles(data.roles ?? [])
+  }
+
+  async function loadLinks() {
+    const res = await fetch('/api/admin/links')
+    const data = await res.json()
+    setLinks(data.links ?? [])
+    setLinksLoaded(true)
+  }
+
+  async function addLink() {
+    if (!linkDiscordId.trim() || !linkRsn.trim()) return
+    await fetch('/api/admin/links', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discord_id: linkDiscordId.trim(), rsn: linkRsn.trim() }),
+    })
+    setLinkDiscordId(''); setLinkRsn('')
+    await loadLinks()
+  }
+
+  async function removeLink(discordId: string) {
+    await fetch('/api/admin/links', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discord_id: discordId }),
+    })
+    setLinks(l => l.filter(x => x.discord_id !== discordId))
+  }
+
+  async function loadLogs() {
+    const res = await fetch('/api/admin/logs')
+    const data = await res.json()
+    setLogs(data.logs ?? [])
+    setLogsLoaded(true)
   }
 
   async function loadTools() {
@@ -916,7 +970,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           {/* Tools sub-nav */}
           <div className="flex gap-1 border-b border-[#2a2a4a]">
-            {([['activity', 'Activity Logs'], ['events', 'Events'], ['messenger', 'Bot Messenger'], ['settings', 'Settings']] as const).map(([key, label]) => (
+            {([['activity', 'Activity'], ['members', 'Members'], ['logs', 'Command Logs'], ['events', 'Events'], ['messenger', 'Messenger'], ['settings', 'Settings']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setToolsTab(key)}
                 className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   toolsTab === key ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'
@@ -1372,6 +1426,107 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+            </div>
+          )}
+
+          {toolsTab === 'members' && (
+            <div className="space-y-6">
+              {/* Add / update link */}
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Link Member to RSN</h2>
+                <div className="flex gap-3 flex-wrap">
+                  <select value={linkDiscordId} onChange={e => setLinkDiscordId(e.target.value)} className="flex-1 min-w-[180px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60">
+                    <option value="">Select Discord member…</option>
+                    {discordActivity.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}{d.rsn ? ` (⚔️ ${d.rsn})` : ''}</option>)}
+                  </select>
+                  <input value={linkRsn} onChange={e => setLinkRsn(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLink()} placeholder="RuneScape name" className="flex-1 min-w-[160px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <button onClick={addLink} disabled={!linkDiscordId || !linkRsn.trim()} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
+                    {links.some(l => l.discord_id === linkDiscordId) ? 'Update' : 'Link'}
+                  </button>
+                </div>
+                <p className="text-xs text-[#4a4a70] mt-2">Selecting a member who already has a link will update their RSN. Press Enter to submit.</p>
+              </div>
+
+              {/* Current links */}
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">RSN Links <span className="text-[#4a4a70] normal-case font-normal">({links.length})</span></h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#1a1a30]">
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Discord Member</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Linked</th>
+                        <th className="px-4 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!linksLoaded ? (
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">Loading…</td></tr>
+                      ) : links.length === 0 ? (
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">No links yet.</td></tr>
+                      ) : links.map(l => (
+                        <tr key={l.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                          <td className="px-4 py-2.5">
+                            <span className="text-sm font-medium text-[#e8e8f0]">{l.display_name ?? '—'}</span>
+                            <span className="text-xs text-[#4a4a70] block">{l.discord_id}</span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-[#3d9970] font-medium">⚔️ {l.rsn}</td>
+                          <td className="px-4 py-2.5 text-xs text-[#4a4a70]">{new Date(l.linked_at).toLocaleDateString()}</td>
+                          <td className="px-4 py-2.5 text-right">
+                            <button onClick={() => removeLink(l.discord_id)} className="text-xs text-[#4a4a70] hover:text-[#ED4245] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#ED4245]/40">Unlink</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {toolsTab === 'logs' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#4a4a70]">Last 200 entries, newest first.</span>
+                <span className={`flex items-center gap-1.5 text-xs font-medium ${logsLive ? 'text-[#57F287]' : 'text-[#7070a0]'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${logsLive ? 'bg-[#57F287] animate-pulse' : 'bg-[#4a4a70]'}`} />
+                  {logsLive ? 'Live' : 'Connecting…'}
+                </span>
+              </div>
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#1a1a30]">
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Time</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Command</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Subcommand</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!logsLoaded ? (
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">Loading…</td></tr>
+                      ) : logs.length === 0 ? (
+                        <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">No commands logged yet.</td></tr>
+                      ) : logs.map(log => (
+                        <tr key={log.id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                          <td className="px-4 py-2 text-xs text-[#4a4a70] whitespace-nowrap">{new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}<span className="block text-[10px]">{new Date(log.logged_at).toLocaleDateString()}</span></td>
+                          <td className="px-4 py-2">
+                            <span className="text-sm text-[#e8e8f0]">{log.display_name ?? '—'}</span>
+                            <span className="text-xs text-[#4a4a70] block">{log.discord_id}</span>
+                          </td>
+                          <td className="px-4 py-2 text-sm font-mono text-[#c89b3c]">/{log.command}</td>
+                          <td className="px-4 py-2 text-xs text-[#7070a0]">{log.subcommand ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 
