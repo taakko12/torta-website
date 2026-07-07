@@ -1213,7 +1213,7 @@ export default function AdminDashboard() {
             const chOpts = (val: string | null | undefined) => (
               <>
                 <option value="">— Not set —</option>
-                {channels.map(c => <option key={c.id} value={c.id} selected={c.id === val}>#{c.name}</option>)}
+                {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
               </>
             )
             const row = (label: string, configKey: keyof GuildConfig, hint?: string) => (
