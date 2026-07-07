@@ -41,11 +41,17 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const [mergeToRsn, setMergeToRsn] = useState('')
   const [merging, setMerging] = useState(false)
 
-  // Enrich discord rows with RSN from links
-  const linkMap = Object.fromEntries(localLinks.map(l => [l.discord_id, l.rsn]))
+  // Primary RSN per discord_id (for display enrichment)
+  const primaryLinkMap = Object.fromEntries(localLinks.filter(l => l.primary_rsn).map(l => [l.discord_id, l.rsn]))
+  // All RSNs per discord_id (for combined view aggregation)
+  const discordRsns = localLinks.reduce<Record<string, string[]>>((acc, l) => {
+    ;(acc[l.discord_id] ??= []).push(l.rsn.toLowerCase())
+    return acc
+  }, {})
   const linkedRsns = new Map(localLinks.map(l => [l.rsn.toLowerCase(), l]))
-  const enriched = discordRows.map(d => ({ ...d, rsn: d.rsn ?? linkMap[d.discord_id] ?? null }))
-  const unlinkedDiscord = discordRows.filter(d => !linkMap[d.discord_id])
+  const enriched = discordRows.map(d => ({ ...d, rsn: d.rsn ?? primaryLinkMap[d.discord_id] ?? null }))
+  // Show all Discord members in quick-link dropdown (alts are allowed)
+  const unlinkedDiscord = discordRows
 
   async function saveNote(discordId: string, note: string) {
     setEditingNoteId(null)
@@ -56,8 +62,9 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   async function doQuickLink(rsn: string) {
     if (!quickLinkDiscordId) return
     const member = discordRows.find(d => d.discord_id === quickLinkDiscordId)
-    await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ discord_id: quickLinkDiscordId, rsn }) })
-    setLocalLinks(l => [...l.filter(x => x.discord_id !== quickLinkDiscordId), { discord_id: quickLinkDiscordId, rsn, linked_at: new Date().toISOString(), display_name: member?.display_name ?? null }])
+    const res = await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ discord_id: quickLinkDiscordId, rsn }) })
+    const { primary_rsn } = await res.json()
+    setLocalLinks(l => [...l.filter(x => !(x.discord_id === quickLinkDiscordId && x.rsn === rsn)), { discord_id: quickLinkDiscordId, rsn, linked_at: new Date().toISOString(), display_name: member?.display_name ?? null, primary_rsn: !!primary_rsn }])
     setQuickLinkRsn(null)
   }
 
@@ -95,16 +102,17 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const combinedData: CombinedRow[] = combined ? (() => {
     const rows: CombinedRow[] = []
     for (const d of enriched) {
-      if (d.rsn) {
-        const rsnKey = d.rsn.toLowerCase()
+      const rsns = discordRsns[d.discord_id] ?? (d.rsn ? [d.rsn.toLowerCase()] : [])
+      let igMonth = 0, igAll = 0, hasIngame = false
+      for (const rsnKey of rsns) {
         const ig = ingameByRsn.get(rsnKey)
+        if (ig) { igMonth += ig.month_count; igAll += ig.message_count; hasIngame = true }
         matchedRsns.add(rsnKey)
-        rows.push({ key: `l-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: d.rsn, type: ig ? 'Linked' : 'Discord', role: d.role_name, month_count: d.month_count + (ig?.month_count ?? 0), message_count: d.message_count + (ig?.message_count ?? 0), last_at: d.last_message_at })
-      } else {
-        rows.push({ key: `d-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: null, type: 'Discord', role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })
       }
+      const displayRsn = d.rsn  // primary RSN from enrichment
+      rows.push({ key: `l-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: displayRsn, type: (hasIngame || displayRsn) ? (hasIngame ? 'Linked' : 'Discord') : 'Discord', role: d.role_name, month_count: d.month_count + igMonth, message_count: d.message_count + igAll, last_at: d.last_message_at })
     }
-    for (const ig of ingame) {
+    for (const ig of ingameRows) {
       if (!matchedRsns.has(ig.rsn.toLowerCase()))
         rows.push({ key: `i-${ig.rsn}`, name: ig.rsn, rsn: ig.rsn, type: 'In-Game', role: null, month_count: ig.month_count, message_count: ig.message_count, last_at: ig.last_message_at })
     }

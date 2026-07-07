@@ -30,7 +30,7 @@ export type RolePanel = { channelId: string | null; messageId: string | null; ro
 export type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; rsn: string | null; promotion_note: string | null; message_count: number; month_count: number; last_message_at: string | null }
 export type IngameActivity = { rsn: string; message_count: number; month_count: number; last_message_at: string | null }
 export type VcActivity = { discord_id: string; display_name: string | null; role_name: string | null; total_minutes: number; month_minutes: number; last_seen_at: string | null }
-export type LinkRow = { discord_id: string; rsn: string; linked_at: string; display_name: string | null }
+export type LinkRow = { discord_id: string; rsn: string; linked_at: string; display_name: string | null; primary_rsn: boolean }
 export type ClanEvent = { id: string; title: string; description: string | null; event_type: string; scheduled_at: string | null; channel_id: string | null; created_at: string; event_rsvps: { count: number }[] }
 export type Raid = { id: string; name: string; timestamp: number; description: string | null; channel_id: string | null; signups: {id:string;username:string}[]; attendees: {id:string;username:string}[] | null }
 export type CommandLog = { id: number; discord_id: string; display_name: string | null; command: string; subcommand: string | null; channel_id: string | null; logged_at: string }
@@ -67,7 +67,7 @@ export async function fetchActivity() {
 export async function fetchLinks(): Promise<LinkRow[]> {
   const db = getSupabaseAdmin()
   const [{ data: links }, { data: activity }] = await Promise.all([
-    db.from('rsn_links').select('discord_id, rsn, linked_at').eq('guild_id', GUILD_ID).order('linked_at', { ascending: false }),
+    db.from('rsn_links').select('discord_id, rsn, linked_at, primary_rsn').eq('guild_id', GUILD_ID).order('primary_rsn', { ascending: false }).order('linked_at', { ascending: false }),
     db.from('discord_activity').select('discord_id, display_name').eq('guild_id', GUILD_ID),
   ])
   const nameMap = Object.fromEntries((activity ?? []).filter(a => a.display_name).map(a => [a.discord_id, a.display_name]))
