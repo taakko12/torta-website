@@ -15,6 +15,9 @@ type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string
 type GuildConfig = { planks_channel_id?: string | null; drops_channel_id?: string | null; lootsubmit_channel_id?: string | null; welcome_channel_id?: string | null; welcome_mod_channel_id?: string | null; welcome_role_id?: string | null; clanchat_channel_id?: string | null; broadcast_channel_id?: string | null; inactivity_channel_id?: string | null; recap_channel_id?: string | null }
 type Channel = { id: string; name: string }
 type Role = { id: string; name: string }
+type Raid = { id: string; name: string; timestamp: number; description: string | null; channel_id: string | null; signups: {id:string;username:string}[]; attendees: {id:string;username:string}[] | null; created_at: string }
+type PanelRole = { roleId: string; emoji: string; label: string }
+type RolePanel = { channelId: string | null; messageId: string | null; roles: PanelRole[] }
 
 function formatMinutes(mins: number): string {
   const d = Math.floor(mins / 1440)
@@ -84,6 +87,20 @@ export default function AdminDashboard() {
   const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [channels, setChannels] = useState<Channel[]>([])
   const [roles, setRoles] = useState<Role[]>([])
+  const [raids, setRaids] = useState<Raid[]>([])
+  const [raidName, setRaidName] = useState('')
+  const [raidTimestamp, setRaidTimestamp] = useState('')
+  const [raidDesc, setRaidDesc] = useState('')
+  const [raidChannel, setRaidChannel] = useState('')
+  const [rolePanel, setRolePanel] = useState<RolePanel>({ channelId: null, messageId: null, roles: [] })
+  const [panelRole, setPanelRole] = useState('')
+  const [panelEmoji, setPanelEmoji] = useState('')
+  const [panelLabel, setPanelLabel] = useState('')
+  const [panelChannel, setPanelChannel] = useState('')
+  const [scrapeRunning, setScrapeRunning] = useState(false)
+  const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
+  const [welcomePosting, setWelcomePosting] = useState(false)
+  const [welcomeStatus, setWelcomeStatus] = useState<string | null>(null)
   const [embedChannel, setEmbedChannel] = useState('')
   const [embedTitle, setEmbedTitle] = useState('')
   const [embedDesc, setEmbedDesc] = useState('')
@@ -269,26 +286,32 @@ export default function AdminDashboard() {
 
   async function loadTools() {
     if (activityLoaded) return
-    const [actRes, chRes, roleRes, evRes, cfgRes] = await Promise.all([
+    const [actRes, chRes, roleRes, evRes, cfgRes, raidsRes, panelRes] = await Promise.all([
       fetch('/api/admin/activity'),
       fetch('/api/admin/channels'),
       fetch('/api/admin/roles'),
       fetch('/api/admin/events'),
       fetch('/api/admin/config'),
+      fetch('/api/admin/raids'),
+      fetch('/api/admin/rolepanel'),
     ])
     const actData = await actRes.json()
     const chData = await chRes.json()
     const roleData = await roleRes.json()
     const evData = await evRes.json()
     const cfgData = await cfgRes.json()
+    const raidsData = await raidsRes.json()
+    const panelData = await panelRes.json()
     setDiscordActivity(actData.discord ?? [])
     setIngameActivity(actData.ingame ?? [])
     setVcActivity(actData.vc ?? [])
     setChannels(chData.channels ?? [])
     setRoles(roleData.roles ?? [])
-    if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id) }
+    if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id); setRaidChannel(chData.channels[0].id) }
     setClanEvents(evData.events ?? [])
     setGuildConfig(cfgData.config ?? {})
+    setRaids(raidsData.raids ?? [])
+    setRolePanel(panelData.panel ?? { channelId: null, messageId: null, roles: [] })
     setActivityLoaded(true)
   }
 
@@ -332,6 +355,72 @@ export default function AdminDashboard() {
     const updated = { ...guildConfig, ...patch }
     setGuildConfig(updated)
     await fetch('/api/admin/config', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
+  }
+
+  async function scheduleRaid() {
+    if (!raidName.trim() || !raidTimestamp || !raidChannel) return
+    const timestamp = Math.floor(new Date(raidTimestamp).getTime() / 1000)
+    const res = await fetch('/api/admin/raids', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: raidName.trim(), timestamp, description: raidDesc || null, channel_id: raidChannel }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setRaids(r => [...r, data.raid].sort((a, b) => a.timestamp - b.timestamp))
+      setRaidName(''); setRaidTimestamp(''); setRaidDesc('')
+    }
+  }
+
+  async function addPanelRole() {
+    if (!panelRole || !panelEmoji.trim()) return
+    const label = panelLabel.trim() || roles.find(r => r.id === panelRole)?.name || panelRole
+    const res = await fetch('/api/admin/rolepanel', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roleId: panelRole, emoji: panelEmoji.trim(), label }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setRolePanel(data.panel)
+      setPanelRole(''); setPanelEmoji(''); setPanelLabel('')
+    }
+  }
+
+  async function removePanelRole(roleId: string) {
+    const res = await fetch('/api/admin/rolepanel', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roleId }),
+    })
+    if (res.ok) { const data = await res.json(); setRolePanel(data.panel) }
+  }
+
+  async function postRolePanel() {
+    if (!panelChannel) return
+    const res = await fetch('/api/admin/rolepanel', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channelId: panelChannel }),
+    })
+    if (res.ok) { const data = await res.json(); setRolePanel(data.panel) }
+  }
+
+  async function postWelcomeMessage() {
+    setWelcomePosting(true); setWelcomeStatus(null)
+    const res = await fetch('/api/admin/welcome', { method: 'POST' })
+    const data = await res.json()
+    setWelcomePosting(false)
+    setWelcomeStatus(res.ok ? '✅ Welcome panel posted!' : `❌ ${data.error}`)
+  }
+
+  async function scrapeHistory(period: 'month' | 'all') {
+    setScrapeRunning(true); setScrapeStatus(null)
+    const res = await fetch('/api/admin/scrape', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ period }),
+    })
+    const data = await res.json()
+    setScrapeRunning(false)
+    setScrapeStatus(res.ok
+      ? `✅ Done — ${data.inserted} drops imported, ${data.skipped} already existed (${data.total} messages scanned).`
+      : `❌ ${data.error}`)
   }
 
   async function sendEmbed() {
@@ -1211,6 +1300,52 @@ export default function AdminDashboard() {
                   )
                 })}
               </div>
+
+            {/* Raid scheduling */}
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Schedule Raid</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Posts a raid signup embed with Discord buttons. Members click Sign Up / Drop Out in Discord.</p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                </div>
+                <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                <div className="flex gap-3">
+                  <select value={raidChannel} onChange={e => setRaidChannel(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                  </select>
+                  <button onClick={scheduleRaid} disabled={!raidName.trim() || !raidTimestamp || !raidChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
+                    Schedule Raid
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {raids.length > 0 && (
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Upcoming Raids <span className="text-[#4a4a70] normal-case">({raids.length})</span></h2>
+                </div>
+                <div className="divide-y divide-[#141427]">
+                  {raids.map(raid => (
+                    <div key={raid.id} className="px-5 py-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-[#e8e8f0]">{raid.name}</div>
+                        <div className="text-xs text-[#4a4a70] mt-0.5">
+                          {new Date(raid.timestamp * 1000).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          {' · '}
+                          <span className="text-[#7c5ce8]">{raid.signups?.length ?? 0} signed up</span>
+                          {raid.attendees && <span className="text-[#57F287] ml-2">✓ Complete</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             </div>
           )}
 
@@ -1271,6 +1406,104 @@ export default function AdminDashboard() {
                     {roles.map(r => <option key={r.id} value={r.id}>@{r.name}</option>)}
                   </select>
                 </div>
+              </div>
+            </div>
+
+            {/* Welcome Panel */}
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Welcome Panel</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Posts the clan rules embed with an "I Agree" button. Set Welcome Channel above first.</p>
+              </div>
+              <div className="px-5 py-4 flex flex-wrap items-center gap-3">
+                <span className="text-sm text-[#a0a0c0]">
+                  {guildConfig.welcome_channel_id
+                    ? <>Posting to <span className="text-[#c89b3c]">#{channels.find(c => c.id === guildConfig.welcome_channel_id)?.name ?? guildConfig.welcome_channel_id}</span></>
+                    : <span className="text-[#4a4a70]">Welcome channel not set</span>}
+                </span>
+                <button
+                  onClick={postWelcomeMessage}
+                  disabled={!guildConfig.welcome_channel_id || welcomePosting}
+                  className="ml-auto px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40"
+                >
+                  {welcomePosting ? 'Posting…' : 'Post Welcome Message'}
+                </button>
+                {welcomeStatus && <span className="text-xs text-[#a0a0c0] w-full">{welcomeStatus}</span>}
+              </div>
+            </div>
+
+            {/* Role Panel */}
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Panel</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Manage role self-assignment buttons. Adding or removing a role auto-updates the Discord message.</p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-4">
+                {rolePanel.roles.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {rolePanel.roles.map(r => (
+                      <div key={r.roleId} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#141427] border border-[#2a2a4a] text-sm text-[#c0c0e0]">
+                        <span>{r.emoji}</span><span>{r.label}</span>
+                        <button onClick={() => removePanelRole(r.roleId)} className="text-[#4a4a70] hover:text-[#ED4245] transition-colors ml-1 leading-none">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <select value={panelRole} onChange={e => setPanelRole(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    <option value="">Select role…</option>
+                    {roles.map(r => <option key={r.id} value={r.id}>@{r.name}</option>)}
+                  </select>
+                  <input value={panelEmoji} onChange={e => setPanelEmoji(e.target.value)} placeholder="Emoji" className="w-20 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={panelLabel} onChange={e => setPanelLabel(e.target.value)} placeholder="Label (optional)" className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <button onClick={addPanelRole} disabled={!panelRole || !panelEmoji.trim()} className="px-3 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] disabled:opacity-40">Add</button>
+                </div>
+                <div className="flex gap-2 pt-1 border-t border-[#141427]">
+                  <select value={panelChannel} onChange={e => setPanelChannel(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    <option value="">Select channel to post to…</option>
+                    {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                  </select>
+                  <button onClick={postRolePanel} disabled={!panelChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] disabled:opacity-40">
+                    {rolePanel.messageId ? 'Repost Panel' : 'Post Panel'}
+                  </button>
+                </div>
+                {rolePanel.channelId && (
+                  <p className="text-xs text-[#4a4a70]">
+                    Currently posted in #{channels.find(c => c.id === rolePanel.channelId)?.name ?? rolePanel.channelId}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Loot Scrape */}
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Loot History Scrape</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Re-scan the drops channel and import any missed entries. Automatically skips duplicates.</p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-3">
+                <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-[#1a1020] border border-[#c89b3c]/30 text-xs text-[#c89b3c]">
+                  <span className="text-base mt-0.5 shrink-0">⚠️</span>
+                  <span>This fetches every message in the drops channel from Discord. Large channels may take several minutes. Run once for a full backfill — the bot handles new drops automatically going forward.</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => scrapeHistory('month')}
+                    disabled={scrapeRunning || !guildConfig.drops_channel_id}
+                    className="flex-1 px-4 py-2 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#c0c0e0] text-sm hover:border-[#7c5ce8]/60 transition-colors disabled:opacity-40"
+                  >
+                    {scrapeRunning ? 'Scraping…' : 'Scrape This Month'}
+                  </button>
+                  <button
+                    onClick={() => scrapeHistory('all')}
+                    disabled={scrapeRunning || !guildConfig.drops_channel_id}
+                    className="flex-1 px-4 py-2 rounded-lg bg-[#141427] border border-[#ED4245]/40 text-[#c0c0e0] text-sm hover:border-[#ED4245]/80 transition-colors disabled:opacity-40"
+                  >
+                    {scrapeRunning ? 'Scraping…' : 'Scrape All Time ⚠️'}
+                  </button>
+                </div>
+                {scrapeStatus && <p className="text-xs text-[#a0a0c0]">{scrapeStatus}</p>}
+                {!guildConfig.drops_channel_id && <p className="text-xs text-[#4a4a70]">Set Drops Channel above to enable scraping.</p>}
               </div>
             </div>
             </>
