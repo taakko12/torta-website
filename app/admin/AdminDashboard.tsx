@@ -7,9 +7,19 @@ type BingoTask = { id: string; position: number; title: string; description: str
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
-type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; message_count: number; last_message_at: string | null }
-type IngameActivity = { rsn: string; message_count: number; last_message_at: string | null }
+type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; message_count: number; month_count: number; last_message_at: string | null }
+type IngameActivity = { rsn: string; message_count: number; month_count: number; last_message_at: string | null }
+type VcActivity = { discord_id: string; display_name: string | null; role_name: string | null; total_minutes: number; month_minutes: number; last_seen_at: string | null }
 type Channel = { id: string; name: string }
+
+function formatMinutes(mins: number): string {
+  const d = Math.floor(mins / 1440)
+  const h = Math.floor((mins % 1440) / 60)
+  const m = mins % 60
+  if (d > 0) return `${d}d ${h}h ${m}m`
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
+}
 
 const TEAM_COLORS = ['#c89b3c', '#5865F2', '#57F287', '#ED4245', '#FEE75C', '#EB459E', '#3498db']
 
@@ -47,11 +57,16 @@ export default function AdminDashboard() {
   const [subs, setSubs] = useState<BingoSub[]>([])
   const [discordActivity, setDiscordActivity] = useState<DiscordActivity[]>([])
   const [ingameActivity, setIngameActivity] = useState<IngameActivity[]>([])
+  const [vcActivity, setVcActivity] = useState<VcActivity[]>([])
   const [activityLoaded, setActivityLoaded] = useState(false)
   const [discordOpen, setDiscordOpen] = useState(true)
   const [ingameOpen, setIngameOpen] = useState(true)
+  const [vcOpen, setVcOpen] = useState(true)
   const [discordPage, setDiscordPage] = useState(0)
   const [ingamePage, setIngamePage] = useState(0)
+  const [vcPage, setVcPage] = useState(0)
+  const [combined, setCombined] = useState(false)
+  const [combinedPage, setCombinedPage] = useState(0)
   const [channels, setChannels] = useState<Channel[]>([])
   const [embedChannel, setEmbedChannel] = useState('')
   const [embedTitle, setEmbedTitle] = useState('')
@@ -245,6 +260,7 @@ export default function AdminDashboard() {
     const chData = await chRes.json()
     setDiscordActivity(actData.discord ?? [])
     setIngameActivity(actData.ingame ?? [])
+    setVcActivity(actData.vc ?? [])
     setChannels(chData.channels ?? [])
     if (chData.channels?.length) setEmbedChannel(chData.channels[0].id)
     setActivityLoaded(true)
@@ -746,19 +762,176 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {toolsTab === 'activity' && <>
-          {/* Discord Activity */}
-          {(() => {
+          {toolsTab === 'activity' && (() => {
             const PAGE = 25
-            const pages = Math.ceil(discordActivity.length / PAGE)
-            const slice = discordActivity.slice(discordPage * PAGE, (discordPage + 1) * PAGE)
-            return (
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {discordActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({discordActivity.length})</span>}</h2>
-                  <span className="text-[#4a4a70] text-sm">{discordOpen ? '▲' : '▼'}</span>
+            type CombinedRow = { key: string; name: string; type: 'Discord' | 'In-Game'; role: string | null; month_count: number; message_count: number; last_at: string | null }
+            const combinedData: CombinedRow[] = combined ? [
+              ...discordActivity.map(d => ({ key: `d-${d.discord_id}`, name: d.display_name ?? d.discord_id, type: 'Discord' as const, role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })),
+              ...ingameActivity.map(ig => ({ key: `i-${ig.rsn}`, name: ig.rsn, type: 'In-Game' as const, role: null, month_count: ig.month_count, message_count: ig.message_count, last_at: ig.last_message_at })),
+            ].sort((a, b) => b.month_count - a.month_count) : []
+            const combinedPages = Math.ceil(combinedData.length / PAGE)
+            const combinedSlice = combinedData.slice(combinedPage * PAGE, (combinedPage + 1) * PAGE)
+            const discordPages = Math.ceil(discordActivity.length / PAGE)
+            const discordSlice = discordActivity.slice(discordPage * PAGE, (discordPage + 1) * PAGE)
+            const ingamePages = Math.ceil(ingameActivity.length / PAGE)
+            const ingameSlice = ingameActivity.slice(ingamePage * PAGE, (ingamePage + 1) * PAGE)
+            const vcPages = Math.ceil(vcActivity.length / PAGE)
+            const vcSlice = vcActivity.slice(vcPage * PAGE, (vcPage + 1) * PAGE)
+            return (<>
+              {/* Combine toggle */}
+              <div className="flex justify-end">
+                <button onClick={() => { setCombined(c => !c); setCombinedPage(0) }}
+                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#2a2a4a] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+                  {combined ? 'Split View' : 'Combined View'}
                 </button>
-                {discordOpen && (<>
+              </div>
+
+              {combined ? (
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                  <div className="flex items-center px-5 py-3 border-b border-[#2a2a4a]">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#4a4a70] normal-case">({combinedData.length})</span>}</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-[#1a1a30]">
+                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
+                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Name</th>
+                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Type</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">All Time</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {combinedSlice.length === 0 ? (
+                          <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                        ) : combinedSlice.map((row, i) => (
+                          <tr key={row.key} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                            <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{combinedPage * PAGE + i + 1}</td>
+                            <td className="px-4 py-2.5">
+                              <span className="text-sm font-medium text-[#e8e8f0]">{row.name}</span>
+                              {row.role && <span className="text-xs text-[#7c5ce8] ml-2">{row.role}</span>}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === 'Discord' ? 'bg-[#5865F2]/20 text-[#8ea0f8]' : 'bg-[#3d9970]/20 text-[#5cbf87]'}`}>{row.type}</span>
+                            </td>
+                            <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
+                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
+                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_at ? new Date(row.last_at).toLocaleDateString() : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {combinedPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                      <button onClick={() => setCombinedPage(p => Math.max(0, p - 1))} disabled={combinedPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                      <span className="text-xs text-[#4a4a70]">Page {combinedPage + 1} of {combinedPages}</span>
+                      <button onClick={() => setCombinedPage(p => Math.min(combinedPages - 1, p + 1))} disabled={combinedPage === combinedPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                    </div>
+                  )}
+                </div>
+              ) : (<>
+                {/* Discord Activity */}
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                  <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {discordActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({discordActivity.length})</span>}</h2>
+                    <span className="text-[#4a4a70] text-sm">{discordOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {discordOpen && (<>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[#1a1a30]">
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">All Time</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {discordSlice.length === 0 ? (
+                            <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                          ) : discordSlice.map((row, i) => (
+                            <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                              <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
+                              <td className="px-4 py-2.5">
+                                <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
+                                <span className="text-xs text-[#4a4a70] ml-2">{row.discord_id}</span>
+                              </td>
+                              <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
+                              <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
+                              <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
+                              <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {discordPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                        <button onClick={() => setDiscordPage(p => Math.max(0, p - 1))} disabled={discordPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                        <span className="text-xs text-[#4a4a70]">Page {discordPage + 1} of {discordPages}</span>
+                        <button onClick={() => setDiscordPage(p => Math.min(discordPages - 1, p + 1))} disabled={discordPage === discordPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                      </div>
+                    )}
+                  </>)}
+                </div>
+
+                {/* In-Game Activity */}
+                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                  <button onClick={() => setIngameOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity {ingameActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({ingameActivity.length})</span>}</h2>
+                    <span className="text-[#4a4a70] text-sm">{ingameOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {ingameOpen && (<>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[#1a1a30]">
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
+                            <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">All Time</th>
+                            <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ingameSlice.length === 0 ? (
+                            <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                          ) : ingameSlice.map((row, i) => (
+                            <tr key={row.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                              <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{ingamePage * PAGE + i + 1}</td>
+                              <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
+                              <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
+                              <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.message_count.toLocaleString()}</td>
+                              <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {ingamePages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                        <button onClick={() => setIngamePage(p => Math.max(0, p - 1))} disabled={ingamePage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                        <span className="text-xs text-[#4a4a70]">Page {ingamePage + 1} of {ingamePages}</span>
+                        <button onClick={() => setIngamePage(p => Math.min(ingamePages - 1, p + 1))} disabled={ingamePage === ingamePages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                      </div>
+                    )}
+                  </>)}
+                </div>
+              </>)}
+
+              {/* VC Activity */}
+              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+                <button onClick={() => setVcOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {vcActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({vcActivity.length})</span>}</h2>
+                  <span className="text-[#4a4a70] text-sm">{vcOpen ? '▲' : '▼'}</span>
+                </button>
+                {vcOpen && (<>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -766,92 +939,38 @@ export default function AdminDashboard() {
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
-                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Messages</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">All Time</th>
                           <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {slice.length === 0 ? (
-                          <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
-                        ) : slice.map((row, i) => (
+                        {vcSlice.length === 0 ? (
+                          <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
+                        ) : vcSlice.map((row, i) => (
                           <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
-                            <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
-                            <td className="px-4 py-2.5">
-                              <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
-                              <span className="text-xs text-[#4a4a70] ml-2">{row.discord_id}</span>
-                            </td>
+                            <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{vcPage * PAGE + i + 1}</td>
+                            <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</td>
                             <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
-                            <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.message_count.toLocaleString()}</td>
-                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">
-                              {row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}
-                            </td>
+                            <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{formatMinutes(row.month_minutes)}</td>
+                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{formatMinutes(row.total_minutes)}</td>
+                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">{row.last_seen_at ? new Date(row.last_seen_at).toLocaleDateString() : '—'}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  {pages > 1 && (
+                  {vcPages > 1 && (
                     <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
-                      <button onClick={() => setDiscordPage(p => Math.max(0, p - 1))} disabled={discordPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-                      <span className="text-xs text-[#4a4a70]">Page {discordPage + 1} of {pages}</span>
-                      <button onClick={() => setDiscordPage(p => Math.min(pages - 1, p + 1))} disabled={discordPage === pages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                      <button onClick={() => setVcPage(p => Math.max(0, p - 1))} disabled={vcPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                      <span className="text-xs text-[#4a4a70]">Page {vcPage + 1} of {vcPages}</span>
+                      <button onClick={() => setVcPage(p => Math.min(vcPages - 1, p + 1))} disabled={vcPage === vcPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
                     </div>
                   )}
                 </>)}
               </div>
-            )
+            </>)
           })()}
-
-          {/* In-Game Activity */}
-          {(() => {
-            const PAGE = 25
-            const pages = Math.ceil(ingameActivity.length / PAGE)
-            const slice = ingameActivity.slice(ingamePage * PAGE, (ingamePage + 1) * PAGE)
-            return (
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <button onClick={() => setIngameOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity {ingameActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({ingameActivity.length})</span>}</h2>
-                  <span className="text-[#4a4a70] text-sm">{ingameOpen ? '▲' : '▼'}</span>
-                </button>
-                {ingameOpen && (<>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-[#1a1a30]">
-                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
-                          <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
-                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Messages</th>
-                          <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Last Seen</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {slice.length === 0 ? (
-                          <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
-                        ) : slice.map((row, i) => (
-                          <tr key={row.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
-                            <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{ingamePage * PAGE + i + 1}</td>
-                            <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
-                            <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.message_count.toLocaleString()}</td>
-                            <td className="px-4 py-2.5 text-right text-xs text-[#6868a0]">
-                              {row.last_message_at ? new Date(row.last_message_at).toLocaleDateString() : '—'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {pages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
-                      <button onClick={() => setIngamePage(p => Math.max(0, p - 1))} disabled={ingamePage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-                      <span className="text-xs text-[#4a4a70]">Page {ingamePage + 1} of {pages}</span>
-                      <button onClick={() => setIngamePage(p => Math.min(pages - 1, p + 1))} disabled={ingamePage === pages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
-                    </div>
-                  )}
-                </>)}
-              </div>
-            )
-          })()}
-          </>}
 
           {toolsTab === 'messenger' && <>
           {/* Send Embed */}
