@@ -25,11 +25,11 @@ export default function PlayerSearchPage() {
           value={rsn}
           onChange={e => setRsn(e.target.value)}
           placeholder="Enter RSN…"
-          className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] px-4 py-2.5 text-[#e8e8f0] placeholder-[#7070a0] focus:outline-none focus:border-[#c89b3c]"
+          className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] px-4 py-2.5 text-[#e8e8f0] placeholder-[#7070a0] focus:outline-none focus:border-[#c89b3c]"
         />
         <button
           type="submit"
-          className="px-4 py-2.5 rounded-lg bg-[#c89b3c] text-[#07070f] font-semibold text-sm hover:bg-[#d4a94a] transition-colors"
+          className="px-4 py-2.5 rounded-lg bg-[#c89b3c] text-[#0f0f1e] font-semibold text-sm hover:bg-[#d4a94a] transition-colors"
         >
           Search
         </button>

@@ -18,7 +18,7 @@ export default async function Navbar() {
   return (
     <header className="sticky top-0 z-50">
       {/* Main bar */}
-      <div className="bg-[#07070f]/80 backdrop-blur-md">
+      <div className="bg-[#0f0f1e]/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           {/* Logo */}
           <Link href="/" className="text-gradient-gold text-lg font-black tracking-widest uppercase hover:opacity-90 transition-opacity select-none">
@@ -44,7 +44,7 @@ export default async function Navbar() {
             {session?.isAdmin && (
               <Link
                 href="/admin"
-                className="text-xs px-3 py-1.5 rounded-lg border border-[#3a3a60] bg-[#12122a] text-[#c89b3c] hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/8 transition-all font-medium"
+                className="text-xs px-3 py-1.5 rounded-lg border border-[#424268] bg-[#12122a] text-[#c89b3c] hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/8 transition-all font-medium"
               >
                 Staff Login
               </Link>

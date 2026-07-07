@@ -60,7 +60,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
         {Array.from({ length: boardSize * boardSize }).map((_, i) => {
           const task = tasks.find(t => t.position === i)
           if (!task) {
-            return <div key={i} className="aspect-square rounded-lg bg-[#0a0a18] border border-[#1a1a30]" />
+            return <div key={i} className="aspect-square rounded-lg bg-[#121226] border border-[#21213c]" />
           }
           const count = activeTeam?.taskProgress[task.id] ?? 0
           const done = activeTeam?.completedTaskIds.includes(task.id) ?? false
@@ -71,16 +71,16 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
               key={task.id}
               onClick={() => setSelected(task)}
               className="aspect-square rounded-xl border-2 relative overflow-hidden transition-all text-left group hover:scale-[1.03] hover:z-10 focus:outline-none focus:ring-2 focus:ring-[#c89b3c]/50"
-              style={{ borderColor: done ? teamColor : '#2a2a4a' }}
+              style={{ borderColor: done ? teamColor : '#333358' }}
             >
-              <div className="absolute inset-0 bg-[#0d0d1e]" />
+              <div className="absolute inset-0 bg-[#161628]" />
               {task.image_url && (
                 <div className="absolute inset-0 flex items-center justify-center p-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={task.image_url} alt="" className="w-full h-full object-contain opacity-40 group-hover:opacity-55 transition-opacity" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#07070f]/95 via-[#07070f]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f1e]/95 via-[#0f0f1e]/30 to-transparent" />
               {done && <div className="absolute inset-0 opacity-10" style={{ backgroundColor: teamColor }} />}
               <div className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.025] transition-colors" />
 
@@ -92,7 +92,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
                     {task.points}pt{task.points !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-[#1a1a30] overflow-hidden">
+                <div className="h-1.5 rounded-full bg-[#21213c] overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: teamColor }} />
                 </div>
               </div>
@@ -112,19 +112,19 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
           <div
             role="dialog"
             aria-modal="true"
-            className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#2a2a4a] bg-[#0d0d1e] shadow-2xl shadow-black/60"
+            className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#333358] bg-[#161628] shadow-2xl shadow-black/60"
             onClick={e => e.stopPropagation()}
           >
             {/* Image banner */}
             {selected.image_url && (
-              <div className="relative w-full bg-[#07070f] overflow-hidden" style={{ height: 200 }}>
+              <div className="relative w-full bg-[#0f0f1e] overflow-hidden" style={{ height: 200 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selected.image_url}
                   alt={selected.title}
                   className="w-full h-full object-contain"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0d0d1e]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#161628]" />
               </div>
             )}
 
@@ -138,7 +138,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
                   </span>
                   <button
                     onClick={close}
-                    className="w-7 h-7 rounded-full bg-[#1a1a30] text-[#6868a0] hover:text-white hover:bg-[#252540] transition-colors flex items-center justify-center text-sm leading-none"
+                    className="w-7 h-7 rounded-full bg-[#21213c] text-[#6868a0] hover:text-white hover:bg-[#2c2c4e] transition-colors flex items-center justify-center text-sm leading-none"
                   >
                     ✕
                   </button>
@@ -151,7 +151,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
 
               {/* Progress section */}
               {activeTeam && (
-                <div className="rounded-xl bg-[#141427] border border-[#1a1a30] p-4 mb-5">
+                <div className="rounded-xl bg-[#1c1c36] border border-[#21213c] p-4 mb-5">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: activeTeam.team.color }} />
@@ -164,7 +164,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
                     </div>
                     <span className="text-xs text-[#6868a0]">{activeCount} / {selected.required_count}</span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-[#0d0d1e] overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-[#161628] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -190,7 +190,7 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
                 </div>
 
                 {taskSubmissions.length === 0 ? (
-                  <div className="rounded-xl border border-[#1a1a30] bg-[#0a0a18] py-8 text-center">
+                  <div className="rounded-xl border border-[#21213c] bg-[#121226] py-8 text-center">
                     <p className="text-sm text-[#4a4a70]">No approved submissions yet.</p>
                   </div>
                 ) : (
@@ -198,14 +198,14 @@ export default function BingoBoardGrid({ boardSize, tasks, activeTeam, submissio
                     {taskSubmissions.map(sub => {
                       const team = rsnTeamMap[sub.rsn.toLowerCase()]
                       return (
-                        <li key={sub.id} className="rounded-xl border border-[#1a1a30] bg-[#0a0a18] overflow-hidden">
+                        <li key={sub.id} className="rounded-xl border border-[#21213c] bg-[#121226] overflow-hidden">
                           {sub.screenshot_url && (
                             <a href={sub.screenshot_url} target="_blank" rel="noopener noreferrer">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={sub.screenshot_url}
                                 alt={`${sub.rsn} screenshot`}
-                                className="w-full object-cover hover:opacity-90 transition-opacity bg-[#07070f]"
+                                className="w-full object-cover hover:opacity-90 transition-opacity bg-[#0f0f1e]"
                                 style={{ maxHeight: 240 }}
                               />
                             </a>

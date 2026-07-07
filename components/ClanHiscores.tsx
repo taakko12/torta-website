@@ -94,7 +94,7 @@ export default function ClanHiscores({ members }: Props) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search RSN..."
-            className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#0d0d1e] border border-[#252540] text-sm text-[#e8e8f0] placeholder:text-[#3a3a60] focus:outline-none focus:border-[#4a4a70]"
+            className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#161628] border border-[#2c2c4e] text-sm text-[#e8e8f0] placeholder:text-[#424268] focus:outline-none focus:border-[#4a4a70]"
           />
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function ClanHiscores({ members }: Props) {
             className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
               tab === t.key
                 ? 'bg-[#c89b3c]/12 text-[#c89b3c] border-[#c89b3c]/30'
-                : 'bg-[#0d0d1e] text-[#6868a0] border-[#252540] hover:text-[#e8e8f0] hover:border-[#3a3a60]'
+                : 'bg-[#161628] text-[#6868a0] border-[#2c2c4e] hover:text-[#e8e8f0] hover:border-[#424268]'
             }`}
           >
             {t.label}
@@ -125,7 +125,7 @@ export default function ClanHiscores({ members }: Props) {
             <select
               value={selectedBoss ?? ''}
               onChange={e => setActiveBoss(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-[#0d0d1e] border border-[#252540] text-sm text-[#e8e8f0] focus:outline-none focus:border-[#4a4a70] w-56"
+              className="px-3 py-2 rounded-lg bg-[#161628] border border-[#2c2c4e] text-sm text-[#e8e8f0] focus:outline-none focus:border-[#4a4a70] w-56"
             >
               {bossRanking.map(boss => (
                 <option key={boss} value={boss}>{formatMetric(boss)}</option>
@@ -145,7 +145,7 @@ export default function ClanHiscores({ members }: Props) {
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
                 activeSkill === skill
                   ? 'bg-[#7c5ce8]/20 text-[#c89b3c] border-[#7c5ce8]/40'
-                  : 'bg-[#141427] text-[#6868a0] border-[#252540] hover:text-[#e8e8f0]'
+                  : 'bg-[#1c1c36] text-[#6868a0] border-[#2c2c4e] hover:text-[#e8e8f0]'
               }`}
             >
               <span>{SKILL_ICONS[skill]}</span>
@@ -156,12 +156,12 @@ export default function ClanHiscores({ members }: Props) {
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
+      <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
         <div className="overflow-x-auto">
           {tab === 'overall' && (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#1a1a30]">
+                <tr className="border-b border-[#21213c]">
                   <th className="px-4 py-3 text-left w-12 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                   <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</th>
                   <th className="px-4 py-3 text-right">
@@ -176,7 +176,7 @@ export default function ClanHiscores({ members }: Props) {
               </thead>
               <tbody>
                 {sorted.map((m, i) => (
-                  <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50 transition-colors">
+                  <tr key={m.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50 transition-colors">
                     <td className="px-4 py-3.5">
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' :
                         <span className="text-xs text-[#4a4a70]">#{i + 1}</span>}
@@ -210,7 +210,7 @@ export default function ClanHiscores({ members }: Props) {
           {tab === 'bosses' && selectedBoss && (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#1a1a30]">
+                <tr className="border-b border-[#21213c]">
                   <th className="px-4 py-3 text-left w-12 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                   <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</th>
                   <th className="px-4 py-3 text-right">
@@ -228,7 +228,7 @@ export default function ClanHiscores({ members }: Props) {
                   const kc = data?.kills ?? -1
                   if (kc < 0) return null
                   return (
-                    <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50 transition-colors">
+                    <tr key={m.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50 transition-colors">
                       <td className="px-4 py-3.5">
                         {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' :
                           <span className="text-xs text-[#4a4a70]">#{i + 1}</span>}
@@ -260,7 +260,7 @@ export default function ClanHiscores({ members }: Props) {
           {tab === 'skills' && (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#1a1a30]">
+                <tr className="border-b border-[#21213c]">
                   <th className="px-4 py-3 text-left w-12 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                   <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</th>
                   <th className="px-4 py-3 text-right">
@@ -276,7 +276,7 @@ export default function ClanHiscores({ members }: Props) {
                 {sorted.map((m, i) => {
                   const data = m.skills[activeSkill]
                   return (
-                    <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50 transition-colors">
+                    <tr key={m.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50 transition-colors">
                       <td className="px-4 py-3.5">
                         {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' :
                           <span className="text-xs text-[#4a4a70]">#{i + 1}</span>}

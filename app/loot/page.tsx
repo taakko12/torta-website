@@ -36,8 +36,8 @@ export default async function LootPage({ searchParams }: Props) {
           href="/loot?tab=monthly"
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             !isAlltime
-              ? 'bg-[#c89b3c] text-[#07070f]'
-              : 'bg-[#141427] text-[#7070a0] hover:text-[#e8e8f0]'
+              ? 'bg-[#c89b3c] text-[#0f0f1e]'
+              : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'
           }`}
         >
           Monthly
@@ -46,8 +46,8 @@ export default async function LootPage({ searchParams }: Props) {
           href="/loot?tab=alltime"
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             isAlltime
-              ? 'bg-[#c89b3c] text-[#07070f]'
-              : 'bg-[#141427] text-[#7070a0] hover:text-[#e8e8f0]'
+              ? 'bg-[#c89b3c] text-[#0f0f1e]'
+              : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'
           }`}
         >
           All Time
@@ -55,7 +55,7 @@ export default async function LootPage({ searchParams }: Props) {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] px-5 py-4">
+      <div className="rounded-xl border border-[#333358] bg-[#161628] px-5 py-4">
         <DropLeaderboardTable entries={entries} />
       </div>
     </div>

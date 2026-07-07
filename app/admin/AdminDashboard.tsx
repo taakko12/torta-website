@@ -532,7 +532,7 @@ export default function AdminDashboard() {
             className={`px-5 py-2 rounded-lg text-sm font-semibold border transition-all ${
               section === s
                 ? 'bg-[#c89b3c]/12 text-[#c89b3c] border-[#c89b3c]/40'
-                : 'bg-[#0e0e1c] text-[#7070a0] border-[#2a2a4a] hover:text-[#e8e8f0]'
+                : 'bg-[#161628] text-[#7070a0] border-[#333358] hover:text-[#e8e8f0]'
             }`}
           >
             {s === 'bingo' ? 'Bingo' : 'Tools'}
@@ -547,7 +547,7 @@ export default function AdminDashboard() {
             <select
               value={selectedEventId ?? ''}
               onChange={e => setSelectedEventId(e.target.value || null)}
-              className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none"
+              className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none"
             >
               {events.map(ev => (
                 <option key={ev.id} value={ev.id}>{ev.title} {ev.active ? '(active)' : ''}</option>
@@ -557,7 +557,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-[#2a2a4a]">
+        <div className="flex gap-1 mb-6 border-b border-[#333358]">
           {tabs.map(t => (
             <button
               key={t.key}
@@ -575,13 +575,13 @@ export default function AdminDashboard() {
       {/* EVENTS TAB */}
       {tab === 'events' && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Create Event</h2>
             <div className="space-y-3">
               <input
                 value={newTitle} onChange={e => setNewTitle(e.target.value)}
                 placeholder="Event title (e.g. July Bingo)"
-                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
               />
               <div>
                 <label className="text-xs text-[#7070a0] mb-2 block">Board Size</label>
@@ -599,7 +599,7 @@ export default function AdminDashboard() {
                       className={`p-3 rounded-lg border text-left transition-all ${
                         newSize === size
                           ? 'border-[#c89b3c] bg-[#c89b3c]/10'
-                          : 'border-[#2a2a4a] bg-[#141427] hover:border-[#4a4a6a]'
+                          : 'border-[#333358] bg-[#1c1c36] hover:border-[#4a4a6a]'
                       }`}
                     >
                       <p className={`text-sm font-bold ${newSize === size ? 'text-[#c89b3c]' : 'text-[#e8e8f0]'}`}>{label}</p>
@@ -609,18 +609,18 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <button onClick={createEvent}
-                className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors">
+                className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060] transition-colors">
                 Create Event
               </button>
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">All Events</h2>
             {events.length === 0 ? (
               <p className="text-sm text-[#7070a0]">No events yet.</p>
             ) : (
-              <ul className="divide-y divide-[#2a2a4a]">
+              <ul className="divide-y divide-[#333358]">
                 {events.map(ev => (
                   <li key={ev.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
                     <div>
@@ -635,7 +635,7 @@ export default function AdminDashboard() {
                         </button>
                       ) : (
                         <button onClick={() => setActive(ev.id)}
-                          className="text-xs px-3 py-1 rounded bg-[#141427] text-[#7070a0] border border-[#2a2a4a] hover:text-[#e8e8f0]">
+                          className="text-xs px-3 py-1 rounded bg-[#1c1c36] text-[#7070a0] border border-[#333358] hover:text-[#e8e8f0]">
                           Set Active
                         </button>
                       )}
@@ -657,7 +657,7 @@ export default function AdminDashboard() {
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
                 {/* Task form */}
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">
                     {taskForm.id ? 'Edit Task' : 'Add Task'}
                   </h2>
@@ -668,7 +668,7 @@ export default function AdminDashboard() {
                         value={taskForm.title}
                         onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))}
                         placeholder="Get 5 sapphires from Giant Mole"
-                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                        className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
                       />
                     </div>
                     <div>
@@ -677,7 +677,7 @@ export default function AdminDashboard() {
                         value={taskForm.description}
                         onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))}
                         placeholder="Additional context…"
-                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                        className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
                       />
                     </div>
                     <div>
@@ -686,7 +686,7 @@ export default function AdminDashboard() {
                         value={taskForm.image_url}
                         onChange={e => setTaskForm(f => ({ ...f, image_url: e.target.value }))}
                         placeholder="https://…"
-                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                        className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -695,7 +695,7 @@ export default function AdminDashboard() {
                         <input
                           type="number" min={1} value={taskForm.points}
                           onChange={e => setTaskForm(f => ({ ...f, points: Number(e.target.value) }))}
-                          className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+                          className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
                         />
                       </div>
                       <div>
@@ -703,7 +703,7 @@ export default function AdminDashboard() {
                         <input
                           type="number" min={1} value={taskForm.required_count}
                           onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))}
-                          className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+                          className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
                         />
                       </div>
                     </div>
@@ -715,12 +715,12 @@ export default function AdminDashboard() {
                         type="number" min={1} value={taskForm.points_per_submission}
                         onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))}
                         placeholder={`e.g. ${Math.round(taskForm.points / Math.max(taskForm.required_count, 1))}`}
-                        className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
+                        className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]"
                       />
                     </div>
 
                     {/* Position indicator — driven by board click */}
-                    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-[#141427] border border-[#252540]">
+                    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-[#1c1c36] border border-[#2c2c4e]">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center border-2 border-dashed border-[#c89b3c] bg-[#c89b3c]/10 text-[#c89b3c] text-xs font-bold shrink-0">
                         {taskForm.position}
                       </div>
@@ -730,14 +730,14 @@ export default function AdminDashboard() {
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={upsertTask}
-                        className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
+                        className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060] transition-colors"
                       >
                         {taskForm.id ? 'Save Changes' : 'Add Task'}
                       </button>
                       {taskForm.id && (
                         <button
                           onClick={() => setTaskForm({ ...EMPTY_TASK, position: tasks.length })}
-                          className="px-4 py-2 rounded-lg bg-[#141427] text-[#7070a0] text-sm border border-[#2a2a4a] hover:text-[#e8e8f0]"
+                          className="px-4 py-2 rounded-lg bg-[#1c1c36] text-[#7070a0] text-sm border border-[#333358] hover:text-[#e8e8f0]"
                         >
                           Cancel
                         </button>
@@ -747,7 +747,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Visual board */}
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-4">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
                       Board · {selectedEvent.board_size}×{selectedEvent.board_size}
@@ -779,8 +779,8 @@ export default function AdminDashboard() {
                               ${isEditingThis
                                 ? 'border-[#c89b3c] bg-[#c89b3c]/15 cursor-grab'
                                 : isDraggingThis
-                                  ? 'border-[#3a3a60] bg-[#141427] opacity-40 scale-95 cursor-grabbing'
-                                  : 'border-[#2a2a4a] bg-[#141427] hover:border-[#5a5a8a] hover:bg-[#1a1a30] cursor-grab'
+                                  ? 'border-[#424268] bg-[#1c1c36] opacity-40 scale-95 cursor-grabbing'
+                                  : 'border-[#333358] bg-[#1c1c36] hover:border-[#5a5a8a] hover:bg-[#21213c] cursor-grab'
                               }`}
                           >
                             <p className="text-[9px] font-semibold text-[#e8e8f0] leading-tight line-clamp-3 flex-1">{task.title}</p>
@@ -802,11 +802,11 @@ export default function AdminDashboard() {
                             ${isSelectedPos
                               ? 'border-[#c89b3c] border-dashed bg-[#c89b3c]/10'
                               : dragTaskId
-                                ? 'border-[#3a3a60] border-dashed bg-[#141427]/60 hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/5'
-                                : 'border-[#1a1a30] bg-[#0a0a18] hover:border-[#3a3a60] hover:bg-[#141427]'
+                                ? 'border-[#424268] border-dashed bg-[#1c1c36]/60 hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/5'
+                                : 'border-[#21213c] bg-[#121226] hover:border-[#424268] hover:bg-[#1c1c36]'
                             }`}
                         >
-                          <span className={`text-[9px] font-mono ${isSelectedPos ? 'text-[#c89b3c]' : 'text-[#252540]'}`}>
+                          <span className={`text-[9px] font-mono ${isSelectedPos ? 'text-[#c89b3c]' : 'text-[#2c2c4e]'}`}>
                             {pos}
                           </span>
                         </div>
@@ -818,11 +818,11 @@ export default function AdminDashboard() {
 
               {/* Task list */}
               {tasks.length > 0 && (
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">
                     All Tasks ({tasks.length})
                   </h2>
-                  <ul className="divide-y divide-[#1a1a30]">
+                  <ul className="divide-y divide-[#21213c]">
                     {[...tasks].sort((a, b) => a.position - b.position).map(t => (
                       <li key={t.id} className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -833,7 +833,7 @@ export default function AdminDashboard() {
                         <div className="flex gap-1.5 shrink-0">
                           <button
                             onClick={() => loadTaskIntoForm(t)}
-                            className="text-xs px-2 py-1 rounded bg-[#141427] text-[#7070a0] border border-[#2a2a4a] hover:text-[#e8e8f0]"
+                            className="text-xs px-2 py-1 rounded bg-[#1c1c36] text-[#7070a0] border border-[#333358] hover:text-[#e8e8f0]"
                           >
                             Edit
                           </button>
@@ -861,12 +861,12 @@ export default function AdminDashboard() {
             <p className="text-sm text-[#7070a0]">Select an event above.</p>
           ) : (
             <>
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Create Team</h2>
                 <div className="flex gap-2 flex-wrap">
                   <input value={teamName} onChange={e => setTeamName(e.target.value)}
                     placeholder="Team name"
-                    className="flex-1 min-w-40 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
+                    className="flex-1 min-w-40 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
                   <div className="flex gap-1">
                     {TEAM_COLORS.map(c => (
                       <button key={c} onClick={() => setTeamColor(c)}
@@ -875,24 +875,24 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                   <button onClick={createTeam}
-                    className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060]">
+                    className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060]">
                     Create
                   </button>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Add Member</h2>
                 <div className="flex gap-2 flex-wrap">
                   <select value={memberTeamId} onChange={e => setMemberTeamId(e.target.value)}
-                    className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                    className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                   <input value={memberRsn} onChange={e => setMemberRsn(e.target.value)}
                     placeholder="RSN"
-                    className="flex-1 min-w-32 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
+                    className="flex-1 min-w-32 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
                   <button onClick={addMember}
-                    className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060]">
+                    className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060]">
                     Add
                   </button>
                 </div>
@@ -901,7 +901,7 @@ export default function AdminDashboard() {
               {teams.map(team => {
                 const teamMembers = members.filter(m => m.team_id === team.id)
                 return (
-                  <div key={team.id} className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                  <div key={team.id} className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-sm font-semibold flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
@@ -917,7 +917,7 @@ export default function AdminDashboard() {
                     ) : (
                       <ul className="flex flex-wrap gap-2">
                         {teamMembers.map(m => (
-                          <li key={m.id} className="flex items-center gap-1.5 bg-[#141427] rounded px-2 py-1 text-xs text-[#e8e8f0]">
+                          <li key={m.id} className="flex items-center gap-1.5 bg-[#1c1c36] rounded px-2 py-1 text-xs text-[#e8e8f0]">
                             {m.rsn}
                             <button onClick={() => removeMember(m.id)} className="text-[#7070a0] hover:text-red-400 ml-0.5">×</button>
                           </li>
@@ -938,14 +938,14 @@ export default function AdminDashboard() {
           {!selectedEventId ? (
             <p className="text-sm text-[#7070a0]">Select an event above.</p>
           ) : subs.length === 0 ? (
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-8 text-center text-sm text-[#7070a0]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] p-8 text-center text-sm text-[#7070a0]">
               No pending submissions.
             </div>
           ) : (
             subs.map(sub => {
               const task = tasks.find(t => t.id === sub.task_id)
               return (
-                <div key={sub.id} className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+                <div key={sub.id} className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                       <p className="text-sm font-semibold text-[#e8e8f0]">{sub.rsn}</p>
@@ -969,7 +969,7 @@ export default function AdminDashboard() {
                       <a href={sub.screenshot_url} target="_blank" rel="noreferrer"
                         className="text-xs text-[#5865F2] underline">View screenshot ↗</a>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={sub.screenshot_url} alt="screenshot" className="mt-2 max-h-48 rounded-lg object-contain bg-[#141427]" />
+                      <img src={sub.screenshot_url} alt="screenshot" className="mt-2 max-h-48 rounded-lg object-contain bg-[#1c1c36]" />
                     </div>
                   )}
                 </div>
@@ -983,7 +983,7 @@ export default function AdminDashboard() {
       {section === 'tools' && (
         <div className="space-y-6">
           {/* Tools sub-nav */}
-          <div className="flex gap-1 border-b border-[#2a2a4a]">
+          <div className="flex gap-1 border-b border-[#333358]">
             {([['activity', 'Activity'], ['members', 'Members'], ['logs', 'Command Logs'], ['events', 'Events'], ['messenger', 'Messenger'], ['settings', 'Settings']] as const).map(([key, label]) => (
               <button key={key} onClick={() => setToolsTab(key)}
                 className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
@@ -1029,21 +1029,21 @@ export default function AdminDashboard() {
               {/* Combine toggle */}
               <div className="flex justify-end">
                 <button onClick={() => { setCombined(c => !c); setCombinedPage(0) }}
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#2a2a4a] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#333358] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
                   {combined ? 'Split View' : 'Combined View'}
                 </button>
               </div>
 
               {combined ? (
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                  <button onClick={() => setCombinedOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                  <button onClick={() => setCombinedOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#4a4a70] normal-case">({combinedData.length})</span>}</h2>
                     <span className="text-[#4a4a70] text-sm">{combinedOpen ? '▲' : '▼'}</span>
                   </button>
                   {combinedOpen && <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-[#1a1a30]">
+                        <tr className="border-b border-[#21213c]">
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Name</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Type</th>
@@ -1056,7 +1056,7 @@ export default function AdminDashboard() {
                         {combinedSlice.length === 0 ? (
                           <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                         ) : combinedSlice.map((row, i) => (
-                          <tr key={row.key} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                          <tr key={row.key} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                             <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{combinedPage * PAGE + i + 1}</td>
                             <td className="px-4 py-2.5">
                               <span className="text-sm font-medium text-[#e8e8f0]">{row.name}</span>
@@ -1075,7 +1075,7 @@ export default function AdminDashboard() {
                     </table>
                   </div>}
                   {combinedOpen && combinedPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
                       <button onClick={() => setCombinedPage(p => Math.max(0, p - 1))} disabled={combinedPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
                       <span className="text-xs text-[#4a4a70]">Page {combinedPage + 1} of {combinedPages}</span>
                       <button onClick={() => setCombinedPage(p => Math.min(combinedPages - 1, p + 1))} disabled={combinedPage === combinedPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
@@ -1084,8 +1084,8 @@ export default function AdminDashboard() {
                 </div>
               ) : (<>
                 {/* Discord Activity */}
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                  <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                  <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {discordActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({discordActivity.length})</span>}</h2>
                     <span className="text-[#4a4a70] text-sm">{discordOpen ? '▲' : '▼'}</span>
                   </button>
@@ -1093,7 +1093,7 @@ export default function AdminDashboard() {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-[#1a1a30]">
+                          <tr className="border-b border-[#21213c]">
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
@@ -1107,7 +1107,7 @@ export default function AdminDashboard() {
                           {discordSlice.length === 0 ? (
                             <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                           ) : discordSlice.map((row, i) => (
-                            <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                            <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                               <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
                               <td className="px-4 py-2.5">
                                 <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
@@ -1117,10 +1117,10 @@ export default function AdminDashboard() {
                               <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
                               <td className="px-4 py-2.5 max-w-[160px]">
                                 {editingNoteId === row.discord_id ? (
-                                  <input autoFocus defaultValue={noteValue} onBlur={e => saveNote(row.discord_id, e.target.value)} onKeyDown={e => e.key === 'Enter' && saveNote(row.discord_id, (e.target as HTMLInputElement).value)} className="w-full bg-[#1a1a30] border border-[#7c5ce8]/50 rounded px-2 py-1 text-xs text-[#e8e8f0] outline-none" />
+                                  <input autoFocus defaultValue={noteValue} onBlur={e => saveNote(row.discord_id, e.target.value)} onKeyDown={e => e.key === 'Enter' && saveNote(row.discord_id, (e.target as HTMLInputElement).value)} className="w-full bg-[#21213c] border border-[#7c5ce8]/50 rounded px-2 py-1 text-xs text-[#e8e8f0] outline-none" />
                                 ) : (
                                   <button onClick={() => { setEditingNoteId(row.discord_id); setNoteValue(row.promotion_note ?? '') }} className="text-xs text-left w-full truncate text-[#6868a0] hover:text-[#e8e8f0] transition-colors">
-                                    {row.promotion_note ?? <span className="text-[#3a3a60]">add note…</span>}
+                                    {row.promotion_note ?? <span className="text-[#424268]">add note…</span>}
                                   </button>
                                 )}
                               </td>
@@ -1133,7 +1133,7 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                     {discordPages > 1 && (
-                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
                         <button onClick={() => setDiscordPage(p => Math.max(0, p - 1))} disabled={discordPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
                         <span className="text-xs text-[#4a4a70]">Page {discordPage + 1} of {discordPages}</span>
                         <button onClick={() => setDiscordPage(p => Math.min(discordPages - 1, p + 1))} disabled={discordPage === discordPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
@@ -1143,8 +1143,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* In-Game Activity */}
-                <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                  <button onClick={() => setIngameOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+                <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                  <button onClick={() => setIngameOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity {ingameActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({ingameActivity.length})</span>}</h2>
                     <span className="text-[#4a4a70] text-sm">{ingameOpen ? '▲' : '▼'}</span>
                   </button>
@@ -1152,7 +1152,7 @@ export default function AdminDashboard() {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-[#1a1a30]">
+                          <tr className="border-b border-[#21213c]">
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                             <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
                             <th className="px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">This Month</th>
@@ -1164,7 +1164,7 @@ export default function AdminDashboard() {
                           {ingameSlice.length === 0 ? (
                             <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                           ) : ingameSlice.map((row, i) => (
-                            <tr key={row.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                            <tr key={row.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                               <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{ingamePage * PAGE + i + 1}</td>
                               <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
                               <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
@@ -1176,7 +1176,7 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                     {ingamePages > 1 && (
-                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                      <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
                         <button onClick={() => setIngamePage(p => Math.max(0, p - 1))} disabled={ingamePage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
                         <span className="text-xs text-[#4a4a70]">Page {ingamePage + 1} of {ingamePages}</span>
                         <button onClick={() => setIngamePage(p => Math.min(ingamePages - 1, p + 1))} disabled={ingamePage === ingamePages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
@@ -1187,8 +1187,8 @@ export default function AdminDashboard() {
               </>)}
 
               {/* VC Activity */}
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <button onClick={() => setVcOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#2a2a4a] hover:bg-[#141427]/50 transition-colors">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                <button onClick={() => setVcOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {vcActivity.length > 0 && <span className="text-[#4a4a70] normal-case">({vcActivity.length})</span>}</h2>
                   <span className="text-[#4a4a70] text-sm">{vcOpen ? '▲' : '▼'}</span>
                 </button>
@@ -1196,7 +1196,7 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-[#1a1a30]">
+                        <tr className="border-b border-[#21213c]">
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
                           <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Role</th>
@@ -1209,7 +1209,7 @@ export default function AdminDashboard() {
                         {vcSlice.length === 0 ? (
                           <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{activityLoaded ? 'No data yet.' : 'Loading…'}</td></tr>
                         ) : vcSlice.map((row, i) => (
-                          <tr key={row.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                          <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                             <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{vcPage * PAGE + i + 1}</td>
                             <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</td>
                             <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
@@ -1222,7 +1222,7 @@ export default function AdminDashboard() {
                     </table>
                   </div>
                   {vcPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#1a1a30]">
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
                       <button onClick={() => setVcPage(p => Math.max(0, p - 1))} disabled={vcPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
                       <span className="text-xs text-[#4a4a70]">Page {vcPage + 1} of {vcPages}</span>
                       <button onClick={() => setVcPage(p => Math.min(vcPages - 1, p + 1))} disabled={vcPage === vcPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
@@ -1235,7 +1235,7 @@ export default function AdminDashboard() {
 
           {toolsTab === 'messenger' && <>
           {/* Send Embed */}
-        <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Send Embed to Discord</h2>
           <div className="space-y-3 max-w-lg">
             <div>
@@ -1243,7 +1243,7 @@ export default function AdminDashboard() {
               <select
                 value={embedChannel}
                 onChange={e => setEmbedChannel(e.target.value)}
-                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
+                className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none"
               >
                 {channels.length === 0
                   ? <option value="">Loading channels…</option>
@@ -1257,23 +1257,23 @@ export default function AdminDashboard() {
                 value={embedTitle}
                 onChange={e => setEmbedTitle(e.target.value)}
                 placeholder="Embed title"
-                className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60]"
+                className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]"
               />
             </div>
             <div>
               <label className="text-xs text-[#7070a0] mb-1 block">Description</label>
-              <div className="rounded-lg border border-[#2a2a4a] bg-[#141427] overflow-hidden">
-                <div className="flex flex-wrap gap-px p-1 border-b border-[#2a2a4a] bg-[#0e0e1c]">
+              <div className="rounded-lg border border-[#333358] bg-[#1c1c36] overflow-hidden">
+                <div className="flex flex-wrap gap-px p-1 border-b border-[#333358] bg-[#161628]">
                   {([
                     ['H1', '# '], ['H2', '## '], ['H3', '### '],
                   ] as [string, string][]).map(([label, prefix]) => (
                     <button key={label} type="button"
                       onMouseDown={e => { e.preventDefault(); prefixLine(prefix) }}
-                      className="px-2.5 py-1 rounded text-xs font-bold text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
+                      className="px-2.5 py-1 rounded text-xs font-bold text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#333358] transition-colors">
                       {label}
                     </button>
                   ))}
-                  <span className="self-center text-[#2a2a4a] mx-1">|</span>
+                  <span className="self-center text-[#333358] mx-1">|</span>
                   {([
                     ['B', '**', '**', 'font-bold'],
                     ['I', '*', '*', 'italic'],
@@ -1283,22 +1283,22 @@ export default function AdminDashboard() {
                   ] as [string, string, string, string][]).map(([label, before, after, cls]) => (
                     <button key={label} type="button"
                       onMouseDown={e => { e.preventDefault(); wrapText(before, after) }}
-                      className="px-2.5 py-1 rounded text-xs text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
+                      className="px-2.5 py-1 rounded text-xs text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#333358] transition-colors">
                       <span className={cls}>{label}</span>
                     </button>
                   ))}
-                  <span className="self-center text-[#2a2a4a] mx-1">|</span>
+                  <span className="self-center text-[#333358] mx-1">|</span>
                   {([
                     ['> ', '> ', ''],
                     ['- ', '- ', ''],
                   ] as [string, string, string][]).map(([label, before, after]) => (
                     <button key={label} type="button"
                       onMouseDown={e => { e.preventDefault(); wrapText(before, after) }}
-                      className="px-2.5 py-1 rounded text-xs font-mono text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#2a2a4a] transition-colors">
+                      className="px-2.5 py-1 rounded text-xs font-mono text-[#a0a0c0] hover:text-[#e8e8f0] hover:bg-[#333358] transition-colors">
                       {label}
                     </button>
                   ))}
-                  <span className="ml-auto text-[10px] text-[#3a3a60] self-center pr-1">markdown</span>
+                  <span className="ml-auto text-[10px] text-[#424268] self-center pr-1">markdown</span>
                 </div>
                 <textarea
                   ref={descRef}
@@ -1306,7 +1306,7 @@ export default function AdminDashboard() {
                   onChange={e => setEmbedDesc(e.target.value)}
                   placeholder="Embed description…"
                   rows={5}
-                  className="w-full bg-transparent text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#3a3a60] resize-none"
+                  className="w-full bg-transparent text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268] resize-none"
                 />
               </div>
             </div>
@@ -1314,7 +1314,7 @@ export default function AdminDashboard() {
               <label className="text-xs text-[#7070a0] mb-1 block">Color</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={embedColor} onChange={e => setEmbedColor(e.target.value)}
-                  className="h-9 w-12 rounded cursor-pointer bg-transparent border border-[#2a2a4a]" />
+                  className="h-9 w-12 rounded cursor-pointer bg-transparent border border-[#333358]" />
                 <span className="text-xs text-[#4a4a70]">{embedColor}</span>
               </div>
             </div>
@@ -1335,19 +1335,19 @@ export default function AdminDashboard() {
           {toolsTab === 'events' && (
             <div className="space-y-6">
               {/* Create event */}
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Schedule Event</h2>
                 <div className="grid grid-cols-1 gap-3 max-w-lg">
-                  <input value={eventTitle} onChange={e => setEventTitle(e.target.value)} placeholder="Event title" className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
-                  <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)} placeholder="Description (optional)" rows={2} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none resize-none focus:border-[#7c5ce8]/60" />
-                  <select value={eventType} onChange={e => setEventType(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                  <input value={eventTitle} onChange={e => setEventTitle(e.target.value)} placeholder="Event title" className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)} placeholder="Description (optional)" rows={2} className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none resize-none focus:border-[#7c5ce8]/60" />
+                  <select value={eventType} onChange={e => setEventType(e.target.value)} className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {['Event', 'Raid', 'PvM Session', 'Social', 'Competition', 'Other'].map(t => <option key={t}>{t}</option>)}
                   </select>
                   <div>
                     <label className="text-xs text-[#7070a0] mb-1 block">Date &amp; Time</label>
-                    <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                    <input type="datetime-local" value={eventDate} onChange={e => setEventDate(e.target.value)} className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                   </div>
-                  <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                  <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {channels.length === 0 ? <option value="">Loading channels…</option> : channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                   </select>
                   <button onClick={createClanEvent} disabled={!eventTitle.trim() || !eventChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
@@ -1357,8 +1357,8 @@ export default function AdminDashboard() {
               </div>
 
               {/* Event list */}
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#333358]">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Upcoming Events {clanEvents.length > 0 && <span className="text-[#4a4a70] normal-case">({clanEvents.length})</span>}</h2>
                 </div>
                 {clanEvents.length === 0 ? (
@@ -1367,8 +1367,8 @@ export default function AdminDashboard() {
                   const rsvpCount = ev.event_rsvps?.[0]?.count ?? 0
                   const isOpen = rsvpEventId === ev.id
                   return (
-                    <div key={ev.id} className="border-b border-[#141427] last:border-0">
-                      <div className="flex items-center gap-3 px-5 py-3 hover:bg-[#141427]/50">
+                    <div key={ev.id} className="border-b border-[#1c1c36] last:border-0">
+                      <div className="flex items-center gap-3 px-5 py-3 hover:bg-[#1c1c36]/50">
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium text-[#e8e8f0]">{ev.title}</span>
                           <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-[#7c5ce8]/20 text-[#b09cf8]">{ev.event_type}</span>
@@ -1376,7 +1376,7 @@ export default function AdminDashboard() {
                             {ev.scheduled_at ? new Date(ev.scheduled_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBD'}
                           </div>
                         </div>
-                        <button onClick={() => loadRsvps(ev.id)} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#4a4a70]">
+                        <button onClick={() => loadRsvps(ev.id)} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#333358] hover:border-[#4a4a70]">
                           {rsvpCount} going {isOpen ? '▲' : '▼'}
                         </button>
                         <button onClick={() => deleteEvent(ev.id)} className="text-xs text-[#4a4a70] hover:text-[#ED4245] transition-colors px-2">✕</button>
@@ -1385,7 +1385,7 @@ export default function AdminDashboard() {
                         <div className="px-5 pb-3">
                           {rsvps.length === 0 ? <p className="text-xs text-[#4a4a70]">No RSVPs yet.</p> : (
                             <div className="flex flex-wrap gap-2">
-                              {rsvps.map(r => <span key={r.discord_id} className="text-xs px-2 py-1 rounded-full bg-[#141427] text-[#a0a0c0]">{r.display_name ?? r.discord_id}</span>)}
+                              {rsvps.map(r => <span key={r.discord_id} className="text-xs px-2 py-1 rounded-full bg-[#1c1c36] text-[#a0a0c0]">{r.display_name ?? r.discord_id}</span>)}
                             </div>
                           )}
                         </div>
@@ -1396,19 +1396,19 @@ export default function AdminDashboard() {
               </div>
 
             {/* Raid scheduling */}
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Schedule Raid</h2>
                 <p className="text-xs text-[#4a4a70] mt-1">Posts a raid signup embed with Discord buttons. Members click Sign Up / Drop Out in Discord.</p>
               </div>
               <div className="px-5 py-4 flex flex-col gap-3">
                 <div className="flex gap-3">
-                  <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
-                  <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input type="datetime-local" value={raidTimestamp} onChange={e => setRaidTimestamp(e.target.value)} className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                 </div>
-                <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className="rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                 <div className="flex gap-3">
-                  <select value={raidChannel} onChange={e => setRaidChannel(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                  <select value={raidChannel} onChange={e => setRaidChannel(e.target.value)} className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                   </select>
                   <button onClick={scheduleRaid} disabled={!raidName.trim() || !raidTimestamp || !raidChannel} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
@@ -1419,11 +1419,11 @@ export default function AdminDashboard() {
             </div>
 
             {raids.length > 0 && (
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#2a2a4a]">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#333358]">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Upcoming Raids <span className="text-[#4a4a70] normal-case">({raids.length})</span></h2>
                 </div>
-                <div className="divide-y divide-[#141427]">
+                <div className="divide-y divide-[#1c1c36]">
                   {raids.map(raid => (
                     <div key={raid.id} className="px-5 py-3 flex items-center justify-between">
                       <div>
@@ -1453,29 +1453,29 @@ export default function AdminDashboard() {
             return (
             <div className="space-y-6">
               {/* Add link — only unlinked members */}
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Link Member to RSN</h2>
                 <div className="flex gap-3 flex-wrap">
-                  <select value={linkDiscordId} onChange={e => setLinkDiscordId(e.target.value)} className="flex-1 min-w-[180px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60">
+                  <select value={linkDiscordId} onChange={e => setLinkDiscordId(e.target.value)} className="flex-1 min-w-[180px] rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60">
                     <option value="">Select Discord member…</option>
                     {unlinkedMembers.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
                   </select>
-                  <input value={linkRsn} onChange={e => setLinkRsn(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLink()} placeholder="RuneScape name" className="flex-1 min-w-[160px] rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={linkRsn} onChange={e => setLinkRsn(e.target.value)} onKeyDown={e => e.key === 'Enter' && addLink()} placeholder="RuneScape name" className="flex-1 min-w-[160px] rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                   <button onClick={addLink} disabled={!linkDiscordId || !linkRsn.trim()} className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">Link</button>
                 </div>
                 <p className="text-xs text-[#4a4a70] mt-2">Only unlinked members are shown. To update an existing link, use the Edit button in the table below.</p>
               </div>
 
               {/* Current links + search */}
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#2a2a4a] flex items-center gap-3">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+                <div className="px-5 py-3 border-b border-[#333358] flex items-center gap-3">
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] shrink-0">RSN Links <span className="text-[#4a4a70] normal-case font-normal">({links.length})</span></h2>
-                  <input value={linkSearch} onChange={e => setLinkSearch(e.target.value)} placeholder="Search by name or RSN…" className="ml-auto w-48 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={linkSearch} onChange={e => setLinkSearch(e.target.value)} placeholder="Search by name or RSN…" className="ml-auto w-48 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-1.5 text-sm outline-none focus:border-[#7c5ce8]/60" />
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#1a1a30]">
+                      <tr className="border-b border-[#21213c]">
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Discord Member</th>
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">RSN</th>
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Linked</th>
@@ -1488,14 +1488,14 @@ export default function AdminDashboard() {
                       ) : filteredLinks.length === 0 ? (
                         <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">{q ? 'No matches.' : 'No links yet.'}</td></tr>
                       ) : filteredLinks.map(l => (
-                        <tr key={l.discord_id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                        <tr key={l.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                           <td className="px-4 py-2.5">
                             <span className="text-sm font-medium text-[#e8e8f0]">{l.display_name ?? '—'}</span>
                             <span className="text-xs text-[#4a4a70] block">{l.discord_id}</span>
                           </td>
                           <td className="px-4 py-2.5">
                             {editingDiscordId === l.discord_id ? (
-                              <input autoFocus value={editRsn} onChange={e => setEditRsn(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEditLink(l.discord_id); if (e.key === 'Escape') setEditingDiscordId(null) }} className="rounded bg-[#141427] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-sm outline-none w-36" />
+                              <input autoFocus value={editRsn} onChange={e => setEditRsn(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEditLink(l.discord_id); if (e.key === 'Escape') setEditingDiscordId(null) }} className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-sm outline-none w-36" />
                             ) : (
                               <span className="text-sm text-[#3d9970] font-medium">⚔️ {l.rsn}</span>
                             )}
@@ -1506,10 +1506,10 @@ export default function AdminDashboard() {
                               {editingDiscordId === l.discord_id ? (
                                 <>
                                   <button onClick={() => saveEditLink(l.discord_id)} disabled={!editRsn.trim()} className="text-xs text-[#57F287] hover:text-[#57F287]/80 transition-colors px-2 py-1 rounded border border-[#57F287]/30 hover:border-[#57F287]/60 disabled:opacity-40">Save</button>
-                                  <button onClick={() => setEditingDiscordId(null)} className="text-xs text-[#4a4a70] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#2a2a4a]">Cancel</button>
+                                  <button onClick={() => setEditingDiscordId(null)} className="text-xs text-[#4a4a70] hover:text-[#e8e8f0] transition-colors px-2 py-1 rounded border border-[#333358]">Cancel</button>
                                 </>
                               ) : (
-                                <button onClick={() => { setEditingDiscordId(l.discord_id); setEditRsn(l.rsn) }} className="text-xs text-[#4a4a70] hover:text-[#7c5ce8] transition-colors px-2 py-1 rounded border border-[#2a2a4a] hover:border-[#7c5ce8]/40">Edit</button>
+                                <button onClick={() => { setEditingDiscordId(l.discord_id); setEditRsn(l.rsn) }} className="text-xs text-[#4a4a70] hover:text-[#7c5ce8] transition-colors px-2 py-1 rounded border border-[#333358] hover:border-[#7c5ce8]/40">Edit</button>
                               )}
                               <button onClick={() => removeLink(l.discord_id)} className="text-xs text-[#4a4a70] hover:text-white transition-colors px-2 py-1 rounded bg-[#ED4245]/0 hover:bg-[#ED4245] border border-[#ED4245]/30 hover:border-[#ED4245]">Unlink</button>
                             </div>
@@ -1533,11 +1533,11 @@ export default function AdminDashboard() {
                   {logsLive ? 'Live' : 'Connecting…'}
                 </span>
               </div>
-              <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#1a1a30]">
+                      <tr className="border-b border-[#21213c]">
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Time</th>
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Command</th>
@@ -1550,7 +1550,7 @@ export default function AdminDashboard() {
                       ) : logs.length === 0 ? (
                         <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">No commands logged yet.</td></tr>
                       ) : logs.map(log => (
-                        <tr key={log.id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50">
+                        <tr key={log.id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                           <td className="px-4 py-2 text-xs text-[#4a4a70] whitespace-nowrap">{new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}<span className="block text-[10px]">{new Date(log.logged_at).toLocaleDateString()}</span></td>
                           <td className="px-4 py-2">
                             <span className="text-sm text-[#e8e8f0]">{log.display_name ?? '—'}</span>
@@ -1569,8 +1569,8 @@ export default function AdminDashboard() {
 
           {toolsTab === 'settings' && (
             <>
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
                 <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.{channels.length > 0 ? ` ${channels.length} channels loaded.` : ' No channels loaded — check bot token in Railway.'}</p>
               </div>
@@ -1586,7 +1586,7 @@ export default function AdminDashboard() {
                   ['Weekly Recap Channel', 'recap_channel_id', 'Sunday activity recap post'],
                   ['Inactivity Alerts Channel', 'inactivity_channel_id', 'Monday inactive members list'],
                 ] as [string, keyof GuildConfig, string][]).map(([label, key, hint]) => (
-                  <div key={key} className="flex items-center gap-4 py-3 border-b border-[#141427] last:border-0">
+                  <div key={key} className="flex items-center gap-4 py-3 border-b border-[#1c1c36] last:border-0">
                     <div className="w-52 shrink-0">
                       <div className="text-sm text-[#c0c0e0]">{label}</div>
                       <div className="text-xs text-[#4a4a70] mt-0.5">{hint}</div>
@@ -1594,7 +1594,7 @@ export default function AdminDashboard() {
                     <select
                       value={guildConfig[key] ?? ''}
                       onChange={e => saveConfig({ [key]: e.target.value || null })}
-                      className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+                      className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
                     >
                       <option value="">— Not set —</option>
                       {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
@@ -1604,13 +1604,13 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a] flex items-center gap-3">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358] flex items-center gap-3">
                 <div>
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Settings</h2>
                   <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection. {roles.length > 0 ? `${roles.length} roles loaded.` : <span className="text-[#ED4245]">No roles loaded.</span>}</p>
                 </div>
-                <button onClick={loadRoles} className="ml-auto text-xs text-[#7070a0] hover:text-[#e8e8f0] border border-[#2a2a4a] px-2 py-1 rounded transition-colors">↻ Reload</button>
+                <button onClick={loadRoles} className="ml-auto text-xs text-[#7070a0] hover:text-[#e8e8f0] border border-[#333358] px-2 py-1 rounded transition-colors">↻ Reload</button>
               </div>
               <div className="px-5">
                 <div className="flex items-center gap-4 py-3">
@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
                   <select
                     value={guildConfig.welcome_role_id ?? ''}
                     onChange={e => saveConfig({ welcome_role_id: e.target.value || null })}
-                    className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+                    className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
                   >
                     <option value="">— Not set —</option>
                     {roles.map(r => <option key={r.id} value={r.id}>@{r.name}</option>)}
@@ -1631,8 +1631,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Welcome Panel */}
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Welcome Panel</h2>
                 <p className="text-xs text-[#4a4a70] mt-1">Posts the clan rules embed with an "I Agree" button. Set Welcome Channel above first.</p>
               </div>
@@ -1654,8 +1654,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Role Panel */}
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Panel</h2>
                 <p className="text-xs text-[#4a4a70] mt-1">Manage role self-assignment buttons. Adding or removing a role auto-updates the Discord message.</p>
               </div>
@@ -1663,7 +1663,7 @@ export default function AdminDashboard() {
                 {rolePanel.roles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {rolePanel.roles.map(r => (
-                      <div key={r.roleId} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#141427] border border-[#2a2a4a] text-sm text-[#c0c0e0]">
+                      <div key={r.roleId} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#1c1c36] border border-[#333358] text-sm text-[#c0c0e0]">
                         <span>{r.emoji}</span><span>{r.label}</span>
                         <button onClick={() => removePanelRole(r.roleId)} className="text-[#4a4a70] hover:text-[#ED4245] transition-colors ml-1 leading-none">✕</button>
                       </div>
@@ -1671,16 +1671,16 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <select value={panelRole} onChange={e => setPanelRole(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                  <select value={panelRole} onChange={e => setPanelRole(e.target.value)} className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     <option value="">Select role…</option>
                     {roles.map(r => <option key={r.id} value={r.id}>@{r.name}</option>)}
                   </select>
-                  <input value={panelEmoji} onChange={e => setPanelEmoji(e.target.value)} placeholder="Emoji" className="w-20 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
-                  <input value={panelLabel} onChange={e => setPanelLabel(e.target.value)} placeholder="Label (optional)" className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={panelEmoji} onChange={e => setPanelEmoji(e.target.value)} placeholder="Emoji" className="w-20 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
+                  <input value={panelLabel} onChange={e => setPanelLabel(e.target.value)} placeholder="Label (optional)" className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60" />
                   <button onClick={addPanelRole} disabled={!panelRole || !panelEmoji.trim()} className="px-3 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] disabled:opacity-40">Add</button>
                 </div>
-                <div className="flex gap-2 pt-1 border-t border-[#141427]">
-                  <select value={panelChannel} onChange={e => setPanelChannel(e.target.value)} className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+                <div className="flex gap-2 pt-1 border-t border-[#1c1c36]">
+                  <select value={panelChannel} onChange={e => setPanelChannel(e.target.value)} className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
                     <option value="">Select channel to post to…</option>
                     {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
                   </select>
@@ -1697,8 +1697,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Loot Scrape */}
-            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+            <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#333358]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Loot History Scrape</h2>
                 <p className="text-xs text-[#4a4a70] mt-1">Re-scan the drops channel and import any missed entries. Automatically skips duplicates.</p>
               </div>
@@ -1711,14 +1711,14 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => scrapeHistory('month')}
                     disabled={scrapeRunning || !guildConfig.drops_channel_id}
-                    className="flex-1 px-4 py-2 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#c0c0e0] text-sm hover:border-[#7c5ce8]/60 transition-colors disabled:opacity-40"
+                    className="flex-1 px-4 py-2 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#c0c0e0] text-sm hover:border-[#7c5ce8]/60 transition-colors disabled:opacity-40"
                   >
                     {scrapeRunning ? 'Scraping…' : 'Scrape This Month'}
                   </button>
                   <button
                     onClick={() => scrapeHistory('all')}
                     disabled={scrapeRunning || !guildConfig.drops_channel_id}
-                    className="flex-1 px-4 py-2 rounded-lg bg-[#141427] border border-[#ED4245]/40 text-[#c0c0e0] text-sm hover:border-[#ED4245]/80 transition-colors disabled:opacity-40"
+                    className="flex-1 px-4 py-2 rounded-lg bg-[#1c1c36] border border-[#ED4245]/40 text-[#c0c0e0] text-sm hover:border-[#ED4245]/80 transition-colors disabled:opacity-40"
                   >
                     {scrapeRunning ? 'Scraping…' : 'Scrape All Time ⚠️'}
                   </button>

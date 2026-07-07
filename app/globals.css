@@ -6,28 +6,28 @@
 }
 
 :root {
-  --bg-base:     #07070f;
-  --bg-surface:  #0d0d1e;
-  --bg-elevated: #12122a;
-  --border:      #252540;
-  --border-bright: #3a3a60;
+  --bg-base:     #0f0f1e;
+  --bg-surface:  #161628;
+  --bg-elevated: #1c1c36;
+  --border:      #2c2c4e;
+  --border-bright: #424268;
   --gold:        #c89b3c;
   --gold-light:  #f0c060;
   --gold-dim:    #a07828;
   --purple:      #7c5ce8;
-  --purple-dim:  rgba(124, 92, 232, 0.15);
+  --purple-dim:  rgba(124, 92, 232, 0.18);
   --red:         #cc5555;
   --text:        #e8e8f0;
-  --text-muted:  #6868a0;
-  --text-dim:    #4a4a70;
+  --text-muted:  #7070a8;
+  --text-dim:    #555580;
 }
 
 /* ── Background ─────────────────────────────────────────────── */
 body {
   background-color: var(--bg-base);
   background-image:
-    radial-gradient(ellipse 90% 55% at 5% 0%,  rgba(124, 92, 232, 0.07) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 45% at 95% 90%, rgba(200, 155, 60, 0.05) 0%, transparent 55%);
+    radial-gradient(ellipse 90% 55% at 5% 0%,  rgba(124, 92, 232, 0.13) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 90%, rgba(200, 155, 60, 0.09) 0%, transparent 55%);
   background-attachment: fixed;
   color: var(--text);
 }

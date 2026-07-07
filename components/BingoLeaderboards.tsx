@@ -52,7 +52,7 @@ function Avatar({ name, color }: { name: string; color?: string }) {
   return (
     <div
       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-      style={{ backgroundColor: color ?? '#2a2a4a', color: color ? '#07070f' : '#a0a0c0' }}
+      style={{ backgroundColor: color ?? '#333358', color: color ? '#0f0f1e' : '#a0a0c0' }}
     >
       {name.slice(0, 2).toUpperCase()}
     </div>
@@ -91,7 +91,7 @@ function LineChart({ series }: { series: ChartSeries[] }) {
   const activeSeries = series.filter(s => s.points.length >= 1)
   if (!activeSeries.length) {
     return (
-      <div className="flex items-center justify-center h-48 rounded-xl border border-[#252540] bg-[#0d0d1e]">
+      <div className="flex items-center justify-center h-48 rounded-xl border border-[#2c2c4e] bg-[#161628]">
         <p className="text-sm text-[#4a4a70]">No snapshot data available for this period.</p>
       </div>
     )
@@ -149,13 +149,13 @@ function LineChart({ series }: { series: ChartSeries[] }) {
         {/* Grid */}
         {yTicks.map(v => (
           <g key={v}>
-            <line x1={pad.left} y1={toY(v)} x2={pad.left + W} y2={toY(v)} stroke="#1a1a30" strokeWidth={1} />
+            <line x1={pad.left} y1={toY(v)} x2={pad.left + W} y2={toY(v)} stroke="#21213c" strokeWidth={1} />
             <text x={pad.left - 6} y={toY(v) + 4} textAnchor="end" fill="#4a4a70" fontSize={11}>{v.toFixed(1)}</text>
           </g>
         ))}
         {xTicks.map((t, i) => (
           <g key={i}>
-            <line x1={toX(t)} y1={pad.top} x2={toX(t)} y2={pad.top + H} stroke="#1a1a30" strokeWidth={1} />
+            <line x1={toX(t)} y1={pad.top} x2={toX(t)} y2={pad.top + H} stroke="#21213c" strokeWidth={1} />
             <text x={toX(t)} y={pad.top + H + 18} textAnchor="middle" fill="#4a4a70" fontSize={10}>
               {new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </text>
@@ -177,7 +177,7 @@ function LineChart({ series }: { series: ChartSeries[] }) {
               points={s.points.map(p => `${toX(p.t)},${toY(p.ehb)}`).join(' ')}
             />
             {s.points.map((p, i) => (
-              <circle key={i} cx={toX(p.t)} cy={toY(p.ehb)} r={3} fill={s.color} strokeWidth={1} stroke="#07070f" />
+              <circle key={i} cx={toX(p.t)} cy={toY(p.ehb)} r={3} fill={s.color} strokeWidth={1} stroke="#0f0f1e" />
             ))}
           </g>
         ))}
@@ -185,7 +185,7 @@ function LineChart({ series }: { series: ChartSeries[] }) {
 
       {tooltip && (
         <div
-          className="absolute pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0d0d1e] border border-[#2a2a4a] shadow-lg whitespace-nowrap z-10"
+          className="absolute pointer-events-none px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#161628] border border-[#333358] shadow-lg whitespace-nowrap z-10"
           style={{ left: tooltip.x, top: tooltip.y - 36, transform: 'translateX(-50%)' }}
         >
           {tooltip.text}
@@ -326,7 +326,7 @@ export default function BingoLeaderboards({
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
               view === v.key
                 ? 'bg-[#c89b3c]/12 text-[#c89b3c] border-[#c89b3c]/30'
-                : 'bg-[#0d0d1e] text-[#6868a0] border-[#252540] hover:text-[#e8e8f0] hover:border-[#3a3a60]'
+                : 'bg-[#161628] text-[#6868a0] border-[#2c2c4e] hover:text-[#e8e8f0] hover:border-[#424268]'
             }`}
           >
             <span>{v.icon}</span>
@@ -347,17 +347,17 @@ export default function BingoLeaderboards({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search RSN or team..."
-                className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#0d0d1e] border border-[#252540] text-sm text-[#e8e8f0] placeholder:text-[#3a3a60] focus:outline-none focus:border-[#4a4a70]"
+                className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#161628] border border-[#2c2c4e] text-sm text-[#e8e8f0] placeholder:text-[#424268] focus:outline-none focus:border-[#4a4a70]"
               />
             </div>
             <span className="text-xs text-[#4a4a70]">{filteredPlayers.length} players</span>
           </div>
 
-          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
+          <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" style={{ minWidth: 620 }}>
                 <thead>
-                  <tr className="border-b border-[#1a1a30]">
+                  <tr className="border-b border-[#21213c]">
                     <th className="px-4 py-3 text-left w-10"><span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</span></th>
                     <th className="px-4 py-3 text-left">
                       <SortHeader col="name" label="Player" sort={playerSort} setSort={setPlayerSort} />
@@ -381,11 +381,11 @@ export default function BingoLeaderboards({
                     const isTop3 = i < 3
                     const medals = ['🥇', '🥈', '🥉']
                     return (
-                      <tr key={p.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/50 transition-colors">
+                      <tr key={p.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50 transition-colors">
                         <td className="px-4 py-3.5">
                           {isTop3
                             ? <span className="text-lg">{medals[i]}</span>
-                            : <span className="w-7 h-7 rounded-full border-2 border-[#2a2a4a] flex items-center justify-center text-xs font-bold text-[#4a4a70]">{i + 1}</span>
+                            : <span className="w-7 h-7 rounded-full border-2 border-[#333358] flex items-center justify-center text-xs font-bold text-[#4a4a70]">{i + 1}</span>
                           }
                         </td>
                         <td className="px-4 py-3.5">
@@ -415,7 +415,7 @@ export default function BingoLeaderboards({
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.team.color }} />
                               <span className="text-xs text-[#a0a0c0] font-medium">{p.team.name}</span>
                             </div>
-                          ) : <span className="text-xs text-[#3a3a60]">—</span>}
+                          ) : <span className="text-xs text-[#424268]">—</span>}
                         </td>
                       </tr>
                     )
@@ -436,11 +436,11 @@ export default function BingoLeaderboards({
       {view === 'teams' && (
         <div>
           <p className="text-xs text-[#4a4a70] mb-4">{teams.length} teams · {totalPossible.toLocaleString()} pts total</p>
-          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
+          <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" style={{ minWidth: 700 }}>
                 <thead>
-                  <tr className="border-b border-[#1a1a30]">
+                  <tr className="border-b border-[#21213c]">
                     <th className="px-4 py-3 text-left w-10"><span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</span></th>
                     <th className="px-4 py-3 text-left">
                       <SortHeader col="name" label="Team" sort={teamSort} setSort={setTeamSort} />
@@ -478,13 +478,13 @@ export default function BingoLeaderboards({
                       <>
                         <tr
                           key={r.team.id}
-                          className="border-b border-[#141427] hover:bg-[#141427]/50 transition-colors cursor-pointer"
+                          className="border-b border-[#1c1c36] hover:bg-[#1c1c36]/50 transition-colors cursor-pointer"
                           onClick={() => toggleTeam(r.team.id)}
                         >
                           <td className="px-4 py-4">
                             {isTop3
                               ? <span className="text-lg">{medals[i]}</span>
-                              : <div className="w-7 h-7 rounded-full border-2 border-[#2a2a4a] flex items-center justify-center text-xs font-bold text-[#4a4a70]">{i + 1}</div>
+                              : <div className="w-7 h-7 rounded-full border-2 border-[#333358] flex items-center justify-center text-xs font-bold text-[#4a4a70]">{i + 1}</div>
                             }
                           </td>
                           <td className="px-4 py-4">
@@ -494,7 +494,7 @@ export default function BingoLeaderboards({
                               <span className="text-xs text-[#4a4a70]">· {r.members.length}</span>
                             </div>
                             <div className="pl-5 mt-1.5">
-                              <div className="h-1 rounded-full bg-[#141427] overflow-hidden w-40">
+                              <div className="h-1 rounded-full bg-[#1c1c36] overflow-hidden w-40">
                                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: r.team.color }} />
                               </div>
                             </div>
@@ -522,8 +522,8 @@ export default function BingoLeaderboards({
                           </td>
                         </tr>
                         {expanded && (
-                          <tr key={`${r.team.id}-expanded`} className="border-b border-[#141427]">
-                            <td colSpan={7} className="bg-[#0a0a18] px-6 py-3">
+                          <tr key={`${r.team.id}-expanded`} className="border-b border-[#1c1c36]">
+                            <td colSpan={7} className="bg-[#121226] px-6 py-3">
                               <table className="w-full">
                                 <thead>
                                   <tr>
@@ -534,7 +534,7 @@ export default function BingoLeaderboards({
                                 </thead>
                                 <tbody>
                                   {memberRows.map(m => (
-                                    <tr key={m.rsn} className="border-t border-[#141427]">
+                                    <tr key={m.rsn} className="border-t border-[#1c1c36]">
                                       <td className="py-2 text-sm text-[#e8e8f0] font-medium">{m.rsn}</td>
                                       <td className="py-2 text-right text-sm font-bold text-[#c89b3c]">
                                         {m.pts % 1 === 0 ? m.pts.toLocaleString() : m.pts.toFixed(2)}
@@ -579,13 +579,13 @@ export default function BingoLeaderboards({
         return (
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex rounded-lg border border-[#252540] overflow-hidden">
+              <div className="flex rounded-lg border border-[#2c2c4e] overflow-hidden">
                 {(['tasks', 'bosses'] as const).map(mode => (
                   <button
                     key={mode}
                     onClick={() => setMatrixMode(mode)}
                     className={`px-4 py-2 text-sm font-semibold transition-colors capitalize ${
-                      matrixMode === mode ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'bg-[#0d0d1e] text-[#6868a0] hover:text-[#e8e8f0]'
+                      matrixMode === mode ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'bg-[#161628] text-[#6868a0] hover:text-[#e8e8f0]'
                     }`}
                   >
                     {mode === 'tasks' ? 'Bingo Tasks' : 'Boss KC (WOM)'}
@@ -600,11 +600,11 @@ export default function BingoLeaderboards({
             </div>
 
             {matrixMode === 'tasks' && (
-              <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
+              <div className="overflow-x-auto rounded-xl border border-[#2c2c4e] bg-[#161628]">
                 <table className="border-collapse" style={{ minWidth: `${120 + tasks.length * 52}px` }}>
                   <thead>
-                    <tr className="border-b border-[#1a1a30]">
-                      <th className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3 text-left w-36">
+                    <tr className="border-b border-[#21213c]">
+                      <th className="sticky left-0 bg-[#161628] z-10 px-4 py-3 text-left w-36">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</span>
                       </th>
                       {tasks.map(t => (
@@ -612,9 +612,9 @@ export default function BingoLeaderboards({
                           <div className="flex flex-col items-center gap-1">
                             {t.image_url
                               ? <img src={t.image_url} alt="" className="w-8 h-8 rounded-lg object-cover" /> // eslint-disable-line @next/next/no-img-element
-                              : <div className="w-8 h-8 rounded-lg bg-[#141427] flex items-center justify-center text-[10px] text-[#3a3a60]">#{t.position}</div>
+                              : <div className="w-8 h-8 rounded-lg bg-[#1c1c36] flex items-center justify-center text-[10px] text-[#424268]">#{t.position}</div>
                             }
-                            <span className="text-[9px] text-[#3a3a60] font-mono">{t.required_count}kc</span>
+                            <span className="text-[9px] text-[#424268] font-mono">{t.required_count}kc</span>
                           </div>
                         </th>
                       ))}
@@ -628,8 +628,8 @@ export default function BingoLeaderboards({
                       const prog = taskProgressByMember[rsn] ?? {}
                       const totalKills = Object.values(prog).reduce((s, v) => s + v, 0)
                       return (
-                        <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
-                          <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
+                        <tr key={m.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/30 transition-colors">
+                          <td className="sticky left-0 bg-[#161628] z-10 px-4 py-3">
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
                               <span className="text-sm font-semibold text-[#e8e8f0] truncate">{m.rsn}</span>
@@ -643,8 +643,8 @@ export default function BingoLeaderboards({
                               <td key={t.id} className="px-1 py-3 text-center">
                                 <div className="flex items-center justify-center">
                                   {count === 0 ? (
-                                    <div className="w-8 h-8 rounded-lg border border-[#1a1a30] bg-[#0a0a18] flex items-center justify-center">
-                                      <div className="w-2 h-2 rounded-full bg-[#1a1a30]" />
+                                    <div className="w-8 h-8 rounded-lg border border-[#21213c] bg-[#121226] flex items-center justify-center">
+                                      <div className="w-2 h-2 rounded-full bg-[#21213c]" />
                                     </div>
                                   ) : (
                                     <div
@@ -675,15 +675,15 @@ export default function BingoLeaderboards({
 
             {matrixMode === 'bosses' && (
               bossColumns.length === 0 ? (
-                <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] py-14 text-center">
+                <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] py-14 text-center">
                   <p className="text-sm text-[#4a4a70]">No boss KC data for this event period. WOM_GROUP_ID must be configured.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
+                <div className="overflow-x-auto rounded-xl border border-[#2c2c4e] bg-[#161628]">
                   <table className="border-collapse" style={{ minWidth: `${140 + bossColumns.length * 60}px` }}>
                     <thead>
-                      <tr className="border-b border-[#1a1a30]">
-                        <th className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3 text-left w-36">
+                      <tr className="border-b border-[#21213c]">
+                        <th className="sticky left-0 bg-[#161628] z-10 px-4 py-3 text-left w-36">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Player</span>
                         </th>
                         {bossColumns.map(boss => (
@@ -710,8 +710,8 @@ export default function BingoLeaderboards({
                           const totalKc = Object.values(kills).reduce((s, v) => s + v, 0)
                           const maxKc = Math.max(...bossColumns.map(b => kills[b] ?? 0), 1)
                           return (
-                            <tr key={m.rsn} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/30 transition-colors">
-                              <td className="sticky left-0 bg-[#0d0d1e] z-10 px-4 py-3">
+                            <tr key={m.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/30 transition-colors">
+                              <td className="sticky left-0 bg-[#161628] z-10 px-4 py-3">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: teamColor }} />
                                   <span className="text-sm font-semibold text-[#e8e8f0] truncate">{m.rsn}</span>
@@ -724,8 +724,8 @@ export default function BingoLeaderboards({
                                   <td key={boss} className="px-1 py-3 text-center">
                                     <div className="flex items-center justify-center">
                                       {kc === 0 ? (
-                                        <div className="w-10 h-8 rounded-lg border border-[#1a1a30] bg-[#0a0a18] flex items-center justify-center">
-                                          <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a30]" />
+                                        <div className="w-10 h-8 rounded-lg border border-[#21213c] bg-[#121226] flex items-center justify-center">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-[#21213c]" />
                                         </div>
                                       ) : (
                                         <div
@@ -764,13 +764,13 @@ export default function BingoLeaderboards({
       {view === 'ehb' && (
         <div>
           <div className="flex items-center gap-3 mb-5 flex-wrap">
-            <div className="flex rounded-lg border border-[#252540] overflow-hidden">
+            <div className="flex rounded-lg border border-[#2c2c4e] overflow-hidden">
               {(['teams', 'players'] as const).map(m => (
                 <button
                   key={m}
                   onClick={() => setEhbMode(m)}
                   className={`px-4 py-2 text-sm font-semibold capitalize transition-colors ${
-                    ehbMode === m ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'bg-[#0d0d1e] text-[#6868a0] hover:text-[#e8e8f0]'
+                    ehbMode === m ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'bg-[#161628] text-[#6868a0] hover:text-[#e8e8f0]'
                   }`}
                 >
                   {m}
@@ -785,7 +785,7 @@ export default function BingoLeaderboards({
           </div>
 
           {ehbLoading ? (
-            <div className="flex items-center justify-center h-64 rounded-xl border border-[#252540] bg-[#0d0d1e]">
+            <div className="flex items-center justify-center h-64 rounded-xl border border-[#2c2c4e] bg-[#161628]">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-6 h-6 border-2 border-[#c89b3c]/30 border-t-[#c89b3c] rounded-full animate-spin" />
                 <p className="text-sm text-[#4a4a70]">Fetching EHB snapshots from WOM…</p>
@@ -796,13 +796,13 @@ export default function BingoLeaderboards({
               {ehbMode === 'players' && (
                 <div className="lg:w-56 shrink-0">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] mb-2">Select Players</p>
-                  <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-y-auto" style={{ maxHeight: 360 }}>
+                  <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-y-auto" style={{ maxHeight: 360 }}>
                     {(ehbData?.players ?? [])
                       .sort((a, b) => (b.points[b.points.length - 1]?.ehb ?? 0) - (a.points[a.points.length - 1]?.ehb ?? 0))
                       .map(p => {
                         const checked = selectedPlayers.has(p.rsn.toLowerCase())
                         return (
-                          <label key={p.rsn} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#1a1a30] last:border-0 cursor-pointer hover:bg-[#141427] transition-colors">
+                          <label key={p.rsn} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#21213c] last:border-0 cursor-pointer hover:bg-[#1c1c36] transition-colors">
                             <input
                               type="checkbox"
                               checked={checked}
@@ -829,7 +829,7 @@ export default function BingoLeaderboards({
               )}
 
               <div className="flex-1 min-w-0">
-                <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-4">
+                <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-4">
                   <LineChart series={ehbMode === 'teams' ? teamChartSeries : playerChartSeries} />
                 </div>
               </div>

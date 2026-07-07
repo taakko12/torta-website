@@ -35,8 +35,8 @@ export default async function AchievementsPage({ searchParams }: Props) {
             href={t.value ? `/achievements?type=${encodeURIComponent(t.value)}` : '/achievements'}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               (type ?? '') === t.value
-                ? 'bg-[#c89b3c] text-[#07070f]'
-                : 'bg-[#141427] text-[#7070a0] hover:text-[#e8e8f0]'
+                ? 'bg-[#c89b3c] text-[#0f0f1e]'
+                : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'
             }`}
           >
             {t.label}
@@ -44,11 +44,11 @@ export default async function AchievementsPage({ searchParams }: Props) {
         ))}
       </div>
 
-      <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] px-5 py-4">
+      <div className="rounded-xl border border-[#333358] bg-[#161628] px-5 py-4">
         {achievements.length === 0 ? (
           <p className="text-sm text-[#7070a0]">No achievements found.</p>
         ) : (
-          <ul className="divide-y divide-[#2a2a4a]">
+          <ul className="divide-y divide-[#333358]">
             {achievements.map(a => (
               <li key={a.id} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center justify-between gap-2 mb-0.5">

@@ -51,7 +51,7 @@ export default async function PlayerPage({ params }: Props) {
 
         {/* WOM stats */}
         {wom && skills && (
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <h2 className="font-semibold text-[#e8e8f0] mb-4">🌍 Wise Old Man</h2>
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -75,7 +75,7 @@ export default async function PlayerPage({ params }: Props) {
         )}
 
         {/* Loot */}
-        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#161628] p-5">
           <h2 className="font-semibold text-[#e8e8f0] mb-4">💰 Loot</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
@@ -105,7 +105,7 @@ export default async function PlayerPage({ params }: Props) {
         </div>
 
         {/* Deaths */}
-        <div className="rounded-xl border border-[#cc5555]/25 bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#cc5555]/25 bg-[#161628] p-5">
           <h2 className="font-semibold text-[#e8e8f0] mb-4">💀 Deaths</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -121,9 +121,9 @@ export default async function PlayerPage({ params }: Props) {
 
         {/* Achievements */}
         {stats.achievements.length > 0 && (
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <h2 className="font-semibold text-[#e8e8f0] mb-4">🏅 Recent Achievements</h2>
-            <ul className="divide-y divide-[#2a2a4a]">
+            <ul className="divide-y divide-[#333358]">
               {stats.achievements.map(a => (
                 <li key={a.id} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between gap-2 mb-0.5">
@@ -138,7 +138,7 @@ export default async function PlayerPage({ params }: Props) {
         )}
 
         {stats.totalGp === 0 && stats.totalDeaths === 0 && stats.achievements.length === 0 && !wom && (
-          <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5 text-center">
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5 text-center">
             <p className="text-[#7070a0]">No data found for <span className="text-[#e8e8f0] capitalize">{displayName}</span>.</p>
           </div>
         )}

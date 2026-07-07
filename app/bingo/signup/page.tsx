@@ -7,7 +7,7 @@ export default function SignUpPage() {
         Sign-ups for the current bingo event are managed by admins.<br />
         Join the Torta Discord and post your RSN to get assigned to a team.
       </p>
-      <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-6 text-left space-y-4">
+      <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-6 text-left space-y-4">
         <div className="flex items-start gap-3">
           <span className="text-[#7c5ce8] text-lg shrink-0">1.</span>
           <div>

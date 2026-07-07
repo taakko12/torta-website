@@ -54,19 +54,19 @@ export default async function SubmissionsPage() {
       </div>
 
       {submissions.length === 0 ? (
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-10 text-center">
+        <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-10 text-center">
           <p className="text-[#4a4a70] text-sm">No submissions yet.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
+        <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
           {submissions.map(sub => {
             const team = rsnToTeam.get(sub.rsn.toLowerCase())
             const task = taskMap.get(sub.task_id)
             return (
-              <div key={sub.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-[#141427] last:border-0">
+              <div key={sub.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-[#1c1c36] last:border-0">
                 <div
                   className="w-1 h-10 rounded-full shrink-0"
-                  style={{ backgroundColor: team?.color ?? '#252540' }}
+                  style={{ backgroundColor: team?.color ?? '#2c2c4e' }}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

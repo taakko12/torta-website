@@ -49,7 +49,7 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
 const STATUS_PILL: Record<Exclude<StatusFilter, 'all'>, string> = {
   completed: 'bg-[#57f287]/15 text-[#57f287] border border-[#57f287]/20',
   in_progress: 'bg-[#c89b3c]/15 text-[#c89b3c] border border-[#c89b3c]/20',
-  not_started: 'bg-[#1a1a30] text-[#6868a0] border border-[#252540]',
+  not_started: 'bg-[#21213c] text-[#6868a0] border border-[#2c2c4e]',
 }
 
 const VIEWS: { key: ViewMode; label: string; sub: string; icon: string }[] = [
@@ -105,7 +105,7 @@ export default function BingoBoardView({
             className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
               view === v.key
                 ? 'border-[#c89b3c]/50 bg-[#c89b3c]/8'
-                : 'border-[#252540] bg-[#0d0d1e] hover:border-[#3a3a60] hover:bg-[#141427]'
+                : 'border-[#2c2c4e] bg-[#161628] hover:border-[#424268] hover:bg-[#1c1c36]'
             }`}
           >
             <span className={`text-lg leading-none mt-0.5 shrink-0 ${view === v.key ? 'text-[#c89b3c]' : 'text-[#4a4a70]'}`}>
@@ -128,8 +128,8 @@ export default function BingoBoardView({
               onClick={() => setActiveTeamId(p.team.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                 activeProg?.team.id === p.team.id
-                  ? 'text-[#07070f] border-transparent'
-                  : 'bg-[#141427] text-[#a0a0c0] border-[#2a2a4a] hover:text-[#e8e8f0]'
+                  ? 'text-[#0f0f1e] border-transparent'
+                  : 'bg-[#1c1c36] text-[#a0a0c0] border-[#333358] hover:text-[#e8e8f0]'
               }`}
               style={activeProg?.team.id === p.team.id ? { backgroundColor: p.team.color, borderColor: p.team.color } : {}}
             >
@@ -170,18 +170,18 @@ export default function BingoBoardView({
                   key={task.id}
                   onClick={() => setSelectedTask(task)}
                   className="flex items-stretch rounded-xl border-2 overflow-hidden text-left group hover:scale-[1.02] transition-all focus:outline-none focus:ring-2 focus:ring-[#c89b3c]/40"
-                  style={{ borderColor: done ? teamColor : '#2a2a4a' }}
+                  style={{ borderColor: done ? teamColor : '#333358' }}
                 >
                   {/* Thumbnail */}
-                  <div className="relative w-20 shrink-0 bg-[#0a0a18] overflow-hidden">
+                  <div className="relative w-20 shrink-0 bg-[#121226] overflow-hidden">
                     {task.image_url
                       ? <img src={task.image_url} alt="" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" /> // eslint-disable-line @next/next/no-img-element
-                      : <div className="w-full h-full flex items-center justify-center text-[#1a1a30] text-2xl">□</div>
+                      : <div className="w-full h-full flex items-center justify-center text-[#21213c] text-2xl">□</div>
                     }
                     {done && <div className="absolute inset-0 opacity-25" style={{ backgroundColor: teamColor }} />}
                   </div>
                   {/* Info */}
-                  <div className="flex-1 bg-[#0d0d1e] p-2.5 flex flex-col justify-between min-w-0">
+                  <div className="flex-1 bg-[#161628] p-2.5 flex flex-col justify-between min-w-0">
                     <div className="flex items-start gap-1">
                       <p className="text-xs font-bold text-white leading-tight line-clamp-2 flex-1">{task.title}</p>
                       {done && <span className="text-sm shrink-0 ml-1" style={{ color: teamColor }}>✓</span>}
@@ -193,7 +193,7 @@ export default function BingoBoardView({
                         </span>
                         <span className="text-[10px] text-[#4a4a70]">{count}/{task.required_count}</span>
                       </div>
-                      <div className="h-1 rounded-full bg-[#1a1a30] overflow-hidden">
+                      <div className="h-1 rounded-full bg-[#21213c] overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: teamColor }} />
                       </div>
                     </div>
@@ -209,11 +209,11 @@ export default function BingoBoardView({
           HEATMAP VIEW
           ═══════════════════════════════════════════ */}
       {view === 'heatmap' && (
-        <div className="overflow-x-auto rounded-xl border border-[#252540] bg-[#0d0d1e]">
+        <div className="overflow-x-auto rounded-xl border border-[#2c2c4e] bg-[#161628]">
           <table className="border-collapse" style={{ minWidth: `${200 + sortedTasks.length * 34}px`, width: '100%' }}>
             <thead>
-              <tr className="border-b border-[#1a1a30]">
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] sticky left-0 bg-[#0d0d1e] z-10 w-44">
+              <tr className="border-b border-[#21213c]">
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] sticky left-0 bg-[#161628] z-10 w-44">
                   Team
                 </th>
                 {sortedTasks.map(t => (
@@ -221,7 +221,7 @@ export default function BingoBoardView({
                     <div className="flex items-center justify-center">
                       {t.image_url
                         ? <img src={t.image_url} alt={t.title} className="w-6 h-6 rounded object-cover opacity-50 hover:opacity-100 transition-opacity" /> // eslint-disable-line @next/next/no-img-element
-                        : <span className="text-[9px] font-mono text-[#3a3a60]">{t.position}</span>
+                        : <span className="text-[9px] font-mono text-[#424268]">{t.position}</span>
                       }
                     </div>
                   </th>
@@ -232,10 +232,10 @@ export default function BingoBoardView({
             </thead>
             <tbody>
               {sortedProgress.map((p, i) => (
-                <tr key={p.team.id} className="border-b border-[#141427] last:border-0 hover:bg-[#141427]/40 transition-colors">
-                  <td className="px-4 py-3 sticky left-0 bg-[#0d0d1e] z-10">
+                <tr key={p.team.id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/40 transition-colors">
+                  <td className="px-4 py-3 sticky left-0 bg-[#161628] z-10">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-[#3a3a60] w-4 shrink-0">#{i + 1}</span>
+                      <span className="text-[10px] font-mono text-[#424268] w-4 shrink-0">#{i + 1}</span>
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.team.color }} />
                       <span className="text-sm font-semibold text-[#e8e8f0] truncate max-w-[6rem]">{p.team.name}</span>
                     </div>
@@ -258,7 +258,7 @@ export default function BingoBoardView({
                                 ? { backgroundColor: p.team.color, boxShadow: `0 0 5px ${p.team.color}90` }
                                 : inProg
                                   ? { backgroundColor: `${p.team.color}35`, border: `1.5px solid ${p.team.color}80` }
-                                  : { border: '1.5px solid #2a2a4a' }
+                                  : { border: '1.5px solid #333358' }
                             }
                           />
                         </div>
@@ -274,7 +274,7 @@ export default function BingoBoardView({
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                       p.completedTaskIds.length === tasks.length
                         ? 'bg-[#57f287]/15 text-[#57f287]'
-                        : 'bg-[#1a1a30] text-[#6868a0]'
+                        : 'bg-[#21213c] text-[#6868a0]'
                     }`}>
                       {p.completedTaskIds.length}/{tasks.length}
                     </span>
@@ -294,7 +294,7 @@ export default function BingoBoardView({
           {sortedProgress.map((p, i) => {
             const pct = totalPossible > 0 ? Math.round((p.totalPoints / totalPossible) * 100) : 0
             return (
-              <div key={p.team.id} className="rounded-xl border bg-[#0d0d1e] overflow-hidden" style={{ borderColor: `${p.team.color}35` }}>
+              <div key={p.team.id} className="rounded-xl border bg-[#161628] overflow-hidden" style={{ borderColor: `${p.team.color}35` }}>
                 {/* Header */}
                 <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderBottom: `1px solid ${p.team.color}25` }}>
                   <div className="flex items-center gap-2 min-w-0">
@@ -311,7 +311,7 @@ export default function BingoBoardView({
                 <div className="p-2" style={{ display: 'grid', gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))`, gap: 3 }}>
                   {Array.from({ length: boardSize * boardSize }).map((_, pos) => {
                     const task = tasks.find(t => t.position === pos)
-                    if (!task) return <div key={pos} className="aspect-square rounded-sm bg-[#0a0a18]" />
+                    if (!task) return <div key={pos} className="aspect-square rounded-sm bg-[#121226]" />
                     const done = p.completedTaskIds.includes(task.id)
                     const inProg = !done && (p.taskProgress[task.id] ?? 0) > 0
                     return (
@@ -323,7 +323,7 @@ export default function BingoBoardView({
                       >
                         <div
                           className="absolute inset-0"
-                          style={{ backgroundColor: done ? p.team.color : '#0a0a18' }}
+                          style={{ backgroundColor: done ? p.team.color : '#121226' }}
                         />
                         {task.image_url && (
                           <img // eslint-disable-line @next/next/no-img-element
@@ -348,7 +348,7 @@ export default function BingoBoardView({
                     <span>{p.completedTaskIds.length}/{tasks.length} tiles</span>
                     <span>{pct}%</span>
                   </div>
-                  <div className="h-1 rounded-full bg-[#141427] overflow-hidden">
+                  <div className="h-1 rounded-full bg-[#1c1c36] overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: p.team.color }} />
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function BingoBoardView({
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   statusFilter === f
                     ? 'bg-[#7c5ce8]/20 text-[#c89b3c] border border-[#7c5ce8]/40'
-                    : 'bg-[#141427] text-[#6868a0] border border-[#252540] hover:text-[#e8e8f0]'
+                    : 'bg-[#1c1c36] text-[#6868a0] border border-[#2c2c4e] hover:text-[#e8e8f0]'
                 }`}
               >
                 {STATUS_LABEL[f]}
@@ -385,12 +385,12 @@ export default function BingoBoardView({
             ))}
           </div>
 
-          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] overflow-hidden">
+          <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
             {/* Column headers */}
             <div className="overflow-x-auto">
               <div style={{ minWidth: 720 }}>
                 <div
-                  className="grid px-4 py-2.5 border-b border-[#1a1a30] text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]"
+                  className="grid px-4 py-2.5 border-b border-[#21213c] text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]"
                   style={{ gridTemplateColumns: '2.5rem 3rem 1fr 5rem 3rem 11rem 7rem 2.5rem', gap: '1rem' }}
                 >
                   <span>#</span>
@@ -415,15 +415,15 @@ export default function BingoBoardView({
                       <button
                         key={t.id}
                         onClick={() => setSelectedTask(t)}
-                        className="w-full grid px-4 py-3 border-b border-[#141427] last:border-0 items-center hover:bg-[#141427]/60 transition-colors text-left group"
+                        className="w-full grid px-4 py-3 border-b border-[#1c1c36] last:border-0 items-center hover:bg-[#1c1c36]/60 transition-colors text-left group"
                         style={{ gridTemplateColumns: '2.5rem 3rem 1fr 5rem 3rem 11rem 7rem 2.5rem', gap: '1rem' }}
                       >
                         <span className="text-xs font-mono text-[#4a4a70]">#{t.position}</span>
 
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#0a0a18] shrink-0">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#121226] shrink-0">
                           {t.image_url
                             ? <img src={t.image_url} alt="" className="w-full h-full object-cover" /> // eslint-disable-line @next/next/no-img-element
-                            : <div className="w-full h-full flex items-center justify-center text-[#1a1a30] text-xl">□</div>
+                            : <div className="w-full h-full flex items-center justify-center text-[#21213c] text-xl">□</div>
                           }
                         </div>
 
@@ -448,7 +448,7 @@ export default function BingoBoardView({
                             <span>Progress</span>
                             <span className="font-bold text-[#e8e8f0]">{count} / {t.required_count}</span>
                           </div>
-                          <div className="h-1.5 rounded-full bg-[#141427] overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-[#1c1c36] overflow-hidden">
                             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
                           </div>
                         </div>
@@ -481,14 +481,14 @@ export default function BingoBoardView({
 
           <div
             role="dialog" aria-modal="true"
-            className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#2a2a4a] bg-[#0d0d1e] shadow-2xl shadow-black/60"
+            className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[#333358] bg-[#161628] shadow-2xl shadow-black/60"
             onClick={e => e.stopPropagation()}
           >
             {/* Image banner */}
             {selectedTask.image_url && (
-              <div className="relative bg-[#07070f] overflow-hidden" style={{ height: 210 }}>
+              <div className="relative bg-[#0f0f1e] overflow-hidden" style={{ height: 210 }}>
                 <img src={selectedTask.image_url} alt={selectedTask.title} className="w-full h-full object-contain" /> {/* eslint-disable-line @next/next/no-img-element */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0d0d1e]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#161628]" />
               </div>
             )}
 
@@ -501,7 +501,7 @@ export default function BingoBoardView({
                 </div>
                 <button
                   onClick={closeModal}
-                  className="w-7 h-7 rounded-full bg-[#1a1a30] text-[#6868a0] hover:text-white hover:bg-[#252540] transition-colors flex items-center justify-center text-sm shrink-0"
+                  className="w-7 h-7 rounded-full bg-[#21213c] text-[#6868a0] hover:text-white hover:bg-[#2c2c4e] transition-colors flex items-center justify-center text-sm shrink-0"
                 >
                   ✕
                 </button>
@@ -509,11 +509,11 @@ export default function BingoBoardView({
 
               {/* Points + Grid Position */}
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="rounded-xl bg-[#141427] border border-[#1a1a30] p-3.5">
+                <div className="rounded-xl bg-[#1c1c36] border border-[#21213c] p-3.5">
                   <p className="text-[10px] font-semibold text-[#6868a0] uppercase tracking-widest mb-1">Points</p>
                   <p className="text-3xl font-black" style={{ color: teamColor }}>{selectedTask.points}</p>
                 </div>
-                <div className="rounded-xl bg-[#141427] border border-[#1a1a30] p-3.5">
+                <div className="rounded-xl bg-[#1c1c36] border border-[#21213c] p-3.5">
                   <p className="text-[10px] font-semibold text-[#6868a0] uppercase tracking-widest mb-1">Grid Position</p>
                   <p className="text-3xl font-black text-[#e8e8f0]">#{selectedTask.position}</p>
                 </div>
@@ -521,14 +521,14 @@ export default function BingoBoardView({
 
               {/* Description */}
               {selectedTask.description && (
-                <div className="rounded-xl bg-[#141427] border border-[#1a1a30] p-4 mb-4">
+                <div className="rounded-xl bg-[#1c1c36] border border-[#21213c] p-4 mb-4">
                   <p className="text-[10px] font-semibold text-[#6868a0] uppercase tracking-widest mb-1.5">Description</p>
                   <p className="text-sm text-[#b0b0c8] leading-relaxed">{selectedTask.description}</p>
                 </div>
               )}
 
               {/* Progress */}
-              <div className="rounded-xl bg-[#141427] border border-[#1a1a30] p-4 mb-4">
+              <div className="rounded-xl bg-[#1c1c36] border border-[#21213c] p-4 mb-4">
                 <p className="text-[10px] font-semibold text-[#6868a0] uppercase tracking-widest mb-3">Progress</p>
                 {activeProg ? (
                   <>
@@ -539,7 +539,7 @@ export default function BingoBoardView({
                       </div>
                       <span className="text-sm font-bold text-[#e8e8f0]">{modalCount} / {selectedTask.required_count}</span>
                     </div>
-                    <div className="h-2.5 rounded-full bg-[#0d0d1e] overflow-hidden mb-3">
+                    <div className="h-2.5 rounded-full bg-[#161628] overflow-hidden mb-3">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -555,7 +555,7 @@ export default function BingoBoardView({
                           ? 'bg-[#57f287]/15 text-[#57f287] border border-[#57f287]/20'
                           : modalCount > 0
                             ? 'bg-[#c89b3c]/15 text-[#c89b3c] border border-[#c89b3c]/20'
-                            : 'bg-[#1a1a30] text-[#6868a0] border border-[#252540]'
+                            : 'bg-[#21213c] text-[#6868a0] border border-[#2c2c4e]'
                       }`}>
                         {modalDone ? '✓ Completed' : modalCount > 0 ? 'In Progress' : 'Not Started'}
                       </span>
@@ -578,7 +578,7 @@ export default function BingoBoardView({
                   <span className="text-[10px] text-[#4a4a70]">{modalSubs.length}</span>
                 </div>
                 {modalSubs.length === 0 ? (
-                  <div className="rounded-xl border border-[#1a1a30] bg-[#0a0a18] py-8 text-center">
+                  <div className="rounded-xl border border-[#21213c] bg-[#121226] py-8 text-center">
                     <p className="text-sm text-[#4a4a70]">No approved submissions yet.</p>
                   </div>
                 ) : (
@@ -586,12 +586,12 @@ export default function BingoBoardView({
                     {modalSubs.map(sub => {
                       const team = rsnTeamMap[sub.rsn.toLowerCase()]
                       return (
-                        <li key={sub.id} className="rounded-xl border border-[#1a1a30] bg-[#0a0a18] overflow-hidden">
+                        <li key={sub.id} className="rounded-xl border border-[#21213c] bg-[#121226] overflow-hidden">
                           {sub.screenshot_url && (
                             <a href={sub.screenshot_url} target="_blank" rel="noopener noreferrer">
                               <img // eslint-disable-line @next/next/no-img-element
                                 src={sub.screenshot_url} alt={`${sub.rsn} screenshot`}
-                                className="w-full object-cover hover:opacity-90 transition-opacity bg-[#07070f]"
+                                className="w-full object-cover hover:opacity-90 transition-opacity bg-[#0f0f1e]"
                                 style={{ maxHeight: 220 }}
                               />
                             </a>

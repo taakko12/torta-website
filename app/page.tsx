@@ -62,7 +62,7 @@ export default async function Home() {
 
       {/* Competitions — Active + Upcoming */}
       {hasEvents && (
-        <div className="mb-10 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+        <div className="mb-10 rounded-xl border border-[#333358] bg-[#161628] p-5">
           <h2 className="font-semibold text-[#e8e8f0] mb-4">⚔️ Competitions</h2>
 
           {/* Active */}
@@ -76,7 +76,7 @@ export default async function Home() {
                   const daysLeft = Math.ceil((new Date(comp.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                   const top3 = (comp.participations ?? []).filter(p => p.progress.gained > 0).slice(0, 3)
                   return (
-                    <div key={comp.id} className="rounded-lg bg-[#07070f] border border-[#2a2a4a] p-4">
+                    <div key={comp.id} className="rounded-lg bg-[#0f0f1e] border border-[#333358] p-4">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
                           {comp.title}
@@ -117,7 +117,7 @@ export default async function Home() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {upcomingComps.map((comp) => (
-                  <div key={comp.id} className="rounded-lg bg-[#07070f] border border-[#2a2a4a] p-4">
+                  <div key={comp.id} className="rounded-lg bg-[#0f0f1e] border border-[#333358] p-4">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
                         {comp.title}
@@ -145,7 +145,7 @@ export default async function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
 
         {/* Recent Drop */}
-        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#0e0e1c] p-5 flex flex-col">
+        <div className="rounded-xl border border-[#c89b3c]/25 bg-[#161628] p-5 flex flex-col">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-3">
             💰 Most Recent Drop
           </p>
@@ -204,7 +204,7 @@ export default async function Home() {
         </div>
 
         {/* Recent Plank */}
-        <div className="rounded-xl border border-[#cc5555]/25 bg-[#0e0e1c] p-5 flex flex-col">
+        <div className="rounded-xl border border-[#cc5555]/25 bg-[#161628] p-5 flex flex-col">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#cc5555] mb-3">
             💀 Most Recent Death
           </p>
@@ -247,7 +247,7 @@ export default async function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Loot Preview */}
-        <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-[#e8e8f0]">💰 Loot Leaders</h2>
             <span className="text-xs text-[#7070a0]">{month}</span>
@@ -274,7 +274,7 @@ export default async function Home() {
         </div>
 
         {/* Plank Preview */}
-        <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+        <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-[#e8e8f0]">💀 Plank Leaders</h2>
             <span className="text-xs text-[#7070a0]">{month}</span>
@@ -302,14 +302,14 @@ export default async function Home() {
       </div>
 
       {/* Clan Achievements */}
-      <div className="mt-4 rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
+      <div className="mt-4 rounded-xl border border-[#333358] bg-[#161628] p-5">
         <h2 className="font-semibold text-[#e8e8f0] mb-4">🏆 Clan Achievements</h2>
         {achievements.length === 0 ? (
           <p className="text-sm text-[#7070a0]">No achievements recorded yet.</p>
         ) : (
           <ul className="space-y-3">
             {achievements.map((a) => (
-              <li key={a.id} className="flex flex-col gap-0.5 border-b border-[#2a2a4a] pb-3 last:border-0 last:pb-0">
+              <li key={a.id} className="flex flex-col gap-0.5 border-b border-[#333358] pb-3 last:border-0 last:pb-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{a.title}</span>
                   <span className="text-xs text-[#7070a0] shrink-0"><ClientDate iso={a.recorded_at} /></span>

@@ -72,7 +72,7 @@ export default async function BingoDashboard() {
 
           {/* Leader callout */}
           {leader && leader.totalPoints > 0 && (
-            <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5 relative overflow-hidden">
+            <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-5 relative overflow-hidden">
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: `radial-gradient(ellipse 80% 100% at 100% 50%, ${leader.team.color}12, transparent)` }}
@@ -100,7 +100,7 @@ export default async function BingoDashboard() {
           )}
 
           {/* Live standings */}
-          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5">
+          <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#6868a0] mb-5">Live Standings</h2>
             {sorted.length === 0 ? (
               <p className="text-sm text-[#4a4a70]">No teams yet.</p>
@@ -114,7 +114,7 @@ export default async function BingoDashboard() {
                       <div className="flex items-center gap-2.5 mb-2">
                         <span className="text-sm w-6 text-center shrink-0">{i === 0 ? '👑' : `#${i + 1}`}</span>
                         <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-[#07070f] shrink-0"
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-[#0f0f1e] shrink-0"
                           style={{ backgroundColor: p.team.color }}
                         >
                           {p.team.name.slice(0, 2).toUpperCase()}
@@ -125,7 +125,7 @@ export default async function BingoDashboard() {
                           {p.totalPoints.toLocaleString()} pts
                         </span>
                       </div>
-                      <div className="ml-[3.625rem] h-2.5 rounded-full bg-[#141427] overflow-hidden">
+                      <div className="ml-[3.625rem] h-2.5 rounded-full bg-[#1c1c36] overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700 bar-shimmer"
                           style={{
@@ -143,7 +143,7 @@ export default async function BingoDashboard() {
           </div>
 
           {/* Event stats */}
-          <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-5">
+          <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#6868a0] mb-4">Event Stats</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
               {[
@@ -152,7 +152,7 @@ export default async function BingoDashboard() {
                 { label: 'Drops Approved', value: approvedSubs.length, color: '#57f287' },
                 { label: 'Teams', value: teams.length, color: '#7c5ce8' },
               ].map(({ label, value, color }) => (
-                <div key={label} className="rounded-lg bg-[#141427] p-3 text-center">
+                <div key={label} className="rounded-lg bg-[#1c1c36] p-3 text-center">
                   <p className="text-xl font-black" style={{ color }}>{value}</p>
                   <p className="text-[11px] text-[#4a4a70] mt-0.5">{label}</p>
                 </div>
@@ -161,7 +161,7 @@ export default async function BingoDashboard() {
             <p className="text-xs text-[#4a4a70] mb-1.5">
               Overall completion — {boardPct}% of all possible points earned across all teams
             </p>
-            <div className="h-2 rounded-full bg-[#141427] overflow-hidden">
+            <div className="h-2 rounded-full bg-[#1c1c36] overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${Math.max(boardPct, 0)}%`, background: 'linear-gradient(90deg, #7c5ce8, #c89b3c)' }}
@@ -171,7 +171,7 @@ export default async function BingoDashboard() {
         </div>
 
         {/* Right: live feed */}
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-4 self-start xl:sticky xl:top-4">
+        <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-4 self-start xl:sticky xl:top-4">
           <div className="flex items-center gap-2 mb-4">
             <span className="w-2 h-2 rounded-full bg-[#57f287] animate-pulse shrink-0" />
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#e8e8f0]">Live Feed</h2>
@@ -181,7 +181,7 @@ export default async function BingoDashboard() {
           {approvedFeed.length === 0 ? (
             <p className="text-sm text-[#4a4a70] text-center py-8">No approved drops yet.</p>
           ) : (
-            <ul className="divide-y divide-[#141427]">
+            <ul className="divide-y divide-[#1c1c36]">
               {approvedFeed.slice(0, 15).map(sub => {
                 const team = rsnToTeam.get(sub.rsn.toLowerCase())
                 const task = taskMap.get(sub.task_id)
@@ -190,7 +190,7 @@ export default async function BingoDashboard() {
                     <div className="flex items-start gap-2.5">
                       <div
                         className="w-1 self-stretch rounded-full mt-0.5 shrink-0 min-h-[2.5rem]"
-                        style={{ backgroundColor: team?.color ?? '#252540' }}
+                        style={{ backgroundColor: team?.color ?? '#2c2c4e' }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">

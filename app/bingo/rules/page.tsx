@@ -6,7 +6,7 @@ export default function RulesPage() {
         <p className="text-sm text-[#6868a0]">How bingo works</p>
       </div>
 
-      <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-6 space-y-6">
+      <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-6 space-y-6">
         {[
           {
             title: 'How to Play',

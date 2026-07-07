@@ -20,7 +20,7 @@ export default function BingoNav({ eventTitle, isAdmin }: { eventTitle: string |
   return (
     <>
       {/* Mobile: horizontal tabs */}
-      <nav className="md:hidden flex overflow-x-auto gap-1 p-2 border-b border-[#1a1a30] bg-[#07070f]/80 sticky top-[57px] z-40 scrollbar-none">
+      <nav className="md:hidden flex overflow-x-auto gap-1 p-2 border-b border-[#21213c] bg-[#0f0f1e]/80 sticky top-[57px] z-40 scrollbar-none">
         {NAV.map(({ href, label }) => (
           <Link
             key={href}
@@ -36,16 +36,16 @@ export default function BingoNav({ eventTitle, isAdmin }: { eventTitle: string |
         ))}
         <Link
           href="/bingo/submit"
-          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#c89b3c] text-[#07070f] whitespace-nowrap ml-2"
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#c89b3c] text-[#0f0f1e] whitespace-nowrap ml-2"
         >
           Submit Drop
         </Link>
       </nav>
 
       {/* Desktop: sidebar */}
-      <aside className="hidden md:flex w-52 shrink-0 flex-col sticky top-[57px] h-[calc(100vh-57px)] border-r border-[#1a1a30] bg-[#07070f]/60 backdrop-blur-sm overflow-y-auto">
+      <aside className="hidden md:flex w-52 shrink-0 flex-col sticky top-[57px] h-[calc(100vh-57px)] border-r border-[#21213c] bg-[#0f0f1e]/60 backdrop-blur-sm overflow-y-auto">
         {/* Event header */}
-        <div className="p-4 border-b border-[#1a1a30]">
+        <div className="p-4 border-b border-[#21213c]">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] mb-1.5">Active Event</p>
           <p className="text-sm font-semibold text-[#e8e8f0] leading-snug">
             {eventTitle ?? <span className="text-[#4a4a70] italic font-normal">None</span>}
@@ -80,18 +80,18 @@ export default function BingoNav({ eventTitle, isAdmin }: { eventTitle: string |
         </nav>
 
         {/* Bottom actions */}
-        <div className="p-3 border-t border-[#1a1a30] space-y-2">
+        <div className="p-3 border-t border-[#21213c] space-y-2">
           {isAdmin && (
             <Link
               href="/bingo/admin"
-              className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg border border-[#3a3a60] text-[#c89b3c] text-xs font-semibold hover:bg-[#c89b3c]/10 transition-colors"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg border border-[#424268] text-[#c89b3c] text-xs font-semibold hover:bg-[#c89b3c]/10 transition-colors"
             >
               ⚙ Manage Board
             </Link>
           )}
           <Link
             href="/bingo/submit"
-            className="flex items-center justify-center w-full py-2.5 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-bold hover:bg-[#f0c060] transition-colors"
+            className="flex items-center justify-center w-full py-2.5 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-bold hover:bg-[#f0c060] transition-colors"
           >
             Submit Drop
           </Link>

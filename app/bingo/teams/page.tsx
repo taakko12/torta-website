@@ -37,7 +37,7 @@ export default async function TeamsPage() {
       </div>
 
       {sorted.length === 0 ? (
-        <div className="rounded-xl border border-[#252540] bg-[#0d0d1e] p-10 text-center">
+        <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-10 text-center">
           <p className="text-[#4a4a70] text-sm">No teams have been created yet.</p>
         </div>
       ) : (
@@ -47,7 +47,7 @@ export default async function TeamsPage() {
             return (
               <div
                 key={p.team.id}
-                className="rounded-xl border bg-[#0d0d1e] p-5 relative overflow-hidden"
+                className="rounded-xl border bg-[#161628] p-5 relative overflow-hidden"
                 style={{ borderColor: `${p.team.color}40` }}
               >
                 <div
@@ -72,7 +72,7 @@ export default async function TeamsPage() {
                     <span>{p.completedTasks.size}/{tasks.length} tiles completed</span>
                     <span>{pct}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-[#141427] overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-[#1c1c36] overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${pct}%`, backgroundColor: p.team.color }}

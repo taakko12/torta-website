@@ -13,7 +13,7 @@ export function DropLeaderboardTable({ entries }: { entries: DropEntry[] }) {
   return (
     <table className="w-full">
       <thead>
-        <tr className="border-b border-[#2a2a4a] text-left text-xs font-semibold uppercase tracking-wider text-[#7070a0]">
+        <tr className="border-b border-[#333358] text-left text-xs font-semibold uppercase tracking-wider text-[#7070a0]">
           <th className="pb-3 w-10">#</th>
           <th className="pb-3">Player</th>
           <th className="pb-3 text-right">Total Loot</th>
@@ -23,7 +23,7 @@ export function DropLeaderboardTable({ entries }: { entries: DropEntry[] }) {
         {entries.map((e, i) => (
           <tr
             key={e.name}
-            className="border-b border-[#1a1a2e] hover:bg-[#141427] transition-colors"
+            className="border-b border-[#1a1a2e] hover:bg-[#1c1c36] transition-colors"
           >
             <td className="py-3 pr-3">
               <Rank i={i} />
@@ -49,7 +49,7 @@ export function PlankLeaderboardTable({ entries }: { entries: PlankEntry[] }) {
   return (
     <table className="w-full">
       <thead>
-        <tr className="border-b border-[#2a2a4a] text-left text-xs font-semibold uppercase tracking-wider text-[#7070a0]">
+        <tr className="border-b border-[#333358] text-left text-xs font-semibold uppercase tracking-wider text-[#7070a0]">
           <th className="pb-3 w-10">#</th>
           <th className="pb-3">Player</th>
           <th className="pb-3 text-right">Deaths</th>

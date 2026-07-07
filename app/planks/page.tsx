@@ -37,7 +37,7 @@ export default async function PlanksPage({ searchParams }: Props) {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             !isAlltime
               ? 'bg-[#cc5555] text-white'
-              : 'bg-[#141427] text-[#7070a0] hover:text-[#e8e8f0]'
+              : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'
           }`}
         >
           Monthly
@@ -47,7 +47,7 @@ export default async function PlanksPage({ searchParams }: Props) {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             isAlltime
               ? 'bg-[#cc5555] text-white'
-              : 'bg-[#141427] text-[#7070a0] hover:text-[#e8e8f0]'
+              : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'
           }`}
         >
           All Time
@@ -55,7 +55,7 @@ export default async function PlanksPage({ searchParams }: Props) {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] px-5 py-4">
+      <div className="rounded-xl border border-[#333358] bg-[#161628] px-5 py-4">
         <PlankLeaderboardTable entries={entries} />
       </div>
     </div>

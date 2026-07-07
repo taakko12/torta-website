@@ -86,7 +86,7 @@ export default function SubmitPage() {
           <input
             value={rsn} onChange={e => setRsn(e.target.value)}
             placeholder="Your in-game name"
-            className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors"
+            className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function SubmitPage() {
           <label className="block text-xs font-semibold text-[#7070a0] uppercase tracking-widest mb-1.5">Task</label>
           <select
             value={taskId} onChange={e => setTaskId(e.target.value)}
-            className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors"
+            className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors"
           >
             {tasks.map(t => (
               <option key={t.id} value={t.id}>
@@ -109,14 +109,14 @@ export default function SubmitPage() {
           <input
             type="file" accept="image/*"
             onChange={e => { setFile(e.target.files?.[0] ?? null); setUrl('') }}
-            className="w-full text-sm text-[#a0a0c0] file:mr-3 file:rounded file:border-0 file:bg-[#2a2a4a] file:px-3 file:py-1.5 file:text-xs file:text-[#e8e8f0] file:cursor-pointer"
+            className="w-full text-sm text-[#a0a0c0] file:mr-3 file:rounded file:border-0 file:bg-[#333358] file:px-3 file:py-1.5 file:text-xs file:text-[#e8e8f0] file:cursor-pointer"
           />
           <p className="text-xs text-[#7070a0] mt-1.5">or paste an image URL (Imgur, Gyazo, etc.)</p>
           <input
             value={url} onChange={e => { setUrl(e.target.value); setFile(null) }}
             placeholder="https://i.imgur.com/..."
             disabled={!!file}
-            className="w-full mt-1.5 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors disabled:opacity-40"
+            className="w-full mt-1.5 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors disabled:opacity-40"
           />
         </div>
 
@@ -126,7 +126,7 @@ export default function SubmitPage() {
             value={notes} onChange={e => setNotes(e.target.value)}
             placeholder="Any context for the admin…"
             rows={2}
-            className="w-full rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors resize-none"
+            className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors resize-none"
           />
         </div>
 
@@ -134,7 +134,7 @@ export default function SubmitPage() {
 
         <button
           type="submit" disabled={submitting}
-          className="w-full py-2.5 rounded-lg bg-[#c89b3c] text-[#07070f] text-sm font-semibold hover:bg-[#f0c060] transition-colors disabled:opacity-50"
+          className="w-full py-2.5 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060] transition-colors disabled:opacity-50"
         >
           {submitting ? 'Submitting…' : 'Submit Drop'}
         </button>
