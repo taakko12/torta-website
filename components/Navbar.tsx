@@ -7,6 +7,7 @@ const links = [
   { href: '/loot', label: 'Loot' },
   { href: '/planks', label: 'Planks' },
   { href: '/achievements', label: 'Achievements' },
+  { href: '/events', label: 'Events' },
   { href: '/player', label: 'Players' },
   { href: '/bingo', label: 'Bingo' },
   { href: '/hiscores', label: 'Hiscores' },
