@@ -54,18 +54,33 @@ export async function POST(req: Request) {
 
   if (threads.length === 0) return NextResponse.json({ imported: 0, message: 'No threads found in that channel.' })
 
-  // Fetch ALL messages per thread (paginate via after=snowflake)
+  type Msg = { id: string; content: string; attachments?: { filename: string; url: string; content_type?: string }[] }
+
+  // Collect all messages newest-first via before-pagination, then reverse for chronological order
   async function fetchAllMessages(threadId: string): Promise<string> {
-    const segments: string[] = []
-    let after = '1'
+    const all: Msg[] = []
+    let before: string | undefined
     while (true) {
-      const res = await fetch(`${DISCORD}/channels/${threadId}/messages?after=${after}&limit=100`, { headers })
+      const qs = before ? `?before=${before}&limit=100` : '?limit=100'
+      const res = await fetch(`${DISCORD}/channels/${threadId}/messages${qs}`, { headers })
       if (!res.ok) break
-      const msgs = await res.json() as { id: string; content: string }[]
+      const msgs = await res.json() as Msg[]
       if (!msgs.length) break
-      for (const m of msgs) { if (m.content.trim()) segments.push(m.content.trim()) }
+      all.push(...msgs)
       if (msgs.length < 100) break
-      after = msgs[msgs.length - 1].id
+      before = msgs[msgs.length - 1].id
+    }
+    all.reverse() // oldest → newest
+
+    const segments: string[] = []
+    for (const m of all) {
+      const parts: string[] = []
+      if (m.content.trim()) parts.push(m.content.trim())
+      for (const att of m.attachments ?? []) {
+        if (att.content_type?.startsWith('image/')) parts.push(`![${att.filename}](${att.url})`)
+        else if (att.content_type?.startsWith('video/')) parts.push(`[video](${att.url})`)
+      }
+      if (parts.length) segments.push(parts.join('\n'))
     }
     return segments.join('\n\n')
   }

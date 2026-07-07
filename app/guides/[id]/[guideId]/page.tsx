@@ -39,6 +39,8 @@ function renderContent(text: string) {
   let i = 0
   while (i < lines.length) {
     const line = lines[i]
+
+    // Fenced code block
     if (line.trim().startsWith('```')) {
       const codeLines: string[] = []
       i++
@@ -50,6 +52,31 @@ function renderContent(text: string) {
       )
       i++; continue
     }
+
+    // Standalone image: ![alt](url)
+    const img = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
+    if (img) {
+      out.push(
+        <div key={i} className="my-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img[2]} alt={img[1]} className="max-w-full rounded-lg border border-[#2c2c4e]" loading="lazy" />
+          {img[1] && <p className="text-xs text-[#4a4a70] mt-1">{img[1]}</p>}
+        </div>
+      )
+      i++; continue
+    }
+
+    // Standalone video: [video](url)
+    const vid = line.match(/^\[video\]\(([^)]+)\)$/)
+    if (vid) {
+      out.push(
+        <div key={i} className="my-4">
+          <video src={vid[1]} controls className="max-w-full rounded-lg border border-[#2c2c4e]" />
+        </div>
+      )
+      i++; continue
+    }
+
     if (line === '---') {
       out.push(<hr key={i} className="my-6 border-[#2c2c4e]" />)
     } else if (line.startsWith('# ')) {
