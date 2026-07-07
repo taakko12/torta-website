@@ -293,33 +293,33 @@ export default function AdminDashboard() {
 
   async function loadTools() {
     if (activityLoaded) return
-    const [actRes, chRes, roleRes, evRes, cfgRes, raidsRes, panelRes] = await Promise.all([
-      fetch('/api/admin/activity'),
-      fetch('/api/admin/channels'),
-      fetch('/api/admin/roles'),
-      fetch('/api/admin/events'),
-      fetch('/api/admin/config'),
-      fetch('/api/admin/raids'),
-      fetch('/api/admin/rolepanel'),
-    ])
-    const actData = await actRes.json()
-    const chData = await chRes.json()
-    const roleData = await roleRes.json()
-    const evData = await evRes.json()
-    const cfgData = await cfgRes.json()
-    const raidsData = await raidsRes.json()
-    const panelData = await panelRes.json()
-    setDiscordActivity(actData.discord ?? [])
-    setIngameActivity(actData.ingame ?? [])
-    setVcActivity(actData.vc ?? [])
-    setChannels(chData.channels ?? [])
-    setRoles(roleData.roles ?? [])
-    if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id); setRaidChannel(chData.channels[0].id) }
-    setClanEvents(evData.events ?? [])
-    setGuildConfig(cfgData.config ?? {})
-    setRaids(raidsData.raids ?? [])
-    setRolePanel(panelData.panel ?? { channelId: null, messageId: null, roles: [] })
-    setActivityLoaded(true)
+    try {
+      const [actRes, chRes, roleRes, evRes, cfgRes, raidsRes, panelRes] = await Promise.all([
+        fetch('/api/admin/activity'),
+        fetch('/api/admin/channels'),
+        fetch('/api/admin/roles'),
+        fetch('/api/admin/events'),
+        fetch('/api/admin/config'),
+        fetch('/api/admin/raids'),
+        fetch('/api/admin/rolepanel'),
+      ])
+      const [actData, chData, roleData, evData, cfgData, raidsData, panelData] = await Promise.all([
+        actRes.json(), chRes.json(), roleRes.json(), evRes.json(), cfgRes.json(), raidsRes.json(), panelRes.json(),
+      ])
+      setDiscordActivity(actData.discord ?? [])
+      setIngameActivity(actData.ingame ?? [])
+      setVcActivity(actData.vc ?? [])
+      setChannels(chData.channels ?? [])
+      setRoles(roleData.roles ?? [])
+      if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id); setRaidChannel(chData.channels[0].id) }
+      setClanEvents(evData.events ?? [])
+      setGuildConfig(cfgData.config ?? {})
+      setRaids(raidsData.raids ?? [])
+      setRolePanel(panelData.panel ?? { channelId: null, messageId: null, roles: [] })
+      setActivityLoaded(true)
+    } catch (e) {
+      console.error('loadTools failed:', e)
+    }
   }
 
   async function createClanEvent() {
@@ -938,7 +938,7 @@ export default function AdminDashboard() {
                   const rsnKey = d.rsn.toLowerCase()
                   const ig = ingameByRsn.get(rsnKey)
                   matchedRsns.add(rsnKey)
-                  rows.push({ key: `l-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: d.rsn, type: ig ? 'Linked' : 'Discord', role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })
+                  rows.push({ key: `l-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: d.rsn, type: ig ? 'Linked' : 'Discord', role: d.role_name, month_count: d.month_count + (ig?.month_count ?? 0), message_count: d.message_count + (ig?.message_count ?? 0), last_at: d.last_message_at })
                 } else {
                   rows.push({ key: `d-${d.discord_id}`, name: d.display_name ?? d.discord_id, rsn: null, type: 'Discord', role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at })
                 }
@@ -1380,7 +1380,7 @@ export default function AdminDashboard() {
             <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
               <div className="px-5 py-3 border-b border-[#2a2a4a]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
-                <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
+                <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.{channels.length > 0 ? ` ${channels.length} channels loaded.` : ' No channels loaded — check bot token in Railway.'}</p>
               </div>
               <div className="px-5">
                 {([
@@ -1447,7 +1447,7 @@ export default function AdminDashboard() {
               <div className="px-5 py-4 flex flex-wrap items-center gap-3">
                 <span className="text-sm text-[#a0a0c0]">
                   {guildConfig.welcome_channel_id
-                    ? <>Posting to <span className="text-[#c89b3c]">#{channels.find(c => c.id === guildConfig.welcome_channel_id)?.name ?? guildConfig.welcome_channel_id}</span></>
+                    ? (() => { const ch = channels.find(c => c.id === guildConfig.welcome_channel_id); return <>Posting to <span className="text-[#c89b3c]">{ch ? `#${ch.name}` : <span className="font-mono text-xs opacity-60">{guildConfig.welcome_channel_id}</span>}</span></> })()
                     : <span className="text-[#4a4a70]">Welcome channel not set</span>}
                 </span>
                 <button
