@@ -12,8 +12,9 @@ type IngameActivity = { rsn: string; message_count: number; month_count: number;
 type VcActivity = { discord_id: string; display_name: string | null; role_name: string | null; total_minutes: number; month_minutes: number; last_seen_at: string | null }
 type ClanEvent = { id: string; title: string; description: string | null; event_type: string; scheduled_at: string | null; channel_id: string | null; created_at: string; event_rsvps: { count: number }[] }
 type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string }
-type GuildConfig = { planks_channel_id?: string | null; drops_channel_id?: string | null; welcome_channel_id?: string | null; welcome_mod_channel_id?: string | null; clanchat_channel_id?: string | null; broadcast_channel_id?: string | null; inactivity_channel_id?: string | null; recap_channel_id?: string | null }
+type GuildConfig = { planks_channel_id?: string | null; drops_channel_id?: string | null; lootsubmit_channel_id?: string | null; welcome_channel_id?: string | null; welcome_mod_channel_id?: string | null; welcome_role_id?: string | null; clanchat_channel_id?: string | null; broadcast_channel_id?: string | null; inactivity_channel_id?: string | null; recap_channel_id?: string | null }
 type Channel = { id: string; name: string }
+type Role = { id: string; name: string }
 
 function formatMinutes(mins: number): string {
   const d = Math.floor(mins / 1440)
@@ -82,6 +83,7 @@ export default function AdminDashboard() {
   const [rsvpEventId, setRsvpEventId] = useState<string | null>(null)
   const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [channels, setChannels] = useState<Channel[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
   const [embedChannel, setEmbedChannel] = useState('')
   const [embedTitle, setEmbedTitle] = useState('')
   const [embedDesc, setEmbedDesc] = useState('')
@@ -267,20 +269,23 @@ export default function AdminDashboard() {
 
   async function loadTools() {
     if (activityLoaded) return
-    const [actRes, chRes, evRes, cfgRes] = await Promise.all([
+    const [actRes, chRes, roleRes, evRes, cfgRes] = await Promise.all([
       fetch('/api/admin/activity'),
       fetch('/api/admin/channels'),
+      fetch('/api/admin/roles'),
       fetch('/api/admin/events'),
       fetch('/api/admin/config'),
     ])
     const actData = await actRes.json()
     const chData = await chRes.json()
+    const roleData = await roleRes.json()
     const evData = await evRes.json()
     const cfgData = await cfgRes.json()
     setDiscordActivity(actData.discord ?? [])
     setIngameActivity(actData.ingame ?? [])
     setVcActivity(actData.vc ?? [])
     setChannels(chData.channels ?? [])
+    setRoles(roleData.roles ?? [])
     if (chData.channels?.length) { setEmbedChannel(chData.channels[0].id); setEventChannel(chData.channels[0].id) }
     setClanEvents(evData.events ?? [])
     setGuildConfig(cfgData.config ?? {})
@@ -1210,6 +1215,7 @@ export default function AdminDashboard() {
           )}
 
           {toolsTab === 'settings' && (
+            <>
             <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
               <div className="px-5 py-3 border-b border-[#2a2a4a]">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
@@ -1221,6 +1227,7 @@ export default function AdminDashboard() {
                   ['TrackScape Broadcasts', 'broadcast_channel_id', 'Drops, pets, achievements'],
                   ['Planks Channel', 'planks_channel_id', 'Death notifications (Dink)'],
                   ['Drops Channel', 'drops_channel_id', 'Loot drops (Dink)'],
+                  ['Loot Submit Channel', 'lootsubmit_channel_id', 'Staff review for manual submissions'],
                   ['Welcome Channel', 'welcome_channel_id', 'New member welcome messages'],
                   ['Welcome Mod Channel', 'welcome_mod_channel_id', 'Staff review for welcomes'],
                   ['Weekly Recap Channel', 'recap_channel_id', 'Sunday activity recap post'],
@@ -1243,6 +1250,30 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
+
+            <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] overflow-hidden">
+              <div className="px-5 py-3 border-b border-[#2a2a4a]">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Settings</h2>
+                <p className="text-xs text-[#4a4a70] mt-1">Changes save immediately on selection.</p>
+              </div>
+              <div className="px-5">
+                <div className="flex items-center gap-4 py-3">
+                  <div className="w-52 shrink-0">
+                    <div className="text-sm text-[#c0c0e0]">Welcome Role</div>
+                    <div className="text-xs text-[#4a4a70] mt-0.5">Granted when a new member agrees to rules</div>
+                  </div>
+                  <select
+                    value={guildConfig.welcome_role_id ?? ''}
+                    onChange={e => saveConfig({ welcome_role_id: e.target.value || null })}
+                    className="flex-1 rounded-lg bg-[#141427] border border-[#2a2a4a] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+                  >
+                    <option value="">— Not set —</option>
+                    {roles.map(r => <option key={r.id} value={r.id}>@{r.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            </>
           )}
         </div>
       )}
