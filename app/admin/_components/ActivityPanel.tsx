@@ -274,27 +274,27 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                             <span className="text-xs text-[#5865F2]">⚯ {linked.display_name ?? linked.discord_id}</span>
                           </div>
                         ) : isLinking ? (
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5">
                             <input
                               autoFocus
+                              list="quick-link-members"
                               value={quickLinkSearch}
-                              onChange={e => { setQuickLinkSearch(e.target.value); setQuickLinkDiscordId('') }}
+                              onChange={e => {
+                                const val = e.target.value
+                                setQuickLinkSearch(val)
+                                const match = unlinkedDiscord.find(d => (d.display_name ?? d.discord_id).toLowerCase() === val.toLowerCase())
+                                setQuickLinkDiscordId(match?.discord_id ?? '')
+                              }}
                               placeholder="Search member…"
-                              className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none w-48"
+                              className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none w-40"
                             />
-                            <div className="flex items-center gap-1.5">
-                              <select value={quickLinkDiscordId} onChange={e => setQuickLinkDiscordId(e.target.value)}
-                                className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none flex-1">
-                                <option value="">Select…</option>
-                                {unlinkedDiscord
-                                  .filter(d => !quickLinkSearch || (d.display_name ?? d.discord_id).toLowerCase().includes(quickLinkSearch.toLowerCase()))
-                                  .map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
-                              </select>
-                              <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
-                                className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
-                              <button onClick={() => { setQuickLinkRsn(null); setQuickLinkSearch('') }}
-                                className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
-                            </div>
+                            <datalist id="quick-link-members">
+                              {unlinkedDiscord.map(d => <option key={d.discord_id} value={d.display_name ?? d.discord_id} />)}
+                            </datalist>
+                            <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
+                              className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
+                            <button onClick={() => { setQuickLinkRsn(null); setQuickLinkSearch('') }}
+                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5">
