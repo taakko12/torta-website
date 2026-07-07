@@ -148,7 +148,7 @@ export default function BingoPanel() {
       <div className="flex gap-1 mb-6 border-b border-[#333358]">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === t.key ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#9898c0] hover:text-[#e8e8f0]'}`}>
             {t.label}
           </button>
         ))}
@@ -161,13 +161,13 @@ export default function BingoPanel() {
             <div className="space-y-3">
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Event title (e.g. July Bingo)" className={inp} />
               <div>
-                <label className="text-xs text-[#7070a0] mb-2 block">Board Size</label>
+                <label className="text-xs text-[#9898c0] mb-2 block">Board Size</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[{size:3,label:'3×3',sub:'9 tiles · Quick'},{size:4,label:'4×4',sub:'16 tiles · Standard'},{size:5,label:'5×5',sub:'25 tiles · Classic'},{size:6,label:'6×6',sub:'36 tiles · Marathon'}].map(({ size, label, sub }) => (
                     <button key={size} type="button" onClick={() => setNewSize(size)}
                       className={`p-3 rounded-lg border text-left transition-all ${newSize === size ? 'border-[#c89b3c] bg-[#c89b3c]/10' : 'border-[#333358] bg-[#1c1c36] hover:border-[#4a4a6a]'}`}>
                       <p className={`text-sm font-bold ${newSize === size ? 'text-[#c89b3c]' : 'text-[#e8e8f0]'}`}>{label}</p>
-                      <p className="text-xs text-[#7070a0]">{sub}</p>
+                      <p className="text-xs text-[#9898c0]">{sub}</p>
                     </button>
                   ))}
                 </div>
@@ -178,19 +178,19 @@ export default function BingoPanel() {
 
           <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">All Events</h2>
-            {events.length === 0 ? <p className="text-sm text-[#7070a0]">No events yet.</p> : (
+            {events.length === 0 ? <p className="text-sm text-[#9898c0]">No events yet.</p> : (
               <ul className="divide-y divide-[#333358]">
                 {events.map(ev => (
                   <li key={ev.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-[#e8e8f0]">{ev.title}</p>
-                      <p className="text-xs text-[#7070a0]">{ev.board_size}×{ev.board_size}</p>
+                      <p className="text-xs text-[#9898c0]">{ev.board_size}×{ev.board_size}</p>
                     </div>
                     <div className="flex gap-2">
                       {ev.active ? (
                         <button onClick={() => setActive(null)} className="text-xs px-3 py-1 rounded bg-green-900/40 text-green-400 border border-green-800 hover:bg-green-900/60">Active ✓</button>
                       ) : (
-                        <button onClick={() => setActive(ev.id)} className="text-xs px-3 py-1 rounded bg-[#1c1c36] text-[#7070a0] border border-[#333358] hover:text-[#e8e8f0]">Set Active</button>
+                        <button onClick={() => setActive(ev.id)} className="text-xs px-3 py-1 rounded bg-[#1c1c36] text-[#9898c0] border border-[#333358] hover:text-[#e8e8f0]">Set Active</button>
                       )}
                     </div>
                   </li>
@@ -203,23 +203,23 @@ export default function BingoPanel() {
 
       {tab === 'tasks' && (
         <div className="space-y-5">
-          {!selectedEventId || !selectedEvent ? <p className="text-sm text-[#7070a0]">Select an event above.</p> : (
+          {!selectedEventId || !selectedEvent ? <p className="text-sm text-[#9898c0]">Select an event above.</p> : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
               <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
                 <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">{taskForm.id ? 'Edit Task' : 'Add Task'}</h2>
                 <div className="space-y-3">
-                  <div><label className="text-xs text-[#7070a0] mb-1 block">Title</label><input value={taskForm.title} onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))} placeholder="Get 5 sapphires from Giant Mole" className={inp} /></div>
-                  <div><label className="text-xs text-[#7070a0] mb-1 block">Description <span className="font-normal">(optional)</span></label><input value={taskForm.description} onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))} placeholder="Additional context…" className={inp} /></div>
-                  <div><label className="text-xs text-[#7070a0] mb-1 block">Image URL <span className="font-normal">(optional)</span></label><input value={taskForm.image_url} onChange={e => setTaskForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" className={inp} /></div>
+                  <div><label className="text-xs text-[#9898c0] mb-1 block">Title</label><input value={taskForm.title} onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))} placeholder="Get 5 sapphires from Giant Mole" className={inp} /></div>
+                  <div><label className="text-xs text-[#9898c0] mb-1 block">Description <span className="font-normal">(optional)</span></label><input value={taskForm.description} onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))} placeholder="Additional context…" className={inp} /></div>
+                  <div><label className="text-xs text-[#9898c0] mb-1 block">Image URL <span className="font-normal">(optional)</span></label><input value={taskForm.image_url} onChange={e => setTaskForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" className={inp} /></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><label className="text-xs text-[#7070a0] mb-1 block">Points</label><input type="number" min={1} value={taskForm.points} onChange={e => setTaskForm(f => ({ ...f, points: Number(e.target.value) }))} className={inp} /></div>
-                    <div><label className="text-xs text-[#7070a0] mb-1 block">Required submissions</label><input type="number" min={1} value={taskForm.required_count} onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))} className={inp} /></div>
+                    <div><label className="text-xs text-[#9898c0] mb-1 block">Points</label><input type="number" min={1} value={taskForm.points} onChange={e => setTaskForm(f => ({ ...f, points: Number(e.target.value) }))} className={inp} /></div>
+                    <div><label className="text-xs text-[#9898c0] mb-1 block">Required submissions</label><input type="number" min={1} value={taskForm.required_count} onChange={e => setTaskForm(f => ({ ...f, required_count: Number(e.target.value) }))} className={inp} /></div>
                   </div>
-                  <div><label className="text-xs text-[#7070a0] mb-1 block">Points per submission <span className="font-normal">(override)</span></label><input type="number" min={1} value={taskForm.points_per_submission} onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))} placeholder="Leave blank to use task points" className={inp} /></div>
-                  <div><label className="text-xs text-[#7070a0] mb-1 block">Position on board</label><input type="number" min={1} max={selectedEvent.board_size ** 2} value={taskForm.position} onChange={e => setTaskForm(f => ({ ...f, position: Number(e.target.value) }))} className={inp} /></div>
+                  <div><label className="text-xs text-[#9898c0] mb-1 block">Points per submission <span className="font-normal">(override)</span></label><input type="number" min={1} value={taskForm.points_per_submission} onChange={e => setTaskForm(f => ({ ...f, points_per_submission: e.target.value }))} placeholder="Leave blank to use task points" className={inp} /></div>
+                  <div><label className="text-xs text-[#9898c0] mb-1 block">Position on board</label><input type="number" min={1} max={selectedEvent.board_size ** 2} value={taskForm.position} onChange={e => setTaskForm(f => ({ ...f, position: Number(e.target.value) }))} className={inp} /></div>
                   <div className="flex gap-2 pt-1">
                     <button onClick={upsertTask} className="flex-1 px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060]">{taskForm.id ? 'Save Changes' : 'Add Task'}</button>
-                    {taskForm.id && <button onClick={() => setTaskForm(EMPTY_TASK)} className="px-4 py-2 rounded-lg bg-[#1c1c36] text-[#7070a0] text-sm border border-[#333358] hover:text-[#e8e8f0]">Cancel</button>}
+                    {taskForm.id && <button onClick={() => setTaskForm(EMPTY_TASK)} className="px-4 py-2 rounded-lg bg-[#1c1c36] text-[#9898c0] text-sm border border-[#333358] hover:text-[#e8e8f0]">Cancel</button>}
                   </div>
                 </div>
               </div>
@@ -237,7 +237,7 @@ export default function BingoPanel() {
                         onDragOver={e => { e.preventDefault() }}
                         onDrop={() => { if (dragTaskId) moveTaskTo(dragTaskId, pos) }}
                         onClick={() => task && loadTaskIntoForm(task)}
-                        className={`aspect-square rounded-lg border text-[10px] flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all ${task ? (taskForm.id === task.id ? 'border-[#c89b3c] bg-[#c89b3c]/15 text-[#c89b3c]' : 'border-[#333358] bg-[#1c1c36] text-[#c0c0e0] hover:border-[#c89b3c]/50') : (isDragging ? 'border-dashed border-[#7c5ce8]/50 bg-[#7c5ce8]/5' : 'border-dashed border-[#333358] text-[#4a4a70]')}`}
+                        className={`aspect-square rounded-lg border text-[10px] flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all ${task ? (taskForm.id === task.id ? 'border-[#c89b3c] bg-[#c89b3c]/15 text-[#c89b3c]' : 'border-[#333358] bg-[#1c1c36] text-[#c0c0e0] hover:border-[#c89b3c]/50') : (isDragging ? 'border-dashed border-[#7c5ce8]/50 bg-[#7c5ce8]/5' : 'border-dashed border-[#333358] text-[#7878a8]')}`}
                       >
                         {task ? <span className="line-clamp-3 leading-tight">{task.title}</span> : <span>{pos}</span>}
                       </div>
@@ -247,9 +247,9 @@ export default function BingoPanel() {
                 {tasks.length > 0 && (
                   <ul className="mt-4 space-y-1 max-h-48 overflow-y-auto">
                     {[...tasks].sort((a, b) => a.position - b.position).map(t => (
-                      <li key={t.id} className={`flex items-center gap-2 px-2 py-1 rounded text-xs cursor-pointer transition-colors ${taskForm.id === t.id ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-[#1c1c36]'}`}
+                      <li key={t.id} className={`flex items-center gap-2 px-2 py-1 rounded text-xs cursor-pointer transition-colors ${taskForm.id === t.id ? 'bg-[#c89b3c]/15 text-[#c89b3c]' : 'text-[#9898c0] hover:text-[#e8e8f0] hover:bg-[#1c1c36]'}`}
                         onClick={() => loadTaskIntoForm(t)}>
-                        <span className="shrink-0 w-5 text-center text-[#4a4a70]">{t.position}</span>
+                        <span className="shrink-0 w-5 text-center text-[#7878a8]">{t.position}</span>
                         <span className="flex-1 truncate">{t.title}</span>
                         <span className="shrink-0 text-[#c89b3c]">{t.points}pt</span>
                         <button onClick={e => { e.stopPropagation(); deleteTask(t.id) }} className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50">Del</button>
@@ -265,7 +265,7 @@ export default function BingoPanel() {
 
       {tab === 'teams' && (
         <div className="space-y-6">
-          {!selectedEventId ? <p className="text-sm text-[#7070a0]">Select an event above.</p> : (<>
+          {!selectedEventId ? <p className="text-sm text-[#9898c0]">Select an event above.</p> : (<>
             <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Create Team</h2>
               <div className="flex gap-2 flex-wrap">
@@ -297,11 +297,11 @@ export default function BingoPanel() {
                     </h3>
                     <button onClick={() => deleteTeam(team.id)} className="text-xs px-2 py-1 rounded bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50">Delete team</button>
                   </div>
-                  {teamMembers.length === 0 ? <p className="text-xs text-[#7070a0]">No members yet.</p> : (
+                  {teamMembers.length === 0 ? <p className="text-xs text-[#9898c0]">No members yet.</p> : (
                     <ul className="flex flex-wrap gap-2">
                       {teamMembers.map(m => (
                         <li key={m.id} className="flex items-center gap-1.5 bg-[#1c1c36] rounded px-2 py-1 text-xs text-[#e8e8f0]">
-                          {m.rsn}<button onClick={() => removeMember(m.id)} className="text-[#7070a0] hover:text-red-400 ml-0.5">×</button>
+                          {m.rsn}<button onClick={() => removeMember(m.id)} className="text-[#9898c0] hover:text-red-400 ml-0.5">×</button>
                         </li>
                       ))}
                     </ul>
@@ -315,8 +315,8 @@ export default function BingoPanel() {
 
       {tab === 'queue' && (
         <div className="space-y-4">
-          {!selectedEventId ? <p className="text-sm text-[#7070a0]">Select an event above.</p>
-          : subs.length === 0 ? <div className="rounded-xl border border-[#333358] bg-[#161628] p-8 text-center text-sm text-[#7070a0]">No pending submissions.</div>
+          {!selectedEventId ? <p className="text-sm text-[#9898c0]">Select an event above.</p>
+          : subs.length === 0 ? <div className="rounded-xl border border-[#333358] bg-[#161628] p-8 text-center text-sm text-[#9898c0]">No pending submissions.</div>
           : subs.map(sub => {
             const task = tasks.find(t => t.id === sub.task_id)
             return (
@@ -325,8 +325,8 @@ export default function BingoPanel() {
                   <div>
                     <p className="text-sm font-semibold text-[#e8e8f0]">{sub.rsn}</p>
                     <p className="text-xs text-[#c89b3c] mt-0.5">{task?.title ?? sub.task_id}</p>
-                    {sub.notes && <p className="text-xs text-[#7070a0] mt-1 italic">"{sub.notes}"</p>}
-                    <p className="text-xs text-[#7070a0] mt-1">{new Date(sub.submitted_at).toLocaleString()}</p>
+                    {sub.notes && <p className="text-xs text-[#9898c0] mt-1 italic">"{sub.notes}"</p>}
+                    <p className="text-xs text-[#9898c0] mt-1">{new Date(sub.submitted_at).toLocaleString()}</p>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => doReview(sub.id, 'approved')} className="px-3 py-1.5 rounded-lg bg-green-900/40 text-green-400 border border-green-800 text-sm font-medium hover:bg-green-900/60">✓ Approve</button>

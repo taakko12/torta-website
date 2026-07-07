@@ -50,19 +50,19 @@ export default function MessengerPanel({ channels, dropsChannelId }: Props) {
       <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Send Embed to Discord</h2>
       <div className="space-y-3 max-w-lg">
         <div>
-          <label className="text-xs text-[#7070a0] mb-1 block">Channel</label>
+          <label className="text-xs text-[#9898c0] mb-1 block">Channel</label>
           <select value={embedChannel} onChange={e => setEmbedChannel(e.target.value)}
             className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
             {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-xs text-[#7070a0] mb-1 block">Title</label>
+          <label className="text-xs text-[#9898c0] mb-1 block">Title</label>
           <input value={embedTitle} onChange={e => setEmbedTitle(e.target.value)} placeholder="Embed title"
             className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]" />
         </div>
         <div>
-          <label className="text-xs text-[#7070a0] mb-1 block">Description</label>
+          <label className="text-xs text-[#9898c0] mb-1 block">Description</label>
           <div className="rounded-lg border border-[#333358] bg-[#1c1c36] overflow-hidden">
             <div className="flex flex-wrap gap-px p-1 border-b border-[#333358] bg-[#161628]">
               {[['H1', '# '], ['H2', '## '], ['H3', '### ']].map(([label, prefix]) => (
@@ -87,11 +87,11 @@ export default function MessengerPanel({ channels, dropsChannelId }: Props) {
           </div>
         </div>
         <div>
-          <label className="text-xs text-[#7070a0] mb-1 block">Color</label>
+          <label className="text-xs text-[#9898c0] mb-1 block">Color</label>
           <div className="flex items-center gap-2">
             <input type="color" value={embedColor} onChange={e => setEmbedColor(e.target.value)}
               className="h-9 w-12 rounded cursor-pointer bg-transparent border border-[#333358]" />
-            <span className="text-xs text-[#4a4a70]">{embedColor}</span>
+            <span className="text-xs text-[#7878a8]">{embedColor}</span>
           </div>
         </div>
         <div className="flex items-center gap-3 pt-1">

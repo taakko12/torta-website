@@ -4,9 +4,15 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
+const VALID_KEYS = ['weeklyRecap','modRecap','pollRoll','monthlyReset','womSync','vcFlush']
+
 const DEFAULTS = {
-  weeklyRecap: { day: 0, hour: 20 },
-  modRecap:    { day: 1, hour: 9  },
+  weeklyRecap:  { day: 0, hour: 20 },
+  modRecap:     { day: 1, hour: 9  },
+  pollRoll:     { day: 6, hour: 12 },
+  monthlyReset: { dayOfMonth: 1, hour: 0 },
+  womSync:      { intervalHours: 1 },
+  vcFlush:      { intervalMinutes: 5 },
 }
 
 async function auth() {
@@ -16,8 +22,7 @@ async function auth() {
 }
 
 async function getGuildData() {
-  const db = getSupabaseAdmin()
-  const { data } = await db.from('guild_data').select('data').eq('guild_id', GUILD_ID).single()
+  const { data } = await getSupabaseAdmin().from('guild_data').select('data').eq('guild_id', GUILD_ID).single()
   return data?.data ?? {}
 }
 
@@ -28,22 +33,21 @@ async function saveGuildData(data: object) {
 export async function GET() {
   if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const data = await getGuildData()
-  const jobs = data.scheduledJobs ?? {}
-  return NextResponse.json({
-    weeklyRecap: { ...DEFAULTS.weeklyRecap, ...jobs.weeklyRecap },
-    modRecap:    { ...DEFAULTS.modRecap,    ...jobs.modRecap    },
-  })
+  const stored = data.scheduledJobs ?? {}
+  const result = Object.fromEntries(
+    Object.entries(DEFAULTS).map(([k, def]) => [k, { ...def, ...(stored[k] ?? {}) }])
+  )
+  return NextResponse.json(result)
 }
 
 export async function PATCH(req: Request) {
   if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { key, day, hour } = await req.json()
-  if (!['weeklyRecap', 'modRecap'].includes(key)) {
-    return NextResponse.json({ error: 'Invalid key' }, { status: 400 })
-  }
+  const body = await req.json()
+  const { key, ...values } = body
+  if (!VALID_KEYS.includes(key)) return NextResponse.json({ error: 'Invalid key' }, { status: 400 })
   const data = await getGuildData()
   if (!data.scheduledJobs) data.scheduledJobs = {}
-  data.scheduledJobs[key] = { day: Number(day), hour: Number(hour) }
+  data.scheduledJobs[key] = { ...(DEFAULTS[key as keyof typeof DEFAULTS] ?? {}), ...data.scheduledJobs[key], ...values }
   await saveGuildData(data)
   return NextResponse.json({ ok: true })
 }

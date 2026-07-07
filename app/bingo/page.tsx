@@ -59,7 +59,7 @@ export default async function BingoDashboard() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#57f287] animate-pulse" />
             Live Tournament
           </span>
-          <span className="text-xs text-[#4a4a70]">
+          <span className="text-xs text-[#7878a8]">
             {event.board_size}×{event.board_size} · {tasks.length} tasks · {teams.length} teams
           </span>
         </div>
@@ -77,7 +77,7 @@ export default async function BingoDashboard() {
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: `radial-gradient(ellipse 80% 100% at 100% 50%, ${leader.team.color}12, transparent)` }}
               />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] mb-2">Current Leader</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#7878a8] mb-2">Current Leader</p>
               <div className="flex items-baseline gap-3 flex-wrap">
                 <h2 className="text-2xl font-black text-white">{leader.team.name}</h2>
                 <span className="text-[#6868a0] text-sm">leads with</span>
@@ -103,7 +103,7 @@ export default async function BingoDashboard() {
           <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#6868a0] mb-5">Live Standings</h2>
             {sorted.length === 0 ? (
-              <p className="text-sm text-[#4a4a70]">No teams yet.</p>
+              <p className="text-sm text-[#7878a8]">No teams yet.</p>
             ) : (
               <div className="space-y-5">
                 {sorted.map((p, i) => {
@@ -120,7 +120,7 @@ export default async function BingoDashboard() {
                           {p.team.name.slice(0, 2).toUpperCase()}
                         </div>
                         <span className="text-sm font-semibold text-[#e8e8f0] flex-1 truncate">{p.team.name}</span>
-                        <span className="text-xs text-[#4a4a70] shrink-0">{p.completedTasks.size}/{tasks.length} tiles</span>
+                        <span className="text-xs text-[#7878a8] shrink-0">{p.completedTasks.size}/{tasks.length} tiles</span>
                         <span className="text-sm font-bold shrink-0 w-20 text-right" style={{ color: p.team.color }}>
                           {p.totalPoints.toLocaleString()} pts
                         </span>
@@ -154,11 +154,11 @@ export default async function BingoDashboard() {
               ].map(({ label, value, color }) => (
                 <div key={label} className="rounded-lg bg-[#1c1c36] p-3 text-center">
                   <p className="text-xl font-black" style={{ color }}>{value}</p>
-                  <p className="text-[11px] text-[#4a4a70] mt-0.5">{label}</p>
+                  <p className="text-[11px] text-[#7878a8] mt-0.5">{label}</p>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-[#4a4a70] mb-1.5">
+            <p className="text-xs text-[#7878a8] mb-1.5">
               Overall completion — {boardPct}% of all possible points earned across all teams
             </p>
             <div className="h-2 rounded-full bg-[#1c1c36] overflow-hidden">
@@ -175,11 +175,11 @@ export default async function BingoDashboard() {
           <div className="flex items-center gap-2 mb-4">
             <span className="w-2 h-2 rounded-full bg-[#57f287] animate-pulse shrink-0" />
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#e8e8f0]">Live Feed</h2>
-            <span className="ml-auto text-[10px] text-[#4a4a70]">Approved drops</span>
+            <span className="ml-auto text-[10px] text-[#7878a8]">Approved drops</span>
           </div>
 
           {approvedFeed.length === 0 ? (
-            <p className="text-sm text-[#4a4a70] text-center py-8">No approved drops yet.</p>
+            <p className="text-sm text-[#7878a8] text-center py-8">No approved drops yet.</p>
           ) : (
             <ul className="divide-y divide-[#1c1c36]">
               {approvedFeed.slice(0, 15).map(sub => {
@@ -211,7 +211,7 @@ export default async function BingoDashboard() {
                               {team.name}
                             </span>
                           )}
-                          <span className="text-[10px] text-[#4a4a70]">
+                          <span className="text-[10px] text-[#7878a8]">
                             <ClientDate iso={sub.submitted_at} />
                           </span>
                         </div>

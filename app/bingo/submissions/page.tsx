@@ -55,7 +55,7 @@ export default async function SubmissionsPage() {
 
       {submissions.length === 0 ? (
         <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-10 text-center">
-          <p className="text-[#4a4a70] text-sm">No submissions yet.</p>
+          <p className="text-[#7878a8] text-sm">No submissions yet.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] overflow-hidden">
@@ -84,7 +84,7 @@ export default async function SubmissionsPage() {
                 </div>
                 <div className="text-right shrink-0 space-y-1">
                   {statusBadge(sub.status)}
-                  <p className="text-[10px] text-[#4a4a70]">
+                  <p className="text-[10px] text-[#7878a8]">
                     <ClientDate iso={sub.submitted_at} />
                   </p>
                 </div>

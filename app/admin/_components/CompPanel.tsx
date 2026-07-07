@@ -53,7 +53,7 @@ export default function CompPanel() {
   const card = 'rounded-xl border border-[#333358] bg-[#161628]'
   const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
 
-  if (!data) return <p className="text-sm text-[#4a4a70] py-8 text-center">Loading…</p>
+  if (!data) return <p className="text-sm text-[#7878a8] py-8 text-center">Loading…</p>
 
   const board = data[tab]
   const medals = ['🥇', '🥈', '🥉']
@@ -64,7 +64,7 @@ export default function CompPanel() {
       <div className="flex gap-2">
         {(Object.keys(LABELS) as CompType[]).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-[#7c5ce8] text-white' : 'bg-[#1c1c36] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-[#7c5ce8] text-white' : 'bg-[#1c1c36] text-[#9898c0] hover:text-[#e8e8f0]'}`}>
             {LABELS[t]}
           </button>
         ))}
@@ -92,25 +92,25 @@ export default function CompPanel() {
       <div className={`${card} overflow-hidden`}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
-            {LABELS[tab]} Wins <span className="text-[#4a4a70] normal-case font-normal">({board.length} members)</span>
+            {LABELS[tab]} Wins <span className="text-[#7878a8] normal-case font-normal">({board.length} members)</span>
           </h2>
         </div>
         {board.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-[#4a4a70]">No wins recorded yet.</p>
+          <p className="px-5 py-8 text-center text-sm text-[#7878a8]">No wins recorded yet.</p>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#21213c]">
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">#</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Wins</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">#</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Member</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Wins</th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>
               {board.map((e, idx) => (
                 <tr key={e.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                  <td className="px-4 py-2.5 text-sm text-[#4a4a70]">{medals[idx] ?? idx + 1}</td>
+                  <td className="px-4 py-2.5 text-sm text-[#7878a8]">{medals[idx] ?? idx + 1}</td>
                   <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{e.display_name}</td>
                   <td className="px-4 py-2.5 text-sm font-bold text-[#c89b3c]">{e.wins}</td>
                   <td className="px-4 py-2.5">

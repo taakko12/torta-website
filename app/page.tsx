@@ -51,12 +51,12 @@ function RecentDropCard({ drop }: { drop: RecentDrop | null }) {
               <p className="text-xl font-bold capitalize text-[#e8e8f0]">{drop.player_name}</p>
               <p className="text-2xl font-mono font-semibold text-[#f0c060] mt-1">{formatGp(drop.gp_value)}</p>
               {drop.item_name && drop.item_name !== 'Monthly aggregate' && (
-                <p className="text-sm text-[#7070a0] mt-1">{drop.item_name}</p>
+                <p className="text-sm text-[#9898c0] mt-1">{drop.item_name}</p>
               )}
-              <p className="text-xs text-[#7070a0] mt-2"><ClientDate iso={drop.recorded_at} /></p>
+              <p className="text-xs text-[#9898c0] mt-2"><ClientDate iso={drop.recorded_at} /></p>
               {discordLink(DROPS_CHANNEL, drop.discord_message_id) && (
                 <a href={discordLink(DROPS_CHANNEL, drop.discord_message_id)!} target="_blank" rel="noopener noreferrer"
-                  className="mt-2 inline-block text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors">
+                  className="mt-2 inline-block text-xs text-[#9898c0] hover:text-[#c89b3c] transition-colors">
                   View in Discord →
                 </a>
               )}
@@ -70,7 +70,7 @@ function RecentDropCard({ drop }: { drop: RecentDrop | null }) {
           )}
         </>
       ) : (
-        <p className="text-[#7070a0]">No drops recorded yet.</p>
+        <p className="text-[#9898c0]">No drops recorded yet.</p>
       )}
     </div>
   )
@@ -83,10 +83,10 @@ function RecentPlankCard({ plank }: { plank: RecentPlank | null }) {
       {plank ? (
         <>
           <p className="text-xl font-bold capitalize text-[#e8e8f0]">{plank.player_name}</p>
-          <p className="text-xs text-[#7070a0] mt-1"><ClientDate iso={plank.recorded_at} /></p>
+          <p className="text-xs text-[#9898c0] mt-1"><ClientDate iso={plank.recorded_at} /></p>
           {discordLink(PLANKS_CHANNEL, plank.discord_message_id) && (
             <a href={discordLink(PLANKS_CHANNEL, plank.discord_message_id)!} target="_blank" rel="noopener noreferrer"
-              className="mt-2 inline-block text-xs text-[#7070a0] hover:text-[#cc5555] transition-colors">
+              className="mt-2 inline-block text-xs text-[#9898c0] hover:text-[#cc5555] transition-colors">
               View in Discord →
             </a>
           )}
@@ -98,7 +98,7 @@ function RecentPlankCard({ plank }: { plank: RecentPlank | null }) {
           )}
         </>
       ) : (
-        <p className="text-[#7070a0]">No deaths recorded yet.</p>
+        <p className="text-[#9898c0]">No deaths recorded yet.</p>
       )}
     </div>
   )
@@ -137,7 +137,7 @@ export default async function Home() {
           Torta
         </h1>
         <div className="w-16 xl:w-40 h-px mx-auto bg-gradient-to-r from-transparent via-[#c89b3c]/50 to-transparent" />
-        <p className="hidden xl:block text-xs font-semibold uppercase tracking-[0.25em] text-[#4a4a70] mt-6">
+        <p className="hidden xl:block text-xs font-semibold uppercase tracking-[0.25em] text-[#7878a8] mt-6">
           EST. 2026 &nbsp;·&nbsp; Clan Tracker
         </p>
       </div>
@@ -147,7 +147,7 @@ export default async function Home() {
         <div className="mb-12 xl:mb-16">
           <div className="flex items-center gap-4 mb-5">
             <div className="flex-1 h-px bg-gradient-to-r from-[#c89b3c]/30 to-transparent" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#4a4a70]">Weekly Competitions</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#7878a8]">Weekly Competitions</p>
             <div className="flex-1 h-px bg-gradient-to-l from-[#c89b3c]/30 to-transparent" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -171,7 +171,7 @@ export default async function Home() {
                       <div className="shrink-0 flex flex-col items-end gap-1.5 mt-0.5">
                         <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded text-[#050510]"
                           style={{ backgroundColor: accent }}>LIVE</span>
-                        <span className="text-[10px] text-[#4a4a70]">{daysLeft}d left</span>
+                        <span className="text-[10px] text-[#7878a8]">{daysLeft}d left</span>
                       </div>
                     </div>
                     {top3.length > 0 ? (
@@ -189,7 +189,7 @@ export default async function Home() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-[#4a4a70] mt-auto">No progress recorded yet.</p>
+                      <p className="text-xs text-[#7878a8] mt-auto">No progress recorded yet.</p>
                     )}
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export default async function Home() {
                       <div>
                         <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1.5" style={{ color: accent }}>{label}</p>
                         <p className="text-2xl md:text-3xl font-black text-[#f0f0ff] leading-none">{formatMetric(comp.metric)}</p>
-                        <p className="text-xs text-[#4a4a70] mt-3">Starts <ClientDate iso={comp.startsAt} /></p>
+                        <p className="text-xs text-[#7878a8] mt-3">Starts <ClientDate iso={comp.startsAt} /></p>
                       </div>
                       <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-[#333358] text-[#6868a0] mt-0.5">
                         in {timeUntilLabel(comp.startsAt)}
@@ -240,10 +240,10 @@ export default async function Home() {
             <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-[#e8e8f0]">💰 Loot Leaders</h2>
-                <span className="text-xs text-[#7070a0]">{month}</span>
+                <span className="text-xs text-[#9898c0]">{month}</span>
               </div>
               {topDrops.length === 0 ? (
-                <p className="text-sm text-[#7070a0]">No loot recorded this month.</p>
+                <p className="text-sm text-[#9898c0]">No loot recorded this month.</p>
               ) : (
                 <ul className="space-y-2">
                   {topDrops.slice(0, 5).map((e, i) => (
@@ -255,7 +255,7 @@ export default async function Home() {
                   ))}
                 </ul>
               )}
-              <Link href="/feed?section=loot" className="mt-4 block text-center text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors">
+              <Link href="/feed?section=loot" className="mt-4 block text-center text-xs text-[#9898c0] hover:text-[#c89b3c] transition-colors">
                 View full leaderboard →
               </Link>
             </div>
@@ -263,10 +263,10 @@ export default async function Home() {
             <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-[#e8e8f0]">💀 Plank Leaders</h2>
-                <span className="text-xs text-[#7070a0]">{month}</span>
+                <span className="text-xs text-[#9898c0]">{month}</span>
               </div>
               {topPlanks.length === 0 ? (
-                <p className="text-sm text-[#7070a0]">No deaths recorded this month.</p>
+                <p className="text-sm text-[#9898c0]">No deaths recorded this month.</p>
               ) : (
                 <ul className="space-y-2">
                   {topPlanks.slice(0, 5).map((e, i) => (
@@ -278,7 +278,7 @@ export default async function Home() {
                   ))}
                 </ul>
               )}
-              <Link href="/feed?section=deaths" className="mt-4 block text-center text-xs text-[#7070a0] hover:text-[#cc5555] transition-colors">
+              <Link href="/feed?section=deaths" className="mt-4 block text-center text-xs text-[#9898c0] hover:text-[#cc5555] transition-colors">
                 View full leaderboard →
               </Link>
             </div>
@@ -288,22 +288,22 @@ export default async function Home() {
           <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-[#e8e8f0]">🏆 Clan Achievements</h2>
-              <Link href="/feed?section=achievements" className="text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors">
+              <Link href="/feed?section=achievements" className="text-xs text-[#9898c0] hover:text-[#c89b3c] transition-colors">
                 View all →
               </Link>
             </div>
             {achievements.length === 0 ? (
-              <p className="text-sm text-[#7070a0]">No achievements recorded yet.</p>
+              <p className="text-sm text-[#9898c0]">No achievements recorded yet.</p>
             ) : (
               <ul className="space-y-3">
                 {achievements.map(a => (
                   <li key={a.id} className="flex flex-col gap-0.5 border-b border-[#333358] pb-3 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">{a.title}</span>
-                      <span className="text-xs text-[#7070a0] shrink-0"><ClientDate iso={a.recorded_at} /></span>
+                      <span className="text-xs text-[#9898c0] shrink-0"><ClientDate iso={a.recorded_at} /></span>
                     </div>
                     <p className="text-sm font-medium text-[#e8e8f0] capitalize">{a.player_name}</p>
-                    <p className="text-xs text-[#7070a0]">{a.description}</p>
+                    <p className="text-xs text-[#9898c0]">{a.description}</p>
                   </li>
                 ))}
               </ul>

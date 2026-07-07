@@ -21,9 +21,9 @@ export default function LogsPanel({ initialLogs }: { initialLogs: CommandLog[] }
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-[#4a4a70]">Last 200 entries, newest first.</span>
-        <span className={`flex items-center gap-1.5 text-xs font-medium ${live ? 'text-[#57F287]' : 'text-[#7070a0]'}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${live ? 'bg-[#57F287] animate-pulse' : 'bg-[#4a4a70]'}`} />
+        <span className="text-xs text-[#7878a8]">Last 200 entries, newest first.</span>
+        <span className={`flex items-center gap-1.5 text-xs font-medium ${live ? 'text-[#57F287]' : 'text-[#9898c0]'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${live ? 'bg-[#57F287] animate-pulse' : 'bg-[#7878a8]'}`} />
           {live ? 'Live' : 'Connecting…'}
         </span>
       </div>
@@ -32,27 +32,27 @@ export default function LogsPanel({ initialLogs }: { initialLogs: CommandLog[] }
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#21213c]">
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Time</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Member</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Command</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]">Subcommand</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Time</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Member</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Command</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Subcommand</th>
               </tr>
             </thead>
             <tbody>
               {logs.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#4a4a70]">No commands logged yet.</td></tr>
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#7878a8]">No commands logged yet.</td></tr>
               ) : logs.map(log => (
                 <tr key={log.id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                  <td className="px-4 py-2 text-xs text-[#4a4a70] whitespace-nowrap">
+                  <td className="px-4 py-2 text-xs text-[#7878a8] whitespace-nowrap">
                     {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     <span className="block text-[10px]">{new Date(log.logged_at).toLocaleDateString()}</span>
                   </td>
                   <td className="px-4 py-2">
                     <span className="text-sm text-[#e8e8f0]">{log.display_name ?? '—'}</span>
-                    <span className="text-xs text-[#4a4a70] block">{log.discord_id}</span>
+                    <span className="text-xs text-[#7878a8] block">{log.discord_id}</span>
                   </td>
                   <td className="px-4 py-2 text-sm font-mono text-[#c89b3c]">/{log.command}</td>
-                  <td className="px-4 py-2 text-xs text-[#7070a0]">{log.subcommand ?? '—'}</td>
+                  <td className="px-4 py-2 text-xs text-[#9898c0]">{log.subcommand ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

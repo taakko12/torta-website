@@ -51,7 +51,7 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   Competition: 'bg-[#5865F2]/15 text-[#7c8cf8]',
   Social: 'bg-[#57F287]/15 text-[#57F287]',
   Event: 'bg-[#7c5ce8]/15 text-[#b09cf8]',
-  Other: 'bg-[#4a4a70]/30 text-[#8080b0]',
+  Other: 'bg-[#7878a8]/30 text-[#8080b0]',
 }
 
 function typeBadge(type: string) {
@@ -96,7 +96,7 @@ export default async function EventsPage() {
 
       {(activeComps.length > 0 || upcomingComps.length > 0) && (
         <div className="mb-10">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#4a4a70] mb-3">⚔️ WOM Competitions</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#7878a8] mb-3">⚔️ WOM Competitions</h2>
           <div className="space-y-3">
             {activeComps.map(c => <CompCard key={c.id} comp={c} live />)}
             {upcomingComps.map(c => <CompCard key={c.id} comp={c} />)}
@@ -106,7 +106,7 @@ export default async function EventsPage() {
 
       {upcoming.length === 0 ? (
         <div className="rounded-xl border border-[#333358] bg-[#161628] px-6 py-12 text-center">
-          <p className="text-[#4a4a70]">No upcoming events scheduled.</p>
+          <p className="text-[#7878a8]">No upcoming events scheduled.</p>
         </div>
       ) : (
         <div className="space-y-3 mb-12">
@@ -116,7 +116,7 @@ export default async function EventsPage() {
 
       {past.length > 0 && (
         <>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#4a4a70] mb-3">Past Events</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#7878a8] mb-3">Past Events</h2>
           <div className="space-y-2 opacity-60">
             {past.slice(0, 10).map(row => <EventCard key={row.data.id} row={row} past />)}
           </div>
@@ -136,12 +136,12 @@ function CompCard({ comp, live = false }: { comp: Competition | CompetitionWithS
           {live ? 'LIVE' : 'SOON'}
         </span>
       </div>
-      <div className="flex items-center gap-4 text-xs text-[#4a4a70]">
+      <div className="flex items-center gap-4 text-xs text-[#7878a8]">
         <span className="capitalize">{comp.metric.replace(/_/g, ' ')}</span>
         <span><ClientDate iso={comp.startsAt} /> → <ClientDate iso={comp.endsAt} /></span>
       </div>
       {leader && (
-        <p className="mt-2 text-xs text-[#7070a0]">
+        <p className="mt-2 text-xs text-[#9898c0]">
           Leading: <span className="text-[#c89b3c] font-medium">{leader.player.displayName}</span>
           {' '}({leader.progress.gained.toLocaleString()} gained)
         </p>
@@ -167,8 +167,8 @@ function EventCard({ row, past = false }: { row: Row; past?: boolean }) {
             <span className="shrink-0 text-xs font-semibold px-2 py-0.5 rounded bg-[#57F287]/10 text-[#57F287]">{label}</span>
           )}
         </div>
-        {ev.description && <p className="text-sm text-[#7070a0] mb-3">{ev.description}</p>}
-        <div className="flex items-center gap-4 text-xs text-[#4a4a70]">
+        {ev.description && <p className="text-sm text-[#9898c0] mb-3">{ev.description}</p>}
+        <div className="flex items-center gap-4 text-xs text-[#7878a8]">
           {row.time ? (
             <span><ClientDate iso={row.time.toISOString()} /></span>
           ) : (
@@ -200,8 +200,8 @@ function EventCard({ row, past = false }: { row: Row; past?: boolean }) {
           <span className="shrink-0 text-xs font-semibold px-2 py-0.5 rounded bg-[#57F287]/10 text-[#57F287]">{label}</span>
         )}
       </div>
-      {raid.description && <p className="text-sm text-[#7070a0] mb-3">{raid.description}</p>}
-      <div className="flex items-center gap-4 text-xs text-[#4a4a70]">
+      {raid.description && <p className="text-sm text-[#9898c0] mb-3">{raid.description}</p>}
+      <div className="flex items-center gap-4 text-xs text-[#7878a8]">
         <span><ClientDate iso={row.time.toISOString()} /></span>
         {signupCount > 0 && (
           <span className="text-[#c89b3c]">⚔ {signupCount} signed up</span>

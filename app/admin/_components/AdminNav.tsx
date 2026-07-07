@@ -25,7 +25,7 @@ export default function AdminNav() {
               className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
                 pathname.startsWith(href)
                   ? 'bg-[#c89b3c]/12 text-[#c89b3c] font-medium'
-                  : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-[#1c1c36]'
+                  : 'text-[#9898c0] hover:text-[#e8e8f0] hover:bg-[#1c1c36]'
               }`}
             >
               {label}

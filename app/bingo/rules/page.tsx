@@ -36,7 +36,7 @@ export default function RulesPage() {
         ))}
       </div>
 
-      <p className="text-xs text-[#4a4a70] mt-4 text-center">
+      <p className="text-xs text-[#7878a8] mt-4 text-center">
         Questions? Ask in the Torta Discord.
       </p>
     </div>

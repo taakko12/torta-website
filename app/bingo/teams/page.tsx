@@ -38,7 +38,7 @@ export default async function TeamsPage() {
 
       {sorted.length === 0 ? (
         <div className="rounded-xl border border-[#2c2c4e] bg-[#161628] p-10 text-center">
-          <p className="text-[#4a4a70] text-sm">No teams have been created yet.</p>
+          <p className="text-[#7878a8] text-sm">No teams have been created yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -57,18 +57,18 @@ export default async function TeamsPage() {
                 <div className="flex items-start justify-between gap-3 mt-1 mb-4">
                   <div>
                     <h2 className="text-lg font-black text-white">{p.team.name}</h2>
-                    <p className="text-xs text-[#4a4a70]">Rank #{i + 1}</p>
+                    <p className="text-xs text-[#7878a8]">Rank #{i + 1}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black" style={{ color: p.team.color }}>
                       {p.totalPoints}
                     </p>
-                    <p className="text-[11px] text-[#4a4a70]">points</p>
+                    <p className="text-[11px] text-[#7878a8]">points</p>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <div className="flex items-center justify-between text-xs text-[#4a4a70] mb-1.5">
+                  <div className="flex items-center justify-between text-xs text-[#7878a8] mb-1.5">
                     <span>{p.completedTasks.size}/{tasks.length} tiles completed</span>
                     <span>{pct}%</span>
                   </div>
@@ -81,9 +81,9 @@ export default async function TeamsPage() {
                 </div>
 
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] mb-2">Members</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7878a8] mb-2">Members</p>
                   {p.members.length === 0 ? (
-                    <p className="text-xs text-[#4a4a70] italic">No members assigned</p>
+                    <p className="text-xs text-[#7878a8] italic">No members assigned</p>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {p.members.map(rsn => (

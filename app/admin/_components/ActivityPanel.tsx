@@ -125,14 +125,14 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const ingamePages = Math.ceil(ingameRows.length / PAGE)
   const vcPages = Math.ceil(vc.length / PAGE)
 
-  const th = 'px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70]'
+  const th = 'px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7878a8]'
   const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
         <button onClick={() => { setCombined(c => !c); setCombinedPage(0) }}
-          className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#333358] text-[#7070a0] hover:text-[#e8e8f0]'}`}>
+          className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#333358] text-[#9898c0] hover:text-[#e8e8f0]'}`}>
           {combined ? 'Split View' : 'Combined View'}
         </button>
       </div>
@@ -140,8 +140,8 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
       {combined ? (
         <div className={card}>
           <button onClick={() => setCombinedOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#4a4a70] normal-case">({combinedData.length})</span>}</h2>
-            <span className="text-[#4a4a70] text-sm">{combinedOpen ? '▲' : '▼'}</span>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#7878a8] normal-case">({combinedData.length})</span>}</h2>
+            <span className="text-[#7878a8] text-sm">{combinedOpen ? '▲' : '▼'}</span>
           </button>
           {combinedOpen && <div className="overflow-x-auto">
             <table className="w-full">
@@ -153,7 +153,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
               <tbody>
                 {combinedData.slice(combinedPage * PAGE, (combinedPage + 1) * PAGE).map((row, i) => (
                   <tr key={row.key} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                    <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{combinedPage * PAGE + i + 1}</td>
+                    <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{combinedPage * PAGE + i + 1}</td>
                     <td className="px-4 py-2.5"><span className="text-sm font-medium text-[#e8e8f0]">{row.name}</span>{row.rsn && row.type !== 'In-Game' && <span className="text-xs text-[#3d9970] ml-2">⚔️ {row.rsn}</span>}{row.role && <span className="text-xs text-[#7c5ce8] ml-2">{row.role}</span>}</td>
                     <td className="px-4 py-2.5"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === 'Discord' ? 'bg-[#5865F2]/20 text-[#8ea0f8]' : row.type === 'Linked' ? 'bg-[#c89b3c]/20 text-[#c89b3c]' : 'bg-[#3d9970]/20 text-[#5cbf87]'}`}>{row.type}</span></td>
                     <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{row.month_count.toLocaleString()}</td>
@@ -166,9 +166,9 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
           </div>}
           {combinedOpen && combinedPages > 1 && (
             <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
-              <button onClick={() => setCombinedPage(p => Math.max(0, p - 1))} disabled={combinedPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-              <span className="text-xs text-[#4a4a70]">Page {combinedPage + 1} of {combinedPages}</span>
-              <button onClick={() => setCombinedPage(p => Math.min(combinedPages - 1, p + 1))} disabled={combinedPage === combinedPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+              <button onClick={() => setCombinedPage(p => Math.max(0, p - 1))} disabled={combinedPage === 0} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+              <span className="text-xs text-[#7878a8]">Page {combinedPage + 1} of {combinedPages}</span>
+              <button onClick={() => setCombinedPage(p => Math.min(combinedPages - 1, p + 1))} disabled={combinedPage === combinedPages - 1} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
             </div>
           )}
         </div>
@@ -176,8 +176,8 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
         {/* Discord */}
         <div className={card}>
           <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {enriched.length > 0 && <span className="text-[#4a4a70] normal-case">({enriched.length})</span>}</h2>
-            <span className="text-[#4a4a70] text-sm">{discordOpen ? '▲' : '▼'}</span>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {enriched.length > 0 && <span className="text-[#7878a8] normal-case">({enriched.length})</span>}</h2>
+            <span className="text-[#7878a8] text-sm">{discordOpen ? '▲' : '▼'}</span>
           </button>
           {discordOpen && (<>
             <div className="overflow-x-auto">
@@ -190,11 +190,11 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                 <tbody>
                   {enriched.slice(discordPage * PAGE, (discordPage + 1) * PAGE).map((row, i) => (
                     <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                      <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{discordPage * PAGE + i + 1}</td>
+                      <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{discordPage * PAGE + i + 1}</td>
                       <td className="px-4 py-2.5">
                         <span className="text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</span>
                         {row.rsn && <span className="text-xs text-[#3d9970] ml-2">⚔️ {row.rsn}</span>}
-                        <span className="text-xs text-[#4a4a70] block">{row.discord_id}</span>
+                        <span className="text-xs text-[#7878a8] block">{row.discord_id}</span>
                       </td>
                       <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
                       <td className="px-4 py-2.5 max-w-[160px]">
@@ -216,9 +216,9 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
             </div>
             {discordPages > 1 && (
               <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
-                <button onClick={() => setDiscordPage(p => Math.max(0, p - 1))} disabled={discordPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-                <span className="text-xs text-[#4a4a70]">Page {discordPage + 1} of {discordPages}</span>
-                <button onClick={() => setDiscordPage(p => Math.min(discordPages - 1, p + 1))} disabled={discordPage === discordPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                <button onClick={() => setDiscordPage(p => Math.max(0, p - 1))} disabled={discordPage === 0} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                <span className="text-xs text-[#7878a8]">Page {discordPage + 1} of {discordPages}</span>
+                <button onClick={() => setDiscordPage(p => Math.min(discordPages - 1, p + 1))} disabled={discordPage === discordPages - 1} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
               </div>
             )}
           </>)}
@@ -227,8 +227,8 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
         {/* In-Game */}
         <div className={card}>
           <button onClick={() => setIngameOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity {ingameRows.length > 0 && <span className="text-[#4a4a70] normal-case">({ingameRows.length})</span>}</h2>
-            <span className="text-[#4a4a70] text-sm">{ingameOpen ? '▲' : '▼'}</span>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">In-Game Activity {ingameRows.length > 0 && <span className="text-[#7878a8] normal-case">({ingameRows.length})</span>}</h2>
+            <span className="text-[#7878a8] text-sm">{ingameOpen ? '▲' : '▼'}</span>
           </button>
           {ingameOpen && (<>
             <div className="overflow-x-auto">
@@ -245,7 +245,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                     const isMerging = mergeFromRsn === row.rsn
                     return (
                     <tr key={row.rsn} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                      <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{ingamePage * PAGE + i + 1}</td>
+                      <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{ingamePage * PAGE + i + 1}</td>
                       <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.rsn}</td>
                       <td className="px-4 py-2.5 min-w-[240px]">
                         {isMerging ? (
@@ -267,7 +267,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                               {merging ? '…' : 'Merge'}
                             </button>
                             <button onClick={() => { setMergeFromRsn(null); setMergeToRsn('') }}
-                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
+                              className="text-xs px-2 py-1 rounded text-[#7878a8] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
                           </div>
                         ) : linked ? (
                           <div className="flex items-center gap-2">
@@ -294,16 +294,16 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                             <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
                               className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
                             <button onClick={() => { setQuickLinkRsn(null); setQuickLinkSearch('') }}
-                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
+                              className="text-xs px-2 py-1 rounded text-[#7878a8] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5">
                             <button onClick={() => { setQuickLinkRsn(row.rsn); setQuickLinkDiscordId(''); setQuickLinkSearch(''); setMergeFromRsn(null) }}
-                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#c89b3c] border border-[#333358] hover:border-[#c89b3c]/40 transition-colors">
+                              className="text-xs px-2 py-1 rounded text-[#7878a8] hover:text-[#c89b3c] border border-[#333358] hover:border-[#c89b3c]/40 transition-colors">
                               + Link
                             </button>
                             <button onClick={() => { setMergeFromRsn(row.rsn); setMergeToRsn(''); setQuickLinkRsn(null) }}
-                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#ED4245] border border-[#333358] hover:border-[#ED4245]/40 transition-colors">
+                              className="text-xs px-2 py-1 rounded text-[#7878a8] hover:text-[#ED4245] border border-[#333358] hover:border-[#ED4245]/40 transition-colors">
                               Merge →
                             </button>
                           </div>
@@ -320,9 +320,9 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
             </div>
             {ingamePages > 1 && (
               <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
-                <button onClick={() => setIngamePage(p => Math.max(0, p - 1))} disabled={ingamePage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-                <span className="text-xs text-[#4a4a70]">Page {ingamePage + 1} of {ingamePages}</span>
-                <button onClick={() => setIngamePage(p => Math.min(ingamePages - 1, p + 1))} disabled={ingamePage === ingamePages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+                <button onClick={() => setIngamePage(p => Math.max(0, p - 1))} disabled={ingamePage === 0} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+                <span className="text-xs text-[#7878a8]">Page {ingamePage + 1} of {ingamePages}</span>
+                <button onClick={() => setIngamePage(p => Math.min(ingamePages - 1, p + 1))} disabled={ingamePage === ingamePages - 1} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
               </div>
             )}
           </>)}
@@ -332,8 +332,8 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
       {/* VC Activity — always shown */}
       <div className={card}>
         <button onClick={() => setVcOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {vc.length > 0 && <span className="text-[#4a4a70] normal-case">({vc.length})</span>}</h2>
-          <span className="text-[#4a4a70] text-sm">{vcOpen ? '▲' : '▼'}</span>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {vc.length > 0 && <span className="text-[#7878a8] normal-case">({vc.length})</span>}</h2>
+          <span className="text-[#7878a8] text-sm">{vcOpen ? '▲' : '▼'}</span>
         </button>
         {vcOpen && (<>
           <div className="overflow-x-auto">
@@ -346,7 +346,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
               <tbody>
                 {vc.slice(vcPage * PAGE, (vcPage + 1) * PAGE).map((row, i) => (
                   <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
-                    <td className="px-4 py-2.5 text-xs text-[#4a4a70]">#{vcPage * PAGE + i + 1}</td>
+                    <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{vcPage * PAGE + i + 1}</td>
                     <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</td>
                     <td className="px-4 py-2.5 text-xs text-[#7c5ce8]">{row.role_name ?? '—'}</td>
                     <td className="px-4 py-2.5 text-right text-sm font-bold text-[#c89b3c]">{formatMinutes(row.month_minutes)}</td>
@@ -359,9 +359,9 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
           </div>
           {vcPages > 1 && (
             <div className="flex items-center justify-between px-4 py-2 border-t border-[#21213c]">
-              <button onClick={() => setVcPage(p => Math.max(0, p - 1))} disabled={vcPage === 0} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
-              <span className="text-xs text-[#4a4a70]">Page {vcPage + 1} of {vcPages}</span>
-              <button onClick={() => setVcPage(p => Math.min(vcPages - 1, p + 1))} disabled={vcPage === vcPages - 1} className="text-xs text-[#7070a0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
+              <button onClick={() => setVcPage(p => Math.max(0, p - 1))} disabled={vcPage === 0} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">← Prev</button>
+              <span className="text-xs text-[#7878a8]">Page {vcPage + 1} of {vcPages}</span>
+              <button onClick={() => setVcPage(p => Math.min(vcPages - 1, p + 1))} disabled={vcPage === vcPages - 1} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] disabled:opacity-30">Next →</button>
             </div>
           )}
         </>)}

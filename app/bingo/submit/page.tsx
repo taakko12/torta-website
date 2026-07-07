@@ -54,14 +54,14 @@ export default function SubmitPage() {
   }
 
   if (loading) {
-    return <div className="mx-auto max-w-lg px-4 py-20 text-center text-sm text-[#7070a0]">Loading…</div>
+    return <div className="mx-auto max-w-lg px-4 py-20 text-center text-sm text-[#9898c0]">Loading…</div>
   }
 
   if (!eventId) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="text-[#c89b3c] font-bold text-lg uppercase tracking-widest mb-2">No Active Bingo</p>
-        <p className="text-sm text-[#7070a0]">There's no active bingo event to submit for.</p>
+        <p className="text-sm text-[#9898c0]">There's no active bingo event to submit for.</p>
       </div>
     )
   }
@@ -70,7 +70,7 @@ export default function SubmitPage() {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="text-[#c89b3c] font-bold text-xl mb-2">✓ Submitted!</p>
-        <p className="text-sm text-[#7070a0] mb-6">Your drop has been sent for admin review.</p>
+        <p className="text-sm text-[#9898c0] mb-6">Your drop has been sent for admin review.</p>
         <button onClick={() => { setDone(false); setRsn(''); setNotes(''); setFile(null); setUrl('') }}
           className="text-sm text-[#a0a0c0] underline">Submit another</button>
       </div>
@@ -82,7 +82,7 @@ export default function SubmitPage() {
       <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest mb-6">Submit Drop</h1>
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-[#7070a0] uppercase tracking-widest mb-1.5">RSN</label>
+          <label className="block text-xs font-semibold text-[#9898c0] uppercase tracking-widest mb-1.5">RSN</label>
           <input
             value={rsn} onChange={e => setRsn(e.target.value)}
             placeholder="Your in-game name"
@@ -91,7 +91,7 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#7070a0] uppercase tracking-widest mb-1.5">Task</label>
+          <label className="block text-xs font-semibold text-[#9898c0] uppercase tracking-widest mb-1.5">Task</label>
           <select
             value={taskId} onChange={e => setTaskId(e.target.value)}
             className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c] transition-colors"
@@ -105,13 +105,13 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#7070a0] uppercase tracking-widest mb-1.5">Screenshot</label>
+          <label className="block text-xs font-semibold text-[#9898c0] uppercase tracking-widest mb-1.5">Screenshot</label>
           <input
             type="file" accept="image/*"
             onChange={e => { setFile(e.target.files?.[0] ?? null); setUrl('') }}
             className="w-full text-sm text-[#a0a0c0] file:mr-3 file:rounded file:border-0 file:bg-[#333358] file:px-3 file:py-1.5 file:text-xs file:text-[#e8e8f0] file:cursor-pointer"
           />
-          <p className="text-xs text-[#7070a0] mt-1.5">or paste an image URL (Imgur, Gyazo, etc.)</p>
+          <p className="text-xs text-[#9898c0] mt-1.5">or paste an image URL (Imgur, Gyazo, etc.)</p>
           <input
             value={url} onChange={e => { setUrl(e.target.value); setFile(null) }}
             placeholder="https://i.imgur.com/..."
@@ -121,7 +121,7 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#7070a0] uppercase tracking-widest mb-1.5">Notes <span className="normal-case font-normal">(optional)</span></label>
+          <label className="block text-xs font-semibold text-[#9898c0] uppercase tracking-widest mb-1.5">Notes <span className="normal-case font-normal">(optional)</span></label>
           <textarea
             value={notes} onChange={e => setNotes(e.target.value)}
             placeholder="Any context for the admin…"

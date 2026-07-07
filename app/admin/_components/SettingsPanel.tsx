@@ -28,14 +28,34 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
   const [panelLabel, setPanelLabel] = useState('')
   const [panelChannel, setPanelChannel] = useState('')
 
-  type SchedKey = 'weeklyRecap' | 'modRecap'
-  type SchedJobs = Record<SchedKey, { day: number; hour: number }>
-  const [schedJobs, setSchedJobs] = useState<SchedJobs>({ weeklyRecap: { day: 0, hour: 20 }, modRecap: { day: 1, hour: 9 } })
+  type DayHourJob  = { day: number; hour: number }
+  type DomHourJob  = { dayOfMonth: number; hour: number }
+  type IntervalJob = { intervalHours?: number; intervalMinutes?: number }
+  type SchedJobs = {
+    weeklyRecap:   DayHourJob
+    modRecap:      DayHourJob
+    pollRoll:      DayHourJob
+    monthlyReset:  DomHourJob
+    womSync:       { intervalHours: number }
+    vcFlush:       { intervalMinutes: number }
+  }
+  const SCHED_DEFAULTS: SchedJobs = {
+    weeklyRecap:  { day: 0, hour: 20 },
+    modRecap:     { day: 1, hour: 9  },
+    pollRoll:     { day: 6, hour: 12 },
+    monthlyReset: { dayOfMonth: 1, hour: 0 },
+    womSync:      { intervalHours: 1 },
+    vcFlush:      { intervalMinutes: 5 },
+  }
+  type SchedKey = keyof SchedJobs
+  const [schedJobs, setSchedJobs] = useState<SchedJobs>(SCHED_DEFAULTS)
   const [schedSaving, setSchedSaving] = useState<SchedKey | null>(null)
   const [schedMsg, setSchedMsg] = useState<Partial<Record<SchedKey, string>>>({})
 
   useEffect(() => {
-    fetch('/api/admin/scheduled-jobs').then(r => r.json()).then(setSchedJobs)
+    fetch('/api/admin/scheduled-jobs').then(r => r.json()).then((d: Partial<SchedJobs>) =>
+      setSchedJobs(prev => ({ ...prev, ...d }))
+    )
   }, [])
 
   async function saveSchedJob(key: SchedKey) {
@@ -47,6 +67,10 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
     setSchedSaving(null)
     setSchedMsg(m => ({ ...m, [key]: '✅ Saved' }))
     setTimeout(() => setSchedMsg(m => ({ ...m, [key]: undefined })), 2000)
+  }
+
+  function patch<K extends SchedKey>(key: K, val: Partial<SchedJobs[K]>) {
+    setSchedJobs(j => ({ ...j, [key]: { ...j[key], ...val } }))
   }
 
   async function saveConfig(patch: Partial<GuildConfig>) {
@@ -112,7 +136,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Bot Channel Settings</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">
+          <p className="text-xs text-[#7878a8] mt-1">
             Changes save immediately on selection.{channels.length > 0 ? ` ${channels.length} channels loaded.` : ' No channels loaded — check bot token in Railway.'}
           </p>
         </div>
@@ -121,7 +145,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             <div key={key} className="flex items-center gap-4 py-3 border-b border-[#1c1c36] last:border-0">
               <div className="w-52 shrink-0">
                 <div className="text-sm text-[#c0c0e0]">{label}</div>
-                <div className="text-xs text-[#4a4a70] mt-0.5">{hint}</div>
+                <div className="text-xs text-[#7878a8] mt-0.5">{hint}</div>
               </div>
               <select value={(config[key] as string | null | undefined) ?? ''} onChange={e => saveConfig({ [key]: e.target.value || null })} className={sel}>
                 <option value="">— Not set —</option>
@@ -136,13 +160,13 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Settings</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">{roles.length > 0 ? `${roles.length} roles loaded.` : <span className="text-[#ED4245]">No roles loaded.</span>}</p>
+          <p className="text-xs text-[#7878a8] mt-1">{roles.length > 0 ? `${roles.length} roles loaded.` : <span className="text-[#ED4245]">No roles loaded.</span>}</p>
         </div>
         <div className="px-5">
           <div className="flex items-center gap-4 py-3">
             <div className="w-52 shrink-0">
               <div className="text-sm text-[#c0c0e0]">Welcome Role</div>
-              <div className="text-xs text-[#4a4a70] mt-0.5">Granted when a new member agrees to rules</div>
+              <div className="text-xs text-[#7878a8] mt-0.5">Granted when a new member agrees to rules</div>
             </div>
             <select value={config.welcome_role_id ?? ''} onChange={e => saveConfig({ welcome_role_id: e.target.value || null })} className={sel}>
               <option value="">— Not set —</option>
@@ -156,13 +180,13 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Welcome Panel</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">Posts the clan rules embed with an "I Agree" button. Set Welcome Channel above first.</p>
+          <p className="text-xs text-[#7878a8] mt-1">Posts the clan rules embed with an "I Agree" button. Set Welcome Channel above first.</p>
         </div>
         <div className="px-5 py-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-[#a0a0c0]">
             {config.welcome_channel_id
               ? (() => { const ch = channels.find(c => c.id === config.welcome_channel_id); return <>Posting to <span className="text-[#c89b3c]">{ch ? `#${ch.name}` : <span className="font-mono text-xs opacity-60">{config.welcome_channel_id}</span>}</span></> })()
-              : <span className="text-[#4a4a70]">Welcome channel not set</span>}
+              : <span className="text-[#7878a8]">Welcome channel not set</span>}
           </span>
           <button onClick={postWelcomeMessage} disabled={!config.welcome_channel_id || welcomePosting}
             className="ml-auto px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
@@ -176,7 +200,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Role Panel</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">Manage role self-assignment buttons. Adding or removing a role auto-updates the Discord message.</p>
+          <p className="text-xs text-[#7878a8] mt-1">Manage role self-assignment buttons. Adding or removing a role auto-updates the Discord message.</p>
         </div>
         <div className="px-5 py-4 flex flex-col gap-4">
           {rolePanel.roles.length > 0 && (
@@ -184,7 +208,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
               {rolePanel.roles.map(r => (
                 <div key={r.roleId} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#1c1c36] border border-[#333358] text-sm text-[#c0c0e0]">
                   <span>{r.emoji}</span><span>{r.label}</span>
-                  <button onClick={() => removePanelRole(r.roleId)} className="text-[#4a4a70] hover:text-[#ED4245] transition-colors ml-1 leading-none">✕</button>
+                  <button onClick={() => removePanelRole(r.roleId)} className="text-[#7878a8] hover:text-[#ED4245] transition-colors ml-1 leading-none">✕</button>
                 </div>
               ))}
             </div>
@@ -212,7 +236,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             </button>
           </div>
           {rolePanel.channelId && (
-            <p className="text-xs text-[#4a4a70]">Currently posted in #{channels.find(c => c.id === rolePanel.channelId)?.name ?? rolePanel.channelId}</p>
+            <p className="text-xs text-[#7878a8]">Currently posted in #{channels.find(c => c.id === rolePanel.channelId)?.name ?? rolePanel.channelId}</p>
           )}
         </div>
       </div>
@@ -221,41 +245,39 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Scheduled Jobs</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">All bot & website automation. Changes take effect on the next hourly check. Times are UTC.</p>
+          <p className="text-xs text-[#9898c0] mt-1">All bot automation. Changes take effect on the next check cycle. Times are UTC.</p>
         </div>
         <div className="px-5 divide-y divide-[#1c1c36]">
-          {/* Configurable jobs */}
+          {/* Day + Hour jobs */}
           {([
-            { key: 'weeklyRecap' as SchedKey, icon: '📊', name: 'Weekly Activity Recap', desc: 'Top chatters, VC time, and top drops of the week.', channelKey: 'recap_channel_id' as keyof GuildConfig },
-            { key: 'modRecap'    as SchedKey, icon: '📋', name: 'Moderator Recap',        desc: 'Inactive members and unlinked Discord/RSN accounts.', channelKey: 'inactivity_channel_id' as keyof GuildConfig },
-          ] as const).map(({ key, icon, name, desc, channelKey }) => {
+            { key: 'weeklyRecap' as const, icon: '📊', name: 'Weekly Activity Recap', desc: 'Top chatters, VC time, top drops.', channelKey: 'recap_channel_id' as keyof GuildConfig },
+            { key: 'modRecap'    as const, icon: '📋', name: 'Moderator Recap',        desc: 'Inactive members and unlinked accounts.', channelKey: 'inactivity_channel_id' as keyof GuildConfig },
+            { key: 'pollRoll'    as const, icon: '🎲', name: 'BOTW/SOTW Poll Roll',    desc: 'Posts weekly competition polls.', channelKey: 'poll_channel_id' as keyof GuildConfig },
+          ]).map(({ key, icon, name, desc, channelKey }) => {
             const ch = channels.find(c => c.id === (config[channelKey] as string | null | undefined))
-            const job = schedJobs[key]
+            const job = schedJobs[key] as { day: number; hour: number }
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+            const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
             return (
-              <div key={key} className="py-4 flex flex-col gap-3">
-                <div className="flex items-start gap-3">
+              <div key={key} className="py-4">
+                <div className="flex items-start gap-3 mb-3">
                   <span className="text-xl mt-0.5 shrink-0">{icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
-                    <div className="text-xs text-[#4a4a70] mt-0.5">{desc}</div>
+                    <div className="text-xs text-[#9898c0] mt-0.5">{desc}</div>
                   </div>
                   {ch
                     ? <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
-                    : <span className="shrink-0 text-xs text-[#4a4a70]">Channel not set</span>}
+                    : <span className="shrink-0 text-xs text-[#9898c0]">Channel not set</span>}
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
-                  <span className="text-xs text-[#4a4a70]">Every</span>
-                  <select value={job.day} onChange={e => setSchedJobs(j => ({ ...j, [key]: { ...j[key], day: +e.target.value } }))}
-                    className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
+                  <span className="text-xs text-[#9898c0]">Every</span>
+                  <select value={job.day} onChange={e => patch(key, { day: +e.target.value } as Partial<typeof job>)} className={inp2}>
                     {days.map((d, i) => <option key={i} value={i}>{d}</option>)}
                   </select>
-                  <span className="text-xs text-[#4a4a70]">at</span>
-                  <select value={job.hour} onChange={e => setSchedJobs(j => ({ ...j, [key]: { ...j[key], hour: +e.target.value } }))}
-                    className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
-                    {Array.from({ length: 24 }, (_, h) => (
-                      <option key={h} value={h}>{String(h).padStart(2, '0')}:00 UTC</option>
-                    ))}
+                  <span className="text-xs text-[#9898c0]">at</span>
+                  <select value={job.hour} onChange={e => patch(key, { hour: +e.target.value } as Partial<typeof job>)} className={inp2}>
+                    {Array.from({length:24},(_,h) => <option key={h} value={h}>{String(h).padStart(2,'0')}:00 UTC</option>)}
                   </select>
                   <button onClick={() => saveSchedJob(key)} disabled={schedSaving === key}
                     className="px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white text-xs font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors">
@@ -267,23 +289,68 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             )
           })}
 
-          {/* Fixed jobs (info only) */}
-          {[
-            { icon: '🎲', name: 'BOTW/SOTW Poll Roll',       schedule: 'Every Saturday at 12:00 UTC',    desc: 'Posts competition polls to poll channel.' },
-            { icon: '🔄', name: 'WOM Group Sync',             schedule: 'Every hour',                     desc: 'Syncs member RSNs with Wise Old Man.' },
-            { icon: '🔁', name: 'Monthly Activity Reset',     schedule: '1st of month at 00:00 UTC',      desc: 'Zeros out monthly message and VC counts.' },
-            { icon: '🎙️', name: 'VC Session Flush',           schedule: 'Every 5 minutes',                desc: 'Commits active voice channel session minutes to DB.' },
-          ].map(({ icon, name, schedule, desc }) => (
-            <div key={name} className="py-3 flex items-start gap-3 opacity-60">
-              <span className="text-xl mt-0.5 shrink-0">{icon}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
-                <div className="text-xs text-[#7c5ce8] font-mono mt-0.5">{schedule}</div>
-                <div className="text-xs text-[#4a4a70] mt-0.5">{desc}</div>
+          {/* Monthly reset — day-of-month + hour */}
+          {(() => {
+            const job = schedJobs.monthlyReset
+            const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
+            return (
+              <div className="py-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-xl mt-0.5 shrink-0">🔁</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-[#e8e8f0]">Monthly Activity Reset</div>
+                    <div className="text-xs text-[#9898c0] mt-0.5">Zeros out monthly message and VC counts.</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-8 flex-wrap">
+                  <span className="text-xs text-[#9898c0]">On the</span>
+                  <select value={job.dayOfMonth} onChange={e => patch('monthlyReset', { dayOfMonth: +e.target.value })} className={inp2}>
+                    {Array.from({length:28},(_,i) => <option key={i+1} value={i+1}>{i+1}{[,'st','nd','rd'][i+1]??'th'}</option>)}
+                  </select>
+                  <span className="text-xs text-[#9898c0]">at</span>
+                  <select value={job.hour} onChange={e => patch('monthlyReset', { hour: +e.target.value })} className={inp2}>
+                    {Array.from({length:24},(_,h) => <option key={h} value={h}>{String(h).padStart(2,'0')}:00 UTC</option>)}
+                  </select>
+                  <button onClick={() => saveSchedJob('monthlyReset')} disabled={schedSaving === 'monthlyReset'}
+                    className="px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white text-xs font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors">
+                    {schedSaving === 'monthlyReset' ? 'Saving…' : 'Save'}
+                  </button>
+                  {schedMsg.monthlyReset && <span className="text-xs text-[#57F287]">{schedMsg.monthlyReset}</span>}
+                </div>
               </div>
-              <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#4a4a70] border border-[#333358] px-2 py-1 rounded mt-0.5">Fixed</span>
-            </div>
-          ))}
+            )
+          })()}
+
+          {/* Interval jobs */}
+          {([
+            { key: 'womSync' as const, icon: '🔄', name: 'WOM Group Sync',  desc: 'Syncs member RSNs with Wise Old Man.', intervalKey: 'intervalHours' as const,   label: 'hours',   opts: [1,2,4,6,12,24] },
+            { key: 'vcFlush' as const, icon: '🎙️', name: 'VC Session Flush', desc: 'Commits active voice session time to DB.', intervalKey: 'intervalMinutes' as const, label: 'min', opts: [1,5,10,15,30] },
+          ]).map(({ key, icon, name, desc, intervalKey, label, opts }) => {
+            const job = schedJobs[key] as Record<string, number>
+            const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
+            return (
+              <div key={key} className="py-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-xl mt-0.5 shrink-0">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
+                    <div className="text-xs text-[#9898c0] mt-0.5">{desc}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-8 flex-wrap">
+                  <span className="text-xs text-[#9898c0]">Every</span>
+                  <select value={job[intervalKey]} onChange={e => patch(key, { [intervalKey]: +e.target.value } as Partial<SchedJobs[typeof key]>)} className={inp2}>
+                    {opts.map(v => <option key={v} value={v}>{v} {label}</option>)}
+                  </select>
+                  <button onClick={() => saveSchedJob(key)} disabled={schedSaving === key}
+                    className="px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white text-xs font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors">
+                    {schedSaving === key ? 'Saving…' : 'Save'}
+                  </button>
+                  {schedMsg[key] && <span className="text-xs text-[#57F287]">{schedMsg[key]}</span>}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -291,7 +358,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Loot History Scrape</h2>
-          <p className="text-xs text-[#4a4a70] mt-1">Re-scan the drops channel and import any missed entries. Automatically skips duplicates.</p>
+          <p className="text-xs text-[#7878a8] mt-1">Re-scan the drops channel and import any missed entries. Automatically skips duplicates.</p>
         </div>
         <div className="px-5 py-4 flex flex-col gap-3">
           <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-[#1a1020] border border-[#c89b3c]/30 text-xs text-[#c89b3c]">
@@ -309,7 +376,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             </button>
           </div>
           {scrapeStatus && <p className="text-xs text-[#a0a0c0]">{scrapeStatus}</p>}
-          {!config.drops_channel_id && <p className="text-xs text-[#4a4a70]">Set Drops Channel above to enable scraping.</p>}
+          {!config.drops_channel_id && <p className="text-xs text-[#7878a8]">Set Drops Channel above to enable scraping.</p>}
         </div>
       </div>
     </div>
