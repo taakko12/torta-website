@@ -20,30 +20,26 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
   const [eventDesc, setEventDesc] = useState('')
   const [eventType, setEventType] = useState('Event')
   const [eventDateD, setEventDateD] = useState('')
-  const [eventHour, setEventHour] = useState(20)
-  const [eventMin, setEventMin] = useState(0)
+  const [eventTime, setEventTime] = useState('20:00')
   const [eventChannel, setEventChannel] = useState(channels[0]?.id ?? '')
   const [rsvpEventId, setRsvpEventId] = useState<string | null>(null)
   const [rsvps, setRsvps] = useState<Rsvp[]>([])
   const [raidName, setRaidName] = useState('')
   const [raidDate, setRaidDate] = useState('')
-  const [raidHour, setRaidHour] = useState(20)
-  const [raidMin, setRaidMin] = useState(0)
+  const [raidTime, setRaidTime] = useState('20:00')
   const [raidDesc, setRaidDesc] = useState('')
   const [raidChannel, setRaidChannel] = useState(channels[0]?.id ?? '')
-
-  const pad = (n: number) => String(n).padStart(2, '0')
 
   async function createClanEvent() {
     if (!eventTitle.trim() || !eventChannel) return
     const res = await fetch('/api/admin/events', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDateD ? `${eventDateD}T${pad(eventHour)}:${pad(eventMin)}` : null, channel_id: eventChannel }),
+      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDateD ? `${eventDateD}T${eventTime}` : null, channel_id: eventChannel }),
     })
     if (res.ok) {
       const { event } = await res.json()
       setClanEvents(ev => [...ev, { ...event, event_rsvps: [{ count: 0 }] }])
-      setEventTitle(''); setEventDesc(''); setEventDateD(''); setEventHour(20); setEventMin(0)
+      setEventTitle(''); setEventDesc(''); setEventDateD(''); setEventTime('20:00')
     }
   }
 
@@ -63,7 +59,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
 
   async function scheduleRaid() {
     if (!raidName.trim() || !raidDate || !raidChannel) return
-    const timestamp = Math.floor(new Date(`${raidDate}T${pad(raidHour)}:${pad(raidMin)}`).getTime() / 1000)
+    const timestamp = Math.floor(new Date(`${raidDate}T${raidTime}`).getTime() / 1000)
     const res = await fetch('/api/admin/raids', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: raidName.trim(), timestamp, description: raidDesc || null, channel_id: raidChannel }),
@@ -71,7 +67,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     if (res.ok) {
       const data = await res.json()
       setRaids(r => [...r, data.raid].sort((a, b) => a.timestamp - b.timestamp))
-      setRaidName(''); setRaidDate(''); setRaidHour(20); setRaidMin(0); setRaidDesc('')
+      setRaidName(''); setRaidDate(''); setRaidTime('20:00'); setRaidDesc('')
     }
   }
 
@@ -122,12 +118,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
             <label className="text-xs text-[#9898c0] mb-1 block">Date &amp; Time</label>
             <div className="flex gap-2">
               <input type="date" value={eventDateD} onChange={e => setEventDateD(e.target.value)} className={`flex-1 [color-scheme:dark] ${inp}`} />
-              <select value={eventHour} onChange={e => setEventHour(+e.target.value)} className={inp}>
-                {Array.from({length:24},(_,h)=><option key={h} value={h}>{pad(h)}h</option>)}
-              </select>
-              <select value={eventMin} onChange={e => setEventMin(+e.target.value)} className={inp}>
-                {[0,5,10,15,20,25,30,35,40,45,50,55].map(m=><option key={m} value={m}>{pad(m)}m</option>)}
-              </select>
+              <input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
             </div>
           </div>
           <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className={inp}>
@@ -189,12 +180,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
           <div className="flex gap-2 flex-wrap">
             <input value={raidName} onChange={e => setRaidName(e.target.value)} placeholder="Raid name (e.g. Theatre of Blood)" className={`flex-1 min-w-[180px] ${inp}`} />
             <input type="date" value={raidDate} onChange={e => setRaidDate(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
-            <select value={raidHour} onChange={e => setRaidHour(+e.target.value)} className={inp}>
-              {Array.from({length:24},(_,h)=><option key={h} value={h}>{pad(h)}h</option>)}
-            </select>
-            <select value={raidMin} onChange={e => setRaidMin(+e.target.value)} className={inp}>
-              {[0,5,10,15,20,25,30,35,40,45,50,55].map(m=><option key={m} value={m}>{pad(m)}m</option>)}
-            </select>
+            <input type="time" value={raidTime} onChange={e => setRaidTime(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
           </div>
           <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className={inp} />
           <div className="flex gap-3">
