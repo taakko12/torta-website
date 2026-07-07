@@ -37,6 +37,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const [ingameRows, setIngameRows] = useState<IngameActivity[]>(ingame)
   const [quickLinkRsn, setQuickLinkRsn] = useState<string | null>(null)
   const [quickLinkDiscordId, setQuickLinkDiscordId] = useState('')
+  const [quickLinkSearch, setQuickLinkSearch] = useState('')
   const [mergeFromRsn, setMergeFromRsn] = useState<string | null>(null)
   const [mergeToRsn, setMergeToRsn] = useState('')
   const [merging, setMerging] = useState(false)
@@ -50,8 +51,8 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   }, {})
   const linkedRsns = new Map(localLinks.map(l => [l.rsn.toLowerCase(), l]))
   const enriched = discordRows.map(d => ({ ...d, rsn: d.rsn ?? primaryLinkMap[d.discord_id] ?? null }))
-  // Show all Discord members in quick-link dropdown (alts are allowed)
-  const unlinkedDiscord = discordRows
+  const linkedIds = new Set(localLinks.map(l => l.discord_id))
+  const unlinkedDiscord = discordRows.filter(d => !linkedIds.has(d.discord_id))
 
   async function saveNote(discordId: string, note: string) {
     setEditingNoteId(null)
@@ -273,20 +274,31 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                             <span className="text-xs text-[#5865F2]">⚯ {linked.display_name ?? linked.discord_id}</span>
                           </div>
                         ) : isLinking ? (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <select value={quickLinkDiscordId} onChange={e => setQuickLinkDiscordId(e.target.value)} autoFocus
-                              className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none">
-                              <option value="">Select member…</option>
-                              {unlinkedDiscord.map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
-                            </select>
-                            <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
-                              className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
-                            <button onClick={() => setQuickLinkRsn(null)}
-                              className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
+                          <div className="flex flex-col gap-1.5">
+                            <input
+                              autoFocus
+                              value={quickLinkSearch}
+                              onChange={e => { setQuickLinkSearch(e.target.value); setQuickLinkDiscordId('') }}
+                              placeholder="Search member…"
+                              className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none w-48"
+                            />
+                            <div className="flex items-center gap-1.5">
+                              <select value={quickLinkDiscordId} onChange={e => setQuickLinkDiscordId(e.target.value)}
+                                className="rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-1 text-xs outline-none flex-1">
+                                <option value="">Select…</option>
+                                {unlinkedDiscord
+                                  .filter(d => !quickLinkSearch || (d.display_name ?? d.discord_id).toLowerCase().includes(quickLinkSearch.toLowerCase()))
+                                  .map(d => <option key={d.discord_id} value={d.discord_id}>{d.display_name ?? d.discord_id}</option>)}
+                              </select>
+                              <button onClick={() => doQuickLink(row.rsn)} disabled={!quickLinkDiscordId}
+                                className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] border border-[#57F287]/30 hover:bg-[#57F287]/30 disabled:opacity-40">Link</button>
+                              <button onClick={() => { setQuickLinkRsn(null); setQuickLinkSearch('') }}
+                                className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#e8e8f0] border border-[#333358]">✕</button>
+                            </div>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5">
-                            <button onClick={() => { setQuickLinkRsn(row.rsn); setQuickLinkDiscordId(''); setMergeFromRsn(null) }}
+                            <button onClick={() => { setQuickLinkRsn(row.rsn); setQuickLinkDiscordId(''); setQuickLinkSearch(''); setMergeFromRsn(null) }}
                               className="text-xs px-2 py-1 rounded text-[#4a4a70] hover:text-[#c89b3c] border border-[#333358] hover:border-[#c89b3c]/40 transition-colors">
                               + Link
                             </button>
