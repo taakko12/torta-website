@@ -1,10 +1,21 @@
-import { getPlayerStats } from '@/lib/data'
+import type { Metadata } from 'next'
+import { getPlayerStats, getPlayerActivity } from '@/lib/data'
 import { ClientDate } from '@/components/ClientDate'
 import { MEDALS, formatGp } from '@/lib/utils'
 
 export const revalidate = 60
 
 type Props = { params: Promise<{ rsn: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { rsn } = await params
+  const name = decodeURIComponent(rsn)
+  return {
+    title: `${name} — Torta`,
+    description: `Player stats for ${name} in the Torta OSRS clan.`,
+    openGraph: { title: `${name} — Torta`, description: `Drops, deaths, achievements and activity for ${name}.` },
+  }
+}
 
 async function fetchWom(rsn: string) {
   try {
@@ -21,13 +32,15 @@ export default async function PlayerPage({ params }: Props) {
   const { rsn } = await params
   const displayName = decodeURIComponent(rsn)
 
-  const [stats, wom] = await Promise.all([
+  const [stats, activity, wom] = await Promise.all([
     getPlayerStats(displayName),
+    getPlayerActivity(displayName),
     fetchWom(displayName),
   ])
 
   const skills = wom?.latestSnapshot?.data?.skills
   const computed = wom?.latestSnapshot?.data?.computed
+  const hasData = stats.totalGp > 0 || stats.totalDeaths > 0 || stats.achievements.length > 0 || activity.ingame || activity.discord || wom
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -36,12 +49,9 @@ export default async function PlayerPage({ params }: Props) {
           {wom?.displayName ?? displayName}
         </h1>
         {wom && (
-          <a
-            href={`https://wiseoldman.net/players/${encodeURIComponent(wom.username)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors"
-          >
+          <a href={`https://wiseoldman.net/players/${encodeURIComponent(wom.username)}`}
+            target="_blank" rel="noopener noreferrer"
+            className="text-xs text-[#7070a0] hover:text-[#c89b3c] transition-colors">
             View on Wise Old Man →
           </a>
         )}
@@ -70,6 +80,51 @@ export default async function PlayerPage({ params }: Props) {
                   {computed?.ehb?.value != null ? Math.round(computed.ehb.value).toLocaleString() : '—'}
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Activity */}
+        {(activity.ingame || activity.discord) && (
+          <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
+            <h2 className="font-semibold text-[#e8e8f0] mb-4">📊 Clan Activity</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {activity.ingame && (
+                <div className="rounded-lg bg-[#0f0f1e] border border-[#2c2c4e] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#3d9970] mb-3">⚔️ In-Game Chat</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-[#7070a0] mb-0.5">This Month</p>
+                      <p className="text-lg font-bold text-[#e8e8f0]">{activity.ingame.month_count.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#7070a0] mb-0.5">All Time</p>
+                      <p className="text-lg font-bold text-[#e8e8f0]">{activity.ingame.message_count.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {activity.ingame.last_message_at && (
+                    <p className="text-xs text-[#4a4a70] mt-2">Last seen <ClientDate iso={activity.ingame.last_message_at} /></p>
+                  )}
+                </div>
+              )}
+              {activity.discord && (
+                <div className="rounded-lg bg-[#0f0f1e] border border-[#2c2c4e] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#5865F2] mb-3">💬 Discord Chat</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-[#7070a0] mb-0.5">This Month</p>
+                      <p className="text-lg font-bold text-[#e8e8f0]">{activity.discord.month_count.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#7070a0] mb-0.5">All Time</p>
+                      <p className="text-lg font-bold text-[#e8e8f0]">{activity.discord.message_count.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {activity.discord.last_message_at && (
+                    <p className="text-xs text-[#4a4a70] mt-2">Last seen <ClientDate iso={activity.discord.last_message_at} /></p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -137,7 +192,7 @@ export default async function PlayerPage({ params }: Props) {
           </div>
         )}
 
-        {stats.totalGp === 0 && stats.totalDeaths === 0 && stats.achievements.length === 0 && !wom && (
+        {!hasData && (
           <div className="rounded-xl border border-[#333358] bg-[#161628] p-5 text-center">
             <p className="text-[#7070a0]">No data found for <span className="text-[#e8e8f0] capitalize">{displayName}</span>.</p>
           </div>

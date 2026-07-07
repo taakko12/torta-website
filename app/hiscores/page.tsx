@@ -3,6 +3,11 @@ import ClanHiscores from '@/components/ClanHiscores'
 
 export const revalidate = 300
 
+export const metadata = {
+  title: 'Hiscores — Torta',
+  description: 'Clan hiscores for Torta — sort by EHB, EHP, skills, and boss kills.',
+}
+
 export default async function HiscoresPage() {
   const raw = await getGroupBulkHiscores()
   const members = Object.entries(raw).map(([rsn, data]) => ({ rsn, ...data }))

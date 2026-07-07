@@ -111,7 +111,7 @@ export default async function Home() {
     getMonthlyPlankLeaderboard(),
     getActiveCompetitionsWithStandings(),
     getUpcomingCompetitions(),
-    getRecentAchievements(),
+    getRecentAchievements(5),
   ])
 
   const month = currentMonthLabel()
@@ -137,7 +137,7 @@ export default async function Home() {
         </h1>
         <div className="w-16 xl:w-40 h-px mx-auto bg-gradient-to-r from-transparent via-[#c89b3c]/50 to-transparent" />
         <p className="hidden xl:block text-xs font-semibold uppercase tracking-[0.25em] text-[#4a4a70] mt-6">
-          Est. 2024 &nbsp;·&nbsp; Clan Tracker
+          EST. 2026 &nbsp;·&nbsp; Clan Tracker
         </p>
       </div>
 

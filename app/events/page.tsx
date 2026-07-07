@@ -3,6 +3,11 @@ import { ClientDate } from '@/components/ClientDate'
 
 export const revalidate = 60
 
+export const metadata = {
+  title: 'Events — Torta',
+  description: 'Upcoming raids, clan events, and competitions for Torta OSRS clan.',
+}
+
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
 type ClanEvent = {

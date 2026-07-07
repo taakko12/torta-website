@@ -6,9 +6,10 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/feed', label: 'Feed' },
   { href: '/events', label: 'Events' },
+  { href: '/guides', label: 'Guides' },
   { href: '/player', label: 'Players' },
-  { href: '/bingo', label: 'Bingo' },
   { href: '/hiscores', label: 'Hiscores' },
+  { href: '/bingo', label: 'Bingo' },
 ]
 
 export default async function Navbar() {
@@ -45,7 +46,7 @@ export default async function Navbar() {
                 href="/admin"
                 className="text-xs px-3 py-1.5 rounded-lg border border-[#424268] bg-[#12122a] text-[#c89b3c] hover:border-[#c89b3c]/60 hover:bg-[#c89b3c]/8 transition-all font-medium"
               >
-                Staff Login
+                Admin Panel
               </Link>
             )}
             {session ? (

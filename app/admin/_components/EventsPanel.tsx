@@ -1,11 +1,19 @@
 'use client'
 import { useState } from 'react'
 import type { ClanEvent, Raid, Channel } from '../_lib/data'
+import type { Competition, CompetitionWithStandings } from '@/lib/wom'
+import { formatMetric } from '@/lib/wom'
 
 type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string }
-type Props = { initialEvents: ClanEvent[]; initialRaids: Raid[]; channels: Channel[] }
+type Props = {
+  initialEvents: ClanEvent[]
+  initialRaids: Raid[]
+  channels: Channel[]
+  activeComps: CompetitionWithStandings[]
+  upcomingComps: Competition[]
+}
 
-export default function EventsPanel({ initialEvents, initialRaids, channels }: Props) {
+export default function EventsPanel({ initialEvents, initialRaids, channels, activeComps, upcomingComps }: Props) {
   const [clanEvents, setClanEvents] = useState<ClanEvent[]>(initialEvents)
   const [raids, setRaids] = useState<Raid[]>(initialRaids)
   const [eventTitle, setEventTitle] = useState('')
@@ -66,6 +74,35 @@ export default function EventsPanel({ initialEvents, initialRaids, channels }: P
 
   return (
     <div className="space-y-6">
+
+      {/* WOM Competitions (read-only) */}
+      {(activeComps.length > 0 || upcomingComps.length > 0) && (
+        <div className={`${card} p-5`}>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#57F287]">⚔️ WOM Competitions</h2>
+            <span className="text-[10px] text-[#4a4a70]">Managed via Wise Old Man</span>
+          </div>
+          <div className="space-y-2">
+            {activeComps.map(c => (
+              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#0f1f15] border border-[#57F287]/20">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#57F287]/15 text-[#57F287]">LIVE</span>
+                <span className="text-sm font-medium text-[#e8e8f0] flex-1">{c.title}</span>
+                <span className="text-xs text-[#7070a0]">{formatMetric(c.metric)}</span>
+                <span className="text-xs text-[#4a4a70]">ends {new Date(c.endsAt).toLocaleDateString()}</span>
+              </div>
+            ))}
+            {upcomingComps.map(c => (
+              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#1c1c36] border border-[#333358]">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#4a4a70]/20 text-[#7070a0]">SOON</span>
+                <span className="text-sm font-medium text-[#e8e8f0] flex-1">{c.title}</span>
+                <span className="text-xs text-[#7070a0]">{formatMetric(c.metric)}</span>
+                <span className="text-xs text-[#4a4a70]">starts {new Date(c.startsAt).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Create Event */}
       <div className={`${card} p-5`}>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Schedule Event</h2>

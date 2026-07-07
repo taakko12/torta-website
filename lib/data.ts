@@ -157,3 +157,62 @@ export async function getMostRecentPlank(): Promise<RecentPlank | null> {
     .maybeSingle()
   return data ?? null
 }
+
+export interface RecentDropItem {
+  id: string
+  player_name: string
+  gp_value: number
+  item_name: string | null
+  image_url: string | null
+  screenshot_url: string | null
+  discord_message_id: string | null
+  recorded_at: string
+}
+
+export async function getRecentDrops(limit = 50): Promise<RecentDropItem[]> {
+  const { data } = await supabase
+    .from('drops')
+    .select('id, player_name, gp_value, item_name, image_url, screenshot_url, discord_message_id, recorded_at')
+    .eq('guild_id', GUILD_ID)
+    .order('recorded_at', { ascending: false })
+    .limit(limit)
+  return (data ?? []) as RecentDropItem[]
+}
+
+export interface PlayerActivity {
+  ingame: { message_count: number; month_count: number; last_message_at: string | null } | null
+  discord: { display_name: string | null; message_count: number; month_count: number; last_message_at: string | null } | null
+}
+
+export async function getPlayerActivity(rsn: string): Promise<PlayerActivity> {
+  const admin = getSupabaseAdmin()
+  const [{ data: ingame }, { data: link }] = await Promise.all([
+    admin.from('ingame_activity').select('message_count, month_count, last_message_at').eq('guild_id', GUILD_ID).ilike('rsn', rsn).maybeSingle(),
+    admin.from('rsn_links').select('discord_id').eq('guild_id', GUILD_ID).ilike('rsn', rsn).maybeSingle(),
+  ])
+  let discord = null
+  if (link?.discord_id) {
+    const { data: da } = await admin.from('discord_activity')
+      .select('display_name, message_count, month_count, last_message_at')
+      .eq('guild_id', GUILD_ID).eq('discord_id', link.discord_id).maybeSingle()
+    discord = da ?? null
+  }
+  return { ingame: ingame ?? null, discord }
+}
+
+export interface RaidGuide {
+  id: string
+  title: string
+  content: string
+  thread_id: string | null
+  created_at: string
+}
+
+export async function getRaidGuides(): Promise<RaidGuide[]> {
+  const { data } = await supabase
+    .from('raid_guides')
+    .select('id, title, content, thread_id, created_at')
+    .eq('guild_id', GUILD_ID)
+    .order('title', { ascending: true })
+  return (data ?? []) as RaidGuide[]
+}
