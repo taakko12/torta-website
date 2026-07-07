@@ -46,7 +46,7 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 }
 
 export default function AdminDashboard() {
-  const [section, setSection] = useState<'bingo' | 'tools'>('bingo')
+  const [section, setSection] = useState<'bingo' | 'tools'>('tools')
   const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
   const [toolsTab, setToolsTab] = useState<'activity' | 'messenger'>('activity')
   const [events, setEvents] = useState<BingoEvent[]>([])
