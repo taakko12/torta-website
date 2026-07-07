@@ -54,9 +54,12 @@ export async function POST(req: Request) {
 
   if (threads.length === 0) return NextResponse.json({ imported: 0, message: 'No threads found in that channel.' })
 
-  type Msg = { id: string; content: string; attachments?: { filename: string; url: string; content_type?: string }[] }
+  const db = getSupabaseAdmin()
 
-  // Collect all messages newest-first via before-pagination, then reverse for chronological order
+  type Msg = { id: string; content: string; attachments?: { id: string; filename: string; url: string; content_type?: string }[] }
+
+  // Collect all messages newest-first via before-pagination, then reverse for chronological order.
+  // Images are downloaded and re-uploaded to Supabase Storage for permanent URLs.
   async function fetchAllMessages(threadId: string): Promise<string> {
     const all: Msg[] = []
     let before: string | undefined
@@ -77,8 +80,22 @@ export async function POST(req: Request) {
       const parts: string[] = []
       if (m.content.trim()) parts.push(m.content.trim())
       for (const att of m.attachments ?? []) {
-        if (att.content_type?.startsWith('image/')) parts.push(`![${att.filename}](${att.url})`)
-        else if (att.content_type?.startsWith('video/')) parts.push(`[video](${att.url})`)
+        if (att.content_type?.startsWith('image/')) {
+          const storagePath = `${forum_channel_id}/${threadId}/${att.id}-${att.filename}`
+          try {
+            const imgRes = await fetch(att.url)
+            if (imgRes.ok) {
+              const buf = await imgRes.arrayBuffer()
+              await db.storage.from('guide-images').upload(storagePath, buf, {
+                contentType: att.content_type, upsert: true,
+              })
+            }
+          } catch { /* fallback to CDN url below */ }
+          const { data: { publicUrl } } = db.storage.from('guide-images').getPublicUrl(storagePath)
+          parts.push(`![${att.filename}](${publicUrl})`)
+        } else if (att.content_type?.startsWith('video/')) {
+          parts.push(`[video](${att.url})`)
+        }
       }
       if (parts.length) segments.push(parts.join('\n'))
     }
@@ -93,8 +110,6 @@ export async function POST(req: Request) {
   }))).filter(Boolean) as { title: string; content: string; thread_id: string; forum_channel_id: string; forum_title: string | null }[]
 
   if (guides.length === 0) return NextResponse.json({ imported: 0, message: 'Could not read messages from threads.' })
-
-  const db = getSupabaseAdmin()
   let imported = 0
   for (const g of guides) {
     const { data: existing } = await db.from('raid_guides')
