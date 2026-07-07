@@ -38,6 +38,7 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 export default function AdminDashboard() {
   const [section, setSection] = useState<'bingo' | 'tools'>('bingo')
   const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
+  const [toolsTab, setToolsTab] = useState<'activity' | 'messenger'>('activity')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
@@ -705,6 +706,19 @@ export default function AdminDashboard() {
 
       {section === 'tools' && (
         <div className="space-y-6">
+          {/* Tools sub-nav */}
+          <div className="flex gap-1 border-b border-[#2a2a4a]">
+            {([['activity', 'Activity Logs'], ['messenger', 'Bot Messenger']] as const).map(([key, label]) => (
+              <button key={key} onClick={() => setToolsTab(key)}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  toolsTab === key ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7070a0] hover:text-[#e8e8f0]'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {toolsTab === 'activity' && <>
           {/* Discord Activity */}
           {(() => {
             const PAGE = 25
@@ -807,7 +821,9 @@ export default function AdminDashboard() {
               </div>
             )
           })()}
+          </>}
 
+          {toolsTab === 'messenger' && <>
           {/* Send Embed */}
         <div className="rounded-xl border border-[#2a2a4a] bg-[#0e0e1c] p-5">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-4">Send Embed to Discord</h2>
@@ -864,6 +880,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+          </>}
       </div>
       )}
     </div>
