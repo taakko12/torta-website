@@ -4,9 +4,7 @@ import { SignOutButton } from './AuthButton'
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/loot', label: 'Loot' },
-  { href: '/planks', label: 'Planks' },
-  { href: '/achievements', label: 'Achievements' },
+  { href: '/feed', label: 'Feed' },
   { href: '/events', label: 'Events' },
   { href: '/player', label: 'Players' },
   { href: '/bingo', label: 'Bingo' },
