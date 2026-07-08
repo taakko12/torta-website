@@ -12,5 +12,5 @@ export function logAdminAction(session: Session, command: string, subcommand: st
     subcommand,
     details: details ?? null,
     source: 'web',
-  }).then().catch(() => {})
+  }).then(() => {}).catch(() => {})
 }
