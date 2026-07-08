@@ -10,6 +10,7 @@ const NAV = [
   { href: '/bingo/rules', label: 'Rules', icon: '📖' },
   { href: '/bingo/teams', label: 'Teams', icon: '🛡️' },
   { href: '/bingo/submissions', label: 'Submissions', icon: '📋' },
+  { href: '/bingo/draft', label: 'Draft', icon: '🎲' },
   { href: '/bingo/signup', label: 'Sign Up', icon: '✍️' },
 ]
 

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,13 +23,8 @@ async function fetchOne(rsn: string): Promise<[string, WomData | null]> {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!))
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const rsns = (req.nextUrl.searchParams.get('rsns') ?? '')
     .split(',').map(r => r.trim()).filter(Boolean).slice(0, 60)
-
   const entries = await Promise.all(rsns.map(fetchOne))
   return NextResponse.json(Object.fromEntries(entries.filter(([, v]) => v !== null)))
 }

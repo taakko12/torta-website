@@ -6,19 +6,9 @@ type BingoTask = { id: string; position: number; title: string; description: str
 type BingoTeam = { id: string; name: string; color: string }
 type BingoMember = { id: string; team_id: string; rsn: string }
 type BingoSub = { id: string; task_id: string; rsn: string; screenshot_url: string | null; notes: string | null; status: string; submitted_at: string }
-type Signup = { id: string; rsn: string; discord_username: string | null; expected_playtime: string | null; preferred_partner: string | null; notes: string | null; submitted_at: string }
-type WomData = { displayName: string; type: string; ehp: number; ehb: number; totalLevel: number }
 
 const TEAM_COLORS = ['#c89b3c', '#5865F2', '#57F287', '#ED4245', '#FEE75C', '#EB459E', '#3498db']
 const EMPTY_TASK = { id: '', position: 0, title: '', description: '', image_url: '', points: 1, required_count: 1, points_per_submission: '' }
-
-const ACCOUNT_BADGES: Record<string, { label: string; color: string }> = {
-  ironman:          { label: 'IM',   color: '#a0a0b8' },
-  hardcore_ironman: { label: 'HCIM', color: '#ED4245' },
-  ultimate_ironman: { label: 'UIM',  color: '#b09cf8' },
-  group_ironman:    { label: 'GIM',  color: '#57F287' },
-  solo_ironman:     { label: 'SIM',  color: '#c89b3c' },
-}
 
 async function api(action: string, extra: object = {}) {
   const res = await fetch('/api/bingo/admin', {
@@ -36,7 +26,7 @@ async function review(submissionId: string, action: 'approved' | 'rejected') {
 }
 
 export default function BingoPanel() {
-  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'draft' | 'queue'>('events')
+  const [tab, setTab] = useState<'events' | 'tasks' | 'teams' | 'queue'>('events')
   const [events, setEvents] = useState<BingoEvent[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BingoTask[]>([])
@@ -58,13 +48,6 @@ export default function BingoPanel() {
   const [rulesText, setRulesText] = useState('')
   const [editTeamSize, setEditTeamSize] = useState(2)
   const [saveStatus, setSaveStatus] = useState('')
-
-  // Draft tab
-  const [signups, setSignups] = useState<Signup[]>([])
-  const [womData, setWomData] = useState<Record<string, WomData>>({})
-  const [womLoading, setWomLoading] = useState(false)
-  const [dragRsns, setDragRsns] = useState<string[]>([])
-  const [draftDropTarget, setDraftDropTarget] = useState<string | null>(null)
 
   const selectedEvent = events.find(e => e.id === selectedEventId)
 
@@ -89,22 +72,8 @@ export default function BingoPanel() {
     if (tm?.length && !memberTeamId) setMemberTeamId(tm[0].id)
   }, [memberTeamId])
 
-  const loadDraftData = useCallback(async (eventId: string) => {
-    const res = await fetch(`/api/bingo/signups?event_id=${eventId}`)
-    const { signups: s } = await res.json()
-    setSignups(s ?? [])
-    if (s?.length) {
-      setWomLoading(true)
-      const rsns = (s as Signup[]).map((x: Signup) => x.rsn).join(',')
-      const wom = await fetch(`/api/bingo/draft?rsns=${encodeURIComponent(rsns)}`).then(r => r.json()).catch(() => ({}))
-      setWomData(wom)
-      setWomLoading(false)
-    }
-  }, [])
-
   useEffect(() => { load() }, [load])
   useEffect(() => { if (selectedEventId) loadEventData(selectedEventId) }, [selectedEventId, loadEventData])
-  useEffect(() => { if (tab === 'draft' && selectedEventId) loadDraftData(selectedEventId) }, [tab, selectedEventId, loadDraftData])
 
   async function createEvent() {
     if (!newTitle.trim()) return
@@ -163,115 +132,28 @@ export default function BingoPanel() {
 
   async function deleteTeam(id: string) { await api('delete_team', { id }); if (selectedEventId) loadEventData(selectedEventId) }
 
-  async function addMember(teamId: string, rsn: string) {
-    await api('add_member', { team_id: teamId, rsn: rsn.trim() })
-    if (selectedEventId) loadEventData(selectedEventId)
-  }
-
-  async function addMemberLegacy() {
+  async function addMember() {
     if (!memberRsn.trim() || !memberTeamId) return
-    await addMember(memberTeamId, memberRsn)
+    await api('add_member', { team_id: memberTeamId, rsn: memberRsn.trim() })
     setMemberRsn('')
+    if (selectedEventId) loadEventData(selectedEventId)
   }
 
   async function removeMember(id: string) { await api('remove_member', { id }); if (selectedEventId) loadEventData(selectedEventId) }
   async function doReview(subId: string, action: 'approved' | 'rejected') { await review(subId, action); setSubs(s => s.filter(x => x.id !== subId)) }
 
-  async function deleteSignup(id: string) {
-    await api('delete_signup', { id })
-    setSignups(s => s.filter(x => x.id !== id))
-  }
-
-  async function dropOnTeam(teamId: string, rsnsDropped: string[]) {
-    const assigned = new Set(members.map(m => m.rsn.toLowerCase()))
-    const toAdd = rsnsDropped.filter(r => !assigned.has(r.toLowerCase()))
-    for (const rsn of toAdd) await addMember(teamId, rsn)
-    if (selectedEventId) {
-      const teamsRes = await fetch(`/api/bingo/events/${selectedEventId}/teams`)
-      const { teams: tm, members: m } = await teamsRes.json()
-      setTeams(tm ?? []); setMembers(m ?? [])
-    }
-  }
-
   function loadTaskIntoForm(t: BingoTask) {
     setTaskForm({ id: t.id, position: t.position, title: t.title, description: t.description ?? '', image_url: t.image_url ?? '', points: t.points, required_count: t.required_count, points_per_submission: t.points_per_submission?.toString() ?? '' })
   }
-
-  // Duo pair detection: mutual preferred_partner
-  const confirmedPairs = new Map<string, string>() // rsn.lower → partner.lower
-  for (const s of signups) {
-    if (!s.preferred_partner) continue
-    const pLower = s.preferred_partner.toLowerCase()
-    const match = signups.find(x => x.rsn.toLowerCase() === pLower && x.preferred_partner?.toLowerCase() === s.rsn.toLowerCase())
-    if (match) confirmedPairs.set(s.rsn.toLowerCase(), pLower)
-  }
-
-  // Build pool items: pairs as single units, solos individually
-  type PoolItem = { type: 'solo'; signup: Signup } | { type: 'pair'; a: Signup; b: Signup }
-  const assignedRsns = new Set(members.map(m => m.rsn.toLowerCase()))
-  const seen = new Set<string>()
-  const poolItems: PoolItem[] = []
-  for (const s of signups) {
-    const key = s.rsn.toLowerCase()
-    if (seen.has(key) || assignedRsns.has(key)) continue
-    const partnerKey = confirmedPairs.get(key)
-    if (partnerKey && !seen.has(partnerKey) && !assignedRsns.has(partnerKey)) {
-      const partnerSignup = signups.find(x => x.rsn.toLowerCase() === partnerKey)
-      if (partnerSignup) {
-        poolItems.push({ type: 'pair', a: s, b: partnerSignup })
-        seen.add(key); seen.add(partnerKey)
-        continue
-      }
-    }
-    poolItems.push({ type: 'solo', signup: s })
-    seen.add(key)
-  }
-
-  const teamSize = selectedEvent?.team_size ?? 2
 
   const tabs = [
     { key: 'events' as const, label: 'Events' },
     { key: 'tasks' as const, label: `Tasks (${tasks.length})` },
     { key: 'teams' as const, label: `Teams (${teams.length})` },
-    { key: 'draft' as const, label: `Draft (${signups.length})` },
     { key: 'queue' as const, label: `Queue (${subs.length})` },
   ]
 
   const inp = 'w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]'
-
-  function WomBadge({ rsn }: { rsn: string }) {
-    const d = womData[rsn.toLowerCase()]
-    if (!d) return null
-    const badge = ACCOUNT_BADGES[d.type]
-    return (
-      <span className="flex items-center gap-1.5 text-[10px] text-[#9898c0]">
-        {badge && <span className="px-1 py-0.5 rounded text-[9px] font-bold" style={{ background: badge.color + '22', color: badge.color }}>{badge.label}</span>}
-        <span>Lv {d.totalLevel}</span>
-        <span className="text-[#c89b3c]">{d.ehp.toFixed(0)}EHP</span>
-        <span className="text-[#57F287]">{d.ehb.toFixed(0)}EHB</span>
-      </span>
-    )
-  }
-
-  function PlayerCard({ rsn, compact = false }: { rsn: string; compact?: boolean }) {
-    const d = womData[rsn.toLowerCase()]
-    const badge = d ? ACCOUNT_BADGES[d.type] : null
-    return (
-      <div className={`flex flex-col gap-0.5 ${compact ? '' : 'py-0.5'}`}>
-        <div className="flex items-center gap-1.5">
-          {badge && <span className="px-1 py-0.5 rounded text-[9px] font-bold leading-none" style={{ background: badge.color + '22', color: badge.color }}>{badge.label}</span>}
-          <span className="text-sm font-semibold text-[#e8e8f0] capitalize">{d?.displayName ?? rsn}</span>
-        </div>
-        {d && (
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="text-[#7878a8]">Lv {d.totalLevel}</span>
-            <span className="text-[#c89b3c]">{d.ehp.toFixed(0)} EHP</span>
-            <span className="text-[#57F287]">{d.ehb.toFixed(0)} EHB</span>
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div>
@@ -469,7 +351,7 @@ export default function BingoPanel() {
                 </select>
                 <input value={memberRsn} onChange={e => setMemberRsn(e.target.value)} placeholder="RSN"
                   className="flex-1 min-w-32 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#c89b3c]" />
-                <button onClick={addMemberLegacy} className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060]">Add</button>
+                <button onClick={addMember} className="px-4 py-2 rounded-lg bg-[#c89b3c] text-[#0f0f1e] text-sm font-semibold hover:bg-[#f0c060]">Add</button>
               </div>
             </div>
             {teams.map(team => {
@@ -496,151 +378,6 @@ export default function BingoPanel() {
               )
             })}
           </>)}
-        </div>
-      )}
-
-      {/* ── Draft tab ── */}
-      {tab === 'draft' && (
-        <div className="space-y-4">
-          {!selectedEventId ? <p className="text-sm text-[#9898c0]">Select an event above.</p> : (
-            <>
-              <div className="flex items-center gap-3 flex-wrap">
-                <p className="text-xs text-[#9898c0]">{signups.length} signed up · {poolItems.length} unassigned · {teamSize}-man teams</p>
-                {womLoading && <span className="text-xs text-[#7878a8] animate-pulse">Loading WOM data…</span>}
-                <button onClick={() => selectedEventId && loadDraftData(selectedEventId)} className="text-xs px-2 py-1 rounded border border-[#333358] text-[#9898c0] hover:text-[#e8e8f0] ml-auto">↻ Refresh</button>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 items-start">
-
-                {/* Teams (drop zones) */}
-                <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Teams</p>
-                  {teams.length === 0 && (
-                    <p className="text-sm text-[#9898c0]">No teams yet — create them in the Teams tab first.</p>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {teams.map(team => {
-                      const teamMembers = members.filter(m => m.team_id === team.id)
-                      const slots = Array.from({ length: teamSize }, (_, i) => teamMembers[i] ?? null)
-                      const isTarget = draftDropTarget === team.id
-                      return (
-                        <div key={team.id}
-                          onDragOver={e => { e.preventDefault(); setDraftDropTarget(team.id) }}
-                          onDragLeave={() => setDraftDropTarget(null)}
-                          onDrop={e => {
-                            e.preventDefault()
-                            setDraftDropTarget(null)
-                            const rsns = JSON.parse(e.dataTransfer.getData('rsns') || '[]') as string[]
-                            if (rsns.length) dropOnTeam(team.id, rsns)
-                          }}
-                          className={`rounded-xl border p-3 transition-all ${isTarget ? 'border-dashed scale-[1.02]' : 'border-[#333358]'} bg-[#0d0d1a]`}
-                          style={{ borderColor: isTarget ? team.color : undefined }}>
-                          <div className="flex items-center gap-2 mb-2.5">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
-                            <span className="text-xs font-bold" style={{ color: team.color }}>{team.name}</span>
-                            <span className="text-[10px] text-[#7878a8] ml-auto">{teamMembers.length}/{teamSize}</span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {slots.map((m, i) => m ? (
-                              <div key={m.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-[#1c1c36]">
-                                <PlayerCard rsn={m.rsn} compact />
-                                <button onClick={() => removeMember(m.id)} className="text-[#7878a8] hover:text-[#ED4245] text-xs shrink-0 ml-1">×</button>
-                              </div>
-                            ) : (
-                              <div key={i} className="px-2 py-3 rounded-lg border border-dashed border-[#333358] flex items-center justify-center">
-                                <span className="text-[10px] text-[#4a4a6a]">empty slot</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Player pool */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7878a8] mb-3">Signups Pool</p>
-                  {poolItems.length === 0 && signups.length === 0 && (
-                    <p className="text-sm text-[#9898c0]">No sign-ups yet.</p>
-                  )}
-                  {poolItems.length === 0 && signups.length > 0 && (
-                    <p className="text-sm text-[#57F287]">All players assigned! ✓</p>
-                  )}
-                  <div className="space-y-2">
-                    {poolItems.map((item, idx) => {
-                      if (item.type === 'pair') {
-                        const rsns = [item.a.rsn, item.b.rsn]
-                        return (
-                          <div key={idx} draggable
-                            onDragStart={e => { setDragRsns(rsns); e.dataTransfer.setData('rsns', JSON.stringify(rsns)) }}
-                            onDragEnd={() => setDragRsns([])}
-                            className={`rounded-xl border border-[#7c5ce8]/40 bg-[#12122a] p-3 cursor-grab active:cursor-grabbing transition-opacity ${dragRsns.includes(item.a.rsn) ? 'opacity-50' : ''}`}>
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7c5ce8]/20 text-[#b09cf8]">DUO PAIR</span>
-                              <span className="text-[10px] text-[#7878a8]">drag to assign both</span>
-                            </div>
-                            <div className="space-y-2">
-                              {[item.a, item.b].map(s => (
-                                <div key={s.id} className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <PlayerCard rsn={s.rsn} />
-                                    {s.discord_username && <p className="text-[10px] text-[#7878a8] mt-0.5">{s.discord_username}</p>}
-                                    {s.expected_playtime && <p className="text-[10px] text-[#9898c0]">{s.expected_playtime}</p>}
-                                  </div>
-                                  <button onClick={() => deleteSignup(s.id)} className="text-[10px] text-[#7878a8] hover:text-[#ED4245] shrink-0">✕</button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )
-                      }
-                      const s = item.signup
-                      return (
-                        <div key={s.id} draggable
-                          onDragStart={e => { setDragRsns([s.rsn]); e.dataTransfer.setData('rsns', JSON.stringify([s.rsn])) }}
-                          onDragEnd={() => setDragRsns([])}
-                          className={`rounded-xl border border-[#333358] bg-[#0d0d1a] p-3 cursor-grab active:cursor-grabbing transition-opacity ${dragRsns.includes(s.rsn) ? 'opacity-50' : ''}`}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <PlayerCard rsn={s.rsn} />
-                              {s.discord_username && <p className="text-[10px] text-[#7878a8] mt-0.5">{s.discord_username}</p>}
-                              {s.expected_playtime && <p className="text-[10px] text-[#9898c0]">{s.expected_playtime}</p>}
-                              {s.preferred_partner && (
-                                <p className="text-[10px] text-[#7878a8] mt-0.5">
-                                  Wants to pair with <span className="text-[#9898c0]">{s.preferred_partner}</span>
-                                  {!confirmedPairs.has(s.rsn.toLowerCase()) && <span className="text-[#ED4245]/70"> (unconfirmed)</span>}
-                                </p>
-                              )}
-                              {s.notes && <p className="text-[10px] text-[#7878a8] mt-0.5 italic">{s.notes}</p>}
-                            </div>
-                            <button onClick={() => deleteSignup(s.id)} className="text-[10px] text-[#7878a8] hover:text-[#ED4245] shrink-0 mt-0.5">✕</button>
-                          </div>
-                        </div>
-                      )
-                    })}
-
-                    {/* Show assigned players collapsed */}
-                    {signups.filter(s => assignedRsns.has(s.rsn.toLowerCase())).length > 0 && (
-                      <details className="mt-2">
-                        <summary className="text-[10px] text-[#7878a8] cursor-pointer hover:text-[#9898c0] select-none">
-                          {signups.filter(s => assignedRsns.has(s.rsn.toLowerCase())).length} assigned players
-                        </summary>
-                        <div className="mt-2 space-y-1">
-                          {signups.filter(s => assignedRsns.has(s.rsn.toLowerCase())).map(s => (
-                            <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#1c1c36]/50 opacity-60">
-                              <span className="text-xs text-[#9898c0] capitalize">{s.rsn}</span>
-                              <span className="text-[10px] text-[#57F287]">✓ assigned</span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </div>
       )}
 
