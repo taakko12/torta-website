@@ -146,6 +146,16 @@ function CompCard({ comp, live = false }: { comp: Competition | CompetitionWithS
           {' '}({leader.progress.gained.toLocaleString()} gained)
         </p>
       )}
+      <div className="mt-3">
+        <a
+          href={`https://wiseoldman.net/competitions/${comp.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-[#7c8cf8] hover:text-[#a0aeff] transition-colors"
+        >
+          View on Wise Old Man →
+        </a>
+      </div>
     </div>
   )
 }
