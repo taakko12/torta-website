@@ -34,8 +34,8 @@ export default function LogsPanel({ initialLogs }: { initialLogs: CommandLog[] }
               <tr className="border-b border-[#21213c]">
                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Time</th>
                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Member</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Command</th>
-                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Subcommand</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Action</th>
+                <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -51,8 +51,18 @@ export default function LogsPanel({ initialLogs }: { initialLogs: CommandLog[] }
                     <span className="text-sm text-[#e8e8f0]">{log.display_name ?? '—'}</span>
                     <span className="text-xs text-[#7878a8] block">{log.discord_id}</span>
                   </td>
-                  <td className="px-4 py-2 text-sm font-mono text-[#c89b3c]">/{log.command}</td>
-                  <td className="px-4 py-2 text-xs text-[#9898c0]">{log.subcommand ?? '—'}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[9px] font-bold px-1 py-0.5 rounded uppercase tracking-wide ${log.source === 'web' ? 'bg-[#5865F2]/20 text-[#7c8cf8]' : 'bg-[#c89b3c]/15 text-[#c89b3c]'}`}>
+                        {log.source === 'web' ? 'web' : 'bot'}
+                      </span>
+                      <span className="text-sm font-mono text-[#e8e8f0]">
+                        {log.source === 'web' ? log.command : `/${log.command}`}
+                      </span>
+                    </div>
+                    {log.subcommand && <span className="text-xs text-[#9898c0] block mt-0.5">{log.subcommand}</span>}
+                  </td>
+                  <td className="px-4 py-2 text-xs text-[#9898c0] max-w-[200px] truncate">{log.details ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

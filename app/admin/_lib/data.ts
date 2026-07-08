@@ -33,7 +33,7 @@ export type VcActivity = { discord_id: string; display_name: string | null; role
 export type LinkRow = { discord_id: string; rsn: string; linked_at: string; display_name: string | null; primary_rsn: boolean }
 export type ClanEvent = { id: string; title: string; description: string | null; event_type: string; scheduled_at: string | null; channel_id: string | null; created_at: string; event_rsvps: { count: number }[] }
 export type Raid = { id: string; name: string; timestamp: number; description: string | null; channel_id: string | null; signups: {id:string;username:string}[]; attendees: {id:string;username:string}[] | null }
-export type CommandLog = { id: number; discord_id: string; display_name: string | null; command: string; subcommand: string | null; channel_id: string | null; logged_at: string }
+export type CommandLog = { id: number; discord_id: string; display_name: string | null; command: string; subcommand: string | null; channel_id: string | null; logged_at: string; source?: string | null; details?: string | null }
 
 export async function fetchChannels(): Promise<Channel[]> {
   const res = await botFetch(`/guilds/${GUILD_ID}/channels`)

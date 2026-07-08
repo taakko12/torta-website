@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from '@/lib/auth'
 import { isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
@@ -44,5 +45,6 @@ export async function POST(req: NextRequest) {
     await db.from('ingame_activity').update({ rsn: to_rsn }).eq('guild_id', GUILD_ID).ilike('rsn', from_rsn)
   }
 
+  logAdminAction(session, 'merge-rsn', null, `${from_rsn} → ${to_rsn}`)
   return NextResponse.json({ ok: true })
 }

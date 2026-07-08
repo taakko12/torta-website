@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession, isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error || !event) return NextResponse.json({ error: 'Failed to create event' }, { status: 500 })
+  logAdminAction(session, 'events', 'create', title.trim())
 
   // Post embed to Discord with RSVP buttons
   const token = process.env.DISCORD_BOT_TOKEN
@@ -68,8 +70,10 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id } = await req.json()
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id, title } = await req.json()
   await getSupabaseAdmin().from('clan_events').delete().eq('id', id).eq('guild_id', GUILD_ID)
+  logAdminAction(session, 'events', 'delete', title ?? id)
   return NextResponse.json({ ok: true })
 }

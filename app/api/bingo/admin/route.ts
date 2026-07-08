@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession, isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { logAdminAction } from '@/lib/logAction'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
         .select()
         .single()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      logAdminAction(session, 'bingo', 'create_event', title)
       return NextResponse.json({ data })
     }
 
@@ -33,6 +35,7 @@ export async function POST(req: NextRequest) {
       const { event_id } = body
       await db.from('bingo_events').update({ active: false }).eq('guild_id', GUILD_ID)
       if (event_id) await db.from('bingo_events').update({ active: true }).eq('id', event_id)
+      logAdminAction(session, 'bingo', 'set_active', event_id ?? 'none')
       return NextResponse.json({ ok: true })
     }
 

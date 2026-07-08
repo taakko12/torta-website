@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSession, isAdmin } from '@/lib/auth'
+import { logAdminAction } from '@/lib/logAction'
 
 const DISCORD_API = 'https://discord.com/api/v10'
 
@@ -33,5 +34,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message ?? 'Discord API error' }, { status: res.status })
   }
 
+  logAdminAction(session, 'messenger', 'send', title || description?.slice(0, 60) || channelId)
   return NextResponse.json({ ok: true })
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession, isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
@@ -21,7 +22,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { name, timestamp, description, channel_id } = await req.json()
   if (!name?.trim() || !timestamp || !channel_id)
     return NextResponse.json({ error: 'name, timestamp, and channel_id required' }, { status: 400 })
@@ -76,5 +78,6 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: 'Failed to save raid' }, { status: 500 })
+  logAdminAction(session, 'raids', 'create', name.trim())
   return NextResponse.json({ raid })
 }

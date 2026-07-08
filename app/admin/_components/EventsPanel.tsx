@@ -43,8 +43,8 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     }
   }
 
-  async function deleteEvent(id: string) {
-    await fetch('/api/admin/events', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+  async function deleteEvent(id: string, title: string) {
+    await fetch('/api/admin/events', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, title }) })
     setClanEvents(ev => ev.filter(e => e.id !== id))
     if (rsvpEventId === id) setRsvpEventId(null)
   }
@@ -154,7 +154,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
                 <button onClick={() => loadRsvps(ev.id)} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] px-2 py-1 rounded border border-[#333358] hover:border-[#7878a8]">
                   {rsvpCount} going {isOpen ? '▲' : '▼'}
                 </button>
-                <button onClick={() => deleteEvent(ev.id)} className="text-xs text-[#7878a8] hover:text-[#ED4245] px-2">✕</button>
+                <button onClick={() => deleteEvent(ev.id, ev.title)} className="text-xs text-[#7878a8] hover:text-[#ED4245] px-2">✕</button>
               </div>
               {isOpen && (
                 <div className="px-5 pb-3">
