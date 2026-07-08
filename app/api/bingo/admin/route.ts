@@ -88,6 +88,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    if (action === 'update_event') {
+      const { id, rules, team_size } = body
+      const patch: Record<string, unknown> = {}
+      if (rules !== undefined) patch.rules = rules || null
+      if (team_size !== undefined) patch.team_size = Number(team_size)
+      if (!Object.keys(patch).length) return NextResponse.json({ ok: true })
+      const { error } = await db.from('bingo_events').update(patch).eq('id', id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ ok: true })
+    }
+
+    if (action === 'delete_signup') {
+      const { id } = body
+      const { error } = await db.from('bingo_signups').delete().eq('id', id)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ ok: true })
+    }
+
     if (action === 'swap_tasks') {
       const { id_a, id_b } = body
       const { data: pair } = await db.from('bingo_tasks').select('id, position').in('id', [id_a, id_b])
