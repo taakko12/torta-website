@@ -20,7 +20,7 @@ function activityScore(discordId: string, discord: DiscordActivity[], ingame: In
 }
 
 export default function MembersPanel({ initialLinks, discordActivity, ingameActivity, vcActivity, initialNotes, absences }: Props) {
-  const [tab, setTab] = useState<'links' | 'kick'>('links')
+  const [tab, setTab] = useState<'links' | 'inactives'>('links')
   const [links, setLinks] = useState<LinkRow[]>(initialLinks)
   const [notes, setNotes] = useState<MemberNote[]>(initialNotes)
   const [linkSearch, setLinkSearch] = useState('')
@@ -155,9 +155,9 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
       <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
         <div className="flex border-b border-[#333358]">
           <button className={tabCls('links')} onClick={() => setTab('links')}>RSN Links</button>
-          <button className={tabCls('kick')} onClick={() => setTab('kick')}>
-            Kick List
-            {kickList.length > 0 && <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#ED4245]/20 text-[#ED4245]">{kickList.length}</span>}
+          <button className={tabCls('inactives')} onClick={() => setTab('inactives')}>
+            Inactives
+            {kickList.length > 0 && <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#c89b3c]/20 text-[#c89b3c]">{kickList.length}</span>}
           </button>
         </div>
 
@@ -279,7 +279,7 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
           </>
         )}
 
-        {tab === 'kick' && (
+        {tab === 'inactives' && (
           <div className="p-5 space-y-3">
             <p className="text-xs text-[#7878a8]">Members with an activity score below 5 this month (excludes members on break). Score = Discord msgs + in-game msgs ×2 + VC minutes ×0.1.</p>
             {kickList.length === 0 ? (
@@ -310,7 +310,7 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
                           <button onClick={() => sendWarnDm(m.discord_id, m.display_name)}
                             disabled={warnSent.has(m.discord_id)}
                             className="text-xs px-3 py-1 rounded border border-[#c89b3c]/30 text-[#c89b3c] hover:bg-[#c89b3c]/10 disabled:opacity-40 disabled:cursor-not-allowed">
-                            {warnSent.has(m.discord_id) ? '✓ Sent' : 'Send Warning DM'}
+                            {warnSent.has(m.discord_id) ? '✓ Sent' : 'Send Check-in'}
                           </button>
                         </td>
                       </tr>
