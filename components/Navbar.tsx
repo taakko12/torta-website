@@ -9,6 +9,7 @@ const links = [
   { href: '/player', label: 'Players' },
   { href: '/hiscores', label: 'Hiscores' },
   { href: '/bingo', label: 'Bingo' },
+  { href: '/changelog', label: 'Changelog' },
 ]
 
 export default async function Navbar() {

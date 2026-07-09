@@ -14,6 +14,7 @@ const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['Welcome Mod Channel',       'welcome_mod_channel_id',   'Staff review for welcomes'],
   ['Weekly Recap Channel',      'recap_channel_id',         'Sunday activity recap post'],
   ['Moderator Recap Channel',   'inactivity_channel_id',    'Monday moderator recap post'],
+  ['Changelog Channel',         'changelog_channel_id',     'Optional: post new changelog entries here'],
 ]
 
 export default function SettingsPanel({ config: initialConfig, channels, roles }: Props) {

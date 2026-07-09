@@ -24,6 +24,7 @@ export type GuildConfig = {
   broadcast_channel_id?: string | null
   inactivity_channel_id?: string | null
   recap_channel_id?: string | null
+  changelog_channel_id?: string | null
   role_panel_config?: RolePanel | null
 }
 export type RolePanel = { channelId: string | null; messageId: string | null; roles: { roleId: string; emoji: string; label: string }[] }
@@ -37,6 +38,7 @@ export type CommandLog = { id: number; discord_id: string; display_name: string 
 export type Recruitment = { id: number; guild_id: string; recruiter_rsn: string | null; recruit_discord_id: string; recruit_rsn: string; recruited_at: string }
 export type MemberNote = { id: number; guild_id: string; discord_id: string; note: string; created_by_discord_id: string | null; created_by_name: string | null; created_at: string }
 export type Absence = { id: number; guild_id: string; discord_id: string; display_name: string | null; rsn: string | null; reason: string | null; return_date: string | null; created_at: string; returned_at: string | null }
+export type ChangelogEntry = { id: number; guild_id: string; title: string; content: string | null; category: string; discord_message_id: string | null; created_by_discord_id: string | null; created_by_name: string | null; published_at: string }
 
 export async function fetchChannels(): Promise<Channel[]> {
   const res = await botFetch(`/guilds/${GUILD_ID}/channels`)
@@ -105,6 +107,11 @@ export async function fetchMemberNotes(): Promise<MemberNote[]> {
 export async function fetchAbsences(): Promise<Absence[]> {
   const { data } = await getSupabaseAdmin().from('absences').select('*').eq('guild_id', GUILD_ID).is('returned_at', null).order('created_at', { ascending: false })
   return (data ?? []) as Absence[]
+}
+
+export async function fetchChangelog(): Promise<ChangelogEntry[]> {
+  const { data } = await getSupabaseAdmin().from('changelog').select('*').eq('guild_id', GUILD_ID).order('published_at', { ascending: false }).limit(100)
+  return (data ?? []) as ChangelogEntry[]
 }
 
 export { GUILD_ID }
