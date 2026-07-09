@@ -9,7 +9,6 @@ const links = [
   { href: '/player', label: 'Players' },
   { href: '/hiscores', label: 'Hiscores' },
   { href: '/bingo', label: 'Bingo' },
-  { href: '/members', label: 'Members' },
   { href: '/rules', label: 'Rules' },
   { href: '/changelog', label: 'Changelog' },
 ]
