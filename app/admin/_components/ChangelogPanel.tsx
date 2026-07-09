@@ -19,6 +19,8 @@ function Badge({ category }: { category: string }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>{category}</span>
 }
 
+type ImportCommit = { sha: string; title: string; category: string; repo: string; date: string }
+
 export default function ChangelogPanel({ initialEntries, channels, changelogChannelId }: Props) {
   const [entries, setEntries] = useState(initialEntries)
   const [title, setTitle] = useState('')
@@ -28,6 +30,66 @@ export default function ChangelogPanel({ initialEntries, channels, changelogChan
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<number | null>(null)
+
+  // Import state
+  const [importOpen, setImportOpen] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importCommits, setImportCommits] = useState<ImportCommit[]>([])
+  const [importError, setImportError] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [importing, setImporting] = useState(false)
+  const [importStatus, setImportStatus] = useState<string | null>(null)
+
+  async function loadCommits() {
+    setImportLoading(true); setImportError(null); setImportStatus(null)
+    setSelected(new Set())
+    try {
+      const res = await fetch('/api/admin/changelog/import')
+      const data = await res.json()
+      if (!res.ok) { setImportError(data.error ?? 'Failed'); return }
+      setImportCommits(data.commits)
+    } catch { setImportError('Network error') }
+    setImportLoading(false)
+  }
+
+  function toggleImport() {
+    if (!importOpen) { setImportOpen(true); loadCommits() }
+    else setImportOpen(false)
+  }
+
+  function toggleSelect(sha: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(sha) ? next.delete(sha) : next.add(sha)
+      return next
+    })
+  }
+
+  async function importSelected() {
+    const toImport = importCommits.filter(c => selected.has(c.sha))
+    if (!toImport.length) return
+    setImporting(true); setImportStatus(null)
+    let created = 0
+    for (const c of toImport) {
+      const res = await fetch('/api/admin/changelog', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: c.title,
+          content: `[${c.repo}] ${c.sha}`,
+          category: c.category,
+          channelId: postChannel || null,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setEntries(prev => [data.entry, ...prev])
+        created++
+      }
+    }
+    setSelected(new Set())
+    setImportStatus(`✅ Imported ${created} entr${created === 1 ? 'y' : 'ies'}`)
+    setImporting(false)
+  }
 
   async function publish() {
     if (!title.trim()) return
@@ -61,7 +123,62 @@ export default function ChangelogPanel({ initialEntries, channels, changelogChan
 
   return (
     <div className="space-y-6">
-      {/* Create form */}
+      {/* Import from GitHub */}
+      <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden max-w-2xl">
+        <button onClick={toggleImport}
+          className="w-full flex items-center justify-between px-5 py-3 text-sm font-semibold text-[#e8e8f0] hover:bg-[#1c1c36] transition-colors">
+          <span>Import from GitHub commits</span>
+          <span className="text-[#7878a8] text-xs">{importOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {importOpen && (
+          <div className="border-t border-[#333358]">
+            {importLoading && <p className="px-5 py-6 text-sm text-center text-[#7878a8]">Loading commits…</p>}
+            {importError && <p className="px-5 py-4 text-sm text-[#ED4245]">{importError}</p>}
+            {!importLoading && !importError && importCommits.length === 0 && (
+              <p className="px-5 py-6 text-sm text-center text-[#7878a8]">No feat/fix commits found.</p>
+            )}
+            {importCommits.length > 0 && (
+              <>
+                <p className="px-5 pt-3 pb-1 text-xs text-[#7878a8]">
+                  Showing recent <code className="text-[#9898c0]">feat:</code> / <code className="text-[#9898c0]">fix:</code> commits. Select to import.
+                </p>
+                <ul className="divide-y divide-[#1c1c36] max-h-72 overflow-y-auto">
+                  {importCommits.map(c => (
+                    <li key={c.sha}
+                      onClick={() => toggleSelect(c.sha)}
+                      className={`flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors ${selected.has(c.sha) ? 'bg-[#7c5ce8]/10' : 'hover:bg-[#1c1c36]'}`}>
+                      <input type="checkbox" readOnly checked={selected.has(c.sha)}
+                        className="mt-0.5 accent-[#7c5ce8] shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-[#e8e8f0] truncate">{c.title}</span>
+                          <Badge category={c.category} />
+                          <span className="text-xs text-[#5a5a7a] font-mono">{c.sha}</span>
+                        </div>
+                        <p className="text-xs text-[#5a5a7a] mt-0.5">
+                          {c.repo} · {new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center gap-3 px-5 py-3 border-t border-[#333358]">
+                  <span className="text-xs text-[#7878a8]">{selected.size} selected</span>
+                  <button onClick={importSelected} disabled={importing || selected.size === 0}
+                    className="px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white text-xs font-semibold hover:bg-[#6b4fd4] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    {importing ? 'Importing…' : 'Import Selected'}
+                  </button>
+                  {importStatus && <span className="text-xs text-[#a0a0c0]">{importStatus}</span>}
+                  {postChannel && <span className="text-xs text-[#57F287]">will also post to Discord</span>}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Manual create form */}
       <div className="rounded-xl border border-[#333358] bg-[#161628] p-5 space-y-4 max-w-2xl">
         <h2 className="text-sm font-semibold text-[#e8e8f0]">New Entry</h2>
         <div>
@@ -116,9 +233,7 @@ export default function ChangelogPanel({ initialEntries, channels, changelogChan
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-sm font-medium text-[#e8e8f0]">{e.title}</span>
                     <Badge category={e.category} />
-                    {e.discord_message_id && (
-                      <span className="text-xs text-[#57F287]">posted</span>
-                    )}
+                    {e.discord_message_id && <span className="text-xs text-[#57F287]">posted</span>}
                   </div>
                   {e.content && <p className="text-xs text-[#7878a8] line-clamp-2">{e.content}</p>}
                   <p className="text-xs text-[#5a5a7a] mt-1">
