@@ -1,7 +1,7 @@
-import { fetchPromotions } from '../_lib/data'
+import { fetchPromotions, fetchRoles } from '../_lib/data'
 import PromotionsPanel from '../_components/PromotionsPanel'
 
 export default async function PromotionsPage() {
-  const promotions = await fetchPromotions()
-  return <PromotionsPanel initialPromotions={promotions} />
+  const [promotions, roles] = await Promise.all([fetchPromotions(), fetchRoles()])
+  return <PromotionsPanel initialPromotions={promotions} roles={roles.map(r => r.name)} />
 }

@@ -2,15 +2,13 @@
 import { useState } from 'react'
 import type { Promotion } from '../_lib/data'
 
-const ROLES = ['Recruit', 'Member', 'Veteran', 'Elite', 'Officer', 'Admin']
-
-export default function PromotionsPanel({ initialPromotions }: { initialPromotions: Promotion[] }) {
+export default function PromotionsPanel({ initialPromotions, roles }: { initialPromotions: Promotion[]; roles: string[] }) {
   const [promotions, setPromotions] = useState(initialPromotions)
   const [discordId, setDiscordId] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [rsn, setRsn] = useState('')
-  const [fromRole, setFromRole] = useState(ROLES[0])
-  const [toRole, setToRole] = useState(ROLES[1])
+  const [fromRole, setFromRole] = useState(roles[0] ?? '')
+  const [toRole, setToRole] = useState(roles[1] ?? '')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
@@ -76,7 +74,7 @@ export default function PromotionsPanel({ initialPromotions }: { initialPromotio
             <label className="text-xs text-[#9898c0] mb-1 block">From Rank</label>
             <select value={fromRole} onChange={e => setFromRole(e.target.value)}
               className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
-              {ROLES.map(r => <option key={r}>{r}</option>)}
+              {roles.map(r => <option key={r}>{r}</option>)}
             </select>
           </div>
           <span className="text-[#7878a8] pb-2">→</span>
@@ -84,7 +82,7 @@ export default function PromotionsPanel({ initialPromotions }: { initialPromotio
             <label className="text-xs text-[#9898c0] mb-1 block">To Rank</label>
             <select value={toRole} onChange={e => setToRole(e.target.value)}
               className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
-              {ROLES.map(r => <option key={r}>{r}</option>)}
+              {roles.map(r => <option key={r}>{r}</option>)}
             </select>
           </div>
           <div className="flex-1 min-w-[160px]">
