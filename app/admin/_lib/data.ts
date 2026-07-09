@@ -25,6 +25,7 @@ export type GuildConfig = {
   inactivity_channel_id?: string | null
   recap_channel_id?: string | null
   changelog_channel_id?: string | null
+  rules_content?: string | null
   role_panel_config?: RolePanel | null
 }
 export type RolePanel = { channelId: string | null; messageId: string | null; roles: { roleId: string; emoji: string; label: string }[] }
@@ -39,6 +40,10 @@ export type Recruitment = { id: number; guild_id: string; recruiter_rsn: string 
 export type MemberNote = { id: number; guild_id: string; discord_id: string; note: string; created_by_discord_id: string | null; created_by_name: string | null; created_at: string }
 export type Absence = { id: number; guild_id: string; discord_id: string; display_name: string | null; rsn: string | null; reason: string | null; return_date: string | null; created_at: string; returned_at: string | null }
 export type ChangelogEntry = { id: number; guild_id: string; title: string; content: string | null; category: string; discord_message_id: string | null; created_by_discord_id: string | null; created_by_name: string | null; published_at: string }
+export type BlacklistEntry = { id: number; guild_id: string; discord_id: string | null; rsn: string | null; reason: string; removed_by_name: string | null; created_at: string }
+export type Promotion = { id: number; guild_id: string; discord_id: string | null; display_name: string | null; rsn: string | null; from_role: string; to_role: string; promoted_by_name: string | null; notes: string | null; promoted_at: string }
+export type Drop = { id: number; guild_id: string; player_name: string; gp_value: number; item_name: string | null; image_url: string | null; screenshot_url: string | null; recorded_at: string }
+export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[] }
 
 export async function fetchChannels(): Promise<Channel[]> {
   const res = await botFetch(`/guilds/${GUILD_ID}/channels`)
@@ -112,6 +117,64 @@ export async function fetchAbsences(): Promise<Absence[]> {
 export async function fetchChangelog(): Promise<ChangelogEntry[]> {
   const { data } = await getSupabaseAdmin().from('changelog').select('*').eq('guild_id', GUILD_ID).order('published_at', { ascending: false }).limit(100)
   return (data ?? []) as ChangelogEntry[]
+}
+
+export async function fetchBlacklist(): Promise<BlacklistEntry[]> {
+  const { data } = await getSupabaseAdmin().from('blacklist').select('*').eq('guild_id', GUILD_ID).order('created_at', { ascending: false })
+  return (data ?? []) as BlacklistEntry[]
+}
+
+export async function fetchPromotions(): Promise<Promotion[]> {
+  const { data } = await getSupabaseAdmin().from('promotions').select('*').eq('guild_id', GUILD_ID).order('promoted_at', { ascending: false }).limit(200)
+  return (data ?? []) as Promotion[]
+}
+
+export async function fetchDrops(): Promise<Drop[]> {
+  const { data } = await getSupabaseAdmin().from('drops').select('id, guild_id, player_name, gp_value, item_name, image_url, screenshot_url, recorded_at').eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(300)
+  return (data ?? []) as Drop[]
+}
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const db = getSupabaseAdmin()
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
+  const [
+    { count: memberCount },
+    { count: newThisWeek },
+    { count: absenceCount },
+    { count: blacklistCount },
+    { data: nextEvents },
+    { data: recentLogs },
+  ] = await Promise.all([
+    db.from('rsn_links').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('primary_rsn', true),
+    db.from('rsn_links').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('primary_rsn', true).gte('linked_at', weekAgo),
+    db.from('absences').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).is('returned_at', null),
+    db.from('blacklist').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID),
+    db.from('clan_events').select('title, scheduled_at').eq('guild_id', GUILD_ID).gte('scheduled_at', new Date().toISOString()).order('scheduled_at').limit(1),
+    db.from('command_logs').select('*').eq('guild_id', GUILD_ID).order('logged_at', { ascending: false }).limit(8),
+  ])
+  return {
+    memberCount: memberCount ?? 0,
+    newThisWeek: newThisWeek ?? 0,
+    absenceCount: absenceCount ?? 0,
+    blacklistCount: blacklistCount ?? 0,
+    nextEvent: nextEvents?.[0] ?? null,
+    recentLogs: (recentLogs ?? []) as CommandLog[],
+  }
+}
+
+export async function fetchPublicMembers() {
+  const db = getSupabaseAdmin()
+  const [{ data: links }, { data: activity }] = await Promise.all([
+    db.from('rsn_links').select('discord_id, rsn, linked_at').eq('guild_id', GUILD_ID).eq('primary_rsn', true).order('linked_at', { ascending: false }),
+    db.from('discord_activity').select('discord_id, display_name, role_name').eq('guild_id', GUILD_ID),
+  ])
+  const actMap = Object.fromEntries((activity ?? []).map(a => [a.discord_id, a]))
+  return (links ?? []).map(l => ({
+    rsn: l.rsn as string,
+    linked_at: l.linked_at as string,
+    display_name: actMap[l.discord_id]?.display_name ?? null as string | null,
+    role_name: actMap[l.discord_id]?.role_name ?? null as string | null,
+  }))
 }
 
 export { GUILD_ID }

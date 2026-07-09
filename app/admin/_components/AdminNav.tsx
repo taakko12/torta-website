@@ -3,12 +3,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const NAV = [
+  { href: '/admin',           label: 'Dashboard' },
   { href: '/admin/activity',  label: 'Activity' },
   { href: '/admin/members',   label: 'Members' },
+  { href: '/admin/blacklist', label: 'Blacklist' },
+  { href: '/admin/promotions',label: 'Promotions' },
   { href: '/admin/events',    label: 'Events' },
+  { href: '/admin/loot',      label: 'Loot' },
   { href: '/admin/comp',      label: 'Comp Wins' },
   { href: '/admin/messenger', label: 'Messenger' },
   { href: '/admin/recruitments', label: 'Recruitments' },
+  { href: '/admin/rules',     label: 'Rules' },
   { href: '/admin/changelog', label: 'Changelog' },
   { href: '/admin/logs',      label: 'Logs' },
   { href: '/admin/settings',  label: 'Settings' },
@@ -25,7 +30,7 @@ export default function AdminNav() {
             <Link
               href={href}
               className={`block px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname.startsWith(href)
+                (href === '/admin' ? pathname === '/admin' : pathname.startsWith(href))
                   ? 'bg-[#c89b3c]/12 text-[#c89b3c] font-medium'
                   : 'text-[#9898c0] hover:text-[#e8e8f0] hover:bg-[#1c1c36]'
               }`}
