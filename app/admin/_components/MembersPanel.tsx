@@ -31,6 +31,7 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
   const [noteInput, setNoteInput] = useState<Record<string, string>>({})
   const [warnSent, setWarnSent] = useState<Set<string>>(new Set())
+  const [excludedRoles, setExcludedRoles] = useState<Set<string>>(new Set(['Guest']))
 
   const absentIds = useMemo(() => new Set(absences.map(a => a.discord_id)), [absences])
 
@@ -50,11 +51,17 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
 
   const kickList = useMemo(() => {
     return discordActivity
-      .filter(d => !absentIds.has(d.discord_id))
+      .filter(d => !absentIds.has(d.discord_id) && !excludedRoles.has(d.role_name ?? ''))
       .map(d => ({ ...d, score: activityScore(d.discord_id, discordActivity, ingameActivity, vcActivity, links) }))
       .filter(d => d.score < 5)
       .sort((a, b) => a.score - b.score)
-  }, [discordActivity, ingameActivity, vcActivity, links, absentIds])
+  }, [discordActivity, ingameActivity, vcActivity, links, absentIds, excludedRoles])
+
+  const allRoles = useMemo(() => {
+    const roles = new Set<string>()
+    discordActivity.forEach(d => { if (d.role_name) roles.add(d.role_name) })
+    return [...roles].sort()
+  }, [discordActivity])
 
   async function addLink() {
     if (!linkDiscordId.trim() || !linkRsn.trim()) return
@@ -282,6 +289,15 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
         {tab === 'inactives' && (
           <div className="p-5 space-y-3">
             <p className="text-xs text-[#7878a8]">Members with an activity score below 5 this month (excludes members on break). Score = Discord msgs + in-game msgs ×2 + VC minutes ×0.1.</p>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-[#5a5a7a]">Exclude roles:</span>
+              {allRoles.map(role => (
+                <button key={role} onClick={() => setExcludedRoles(prev => { const s = new Set(prev); s.has(role) ? s.delete(role) : s.add(role); return s })}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${excludedRoles.has(role) ? 'bg-[#7c5ce8]/20 border-[#7c5ce8]/40 text-[#b0a0ff]' : 'border-[#333358] text-[#7878a8] hover:text-[#9898c0]'}`}>
+                  {excludedRoles.has(role) ? '✕ ' : ''}{role}
+                </button>
+              ))}
+            </div>
             {kickList.length === 0 ? (
               <p className="text-sm text-[#57F287] py-4">No members below threshold. 🎉</p>
             ) : (

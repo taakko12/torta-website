@@ -44,6 +44,8 @@ export type BlacklistEntry = { id: number; guild_id: string; discord_id: string 
 export type Promotion = { id: number; guild_id: string; discord_id: string | null; display_name: string | null; rsn: string | null; from_role: string; to_role: string; promoted_by_name: string | null; notes: string | null; promoted_at: string }
 export type Drop = { id: number; guild_id: string; player_name: string; gp_value: number; item_name: string | null; image_url: string | null; screenshot_url: string | null; recorded_at: string }
 export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[] }
+export type Ticket = { id: number; guild_id: string; discord_id: string; display_name: string | null; subject: string | null; status: string; created_at: string; closed_at: string | null; message_count?: number }
+export type TicketMessage = { id: number; ticket_id: number; author_discord_id: string; author_name: string | null; content: string; direction: 'inbound' | 'outbound'; sent_at: string }
 
 export async function fetchChannels(): Promise<Channel[]> {
   const res = await botFetch(`/guilds/${GUILD_ID}/channels`)
@@ -160,6 +162,29 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     nextEvent: nextEvents?.[0] ?? null,
     recentLogs: (recentLogs ?? []) as CommandLog[],
   }
+}
+
+export async function fetchTickets(): Promise<Ticket[]> {
+  const { data } = await getSupabaseAdmin()
+    .from('tickets')
+    .select('*, ticket_messages(count)')
+    .eq('guild_id', GUILD_ID)
+    .order('created_at', { ascending: false })
+    .limit(200)
+  return ((data ?? []) as (Ticket & { ticket_messages: { count: number }[] })[]).map(t => ({
+    ...t,
+    message_count: t.ticket_messages?.[0]?.count ?? 0,
+  }))
+}
+
+export async function fetchTicket(id: number): Promise<{ ticket: Ticket; messages: TicketMessage[] } | null> {
+  const db = getSupabaseAdmin()
+  const [{ data: ticket }, { data: messages }] = await Promise.all([
+    db.from('tickets').select('*').eq('id', id).eq('guild_id', GUILD_ID).single(),
+    db.from('ticket_messages').select('*').eq('ticket_id', id).order('sent_at', { ascending: true }),
+  ])
+  if (!ticket) return null
+  return { ticket: ticket as Ticket, messages: (messages ?? []) as TicketMessage[] }
 }
 
 export async function fetchMembersForPromotion() {
