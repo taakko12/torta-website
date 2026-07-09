@@ -34,6 +34,7 @@ export type LinkRow = { discord_id: string; rsn: string; linked_at: string; disp
 export type ClanEvent = { id: string; title: string; description: string | null; event_type: string; scheduled_at: string | null; channel_id: string | null; created_at: string; event_rsvps: { count: number }[] }
 export type Raid = { id: string; name: string; timestamp: number; description: string | null; channel_id: string | null; signups: {id:string;username:string}[]; attendees: {id:string;username:string}[] | null }
 export type CommandLog = { id: number; discord_id: string; display_name: string | null; command: string; subcommand: string | null; channel_id: string | null; logged_at: string; source?: string | null; details?: string | null }
+export type Recruitment = { id: number; guild_id: string; recruiter_rsn: string | null; recruit_discord_id: string; recruit_rsn: string; recruited_at: string }
 
 export async function fetchChannels(): Promise<Channel[]> {
   const res = await botFetch(`/guilds/${GUILD_ID}/channels`)
@@ -87,6 +88,11 @@ export async function fetchRaids(): Promise<Raid[]> {
 export async function fetchLogs(): Promise<CommandLog[]> {
   const { data } = await getSupabaseAdmin().from('command_logs').select('*').eq('guild_id', GUILD_ID).order('logged_at', { ascending: false }).limit(200)
   return (data ?? []) as CommandLog[]
+}
+
+export async function fetchRecruitments(): Promise<Recruitment[]> {
+  const { data } = await getSupabaseAdmin().from('recruitments').select('*').eq('guild_id', GUILD_ID).order('recruited_at', { ascending: false }).limit(200)
+  return (data ?? []) as Recruitment[]
 }
 
 export { GUILD_ID }
