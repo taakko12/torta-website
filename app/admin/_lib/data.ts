@@ -162,6 +162,24 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   }
 }
 
+export async function fetchMembersForPromotion() {
+  const db = getSupabaseAdmin()
+  const [{ data: links }, { data: activity }] = await Promise.all([
+    db.from('rsn_links').select('discord_id, rsn').eq('guild_id', GUILD_ID).eq('primary_rsn', true),
+    db.from('discord_activity').select('discord_id, display_name, role_name').eq('guild_id', GUILD_ID),
+  ])
+  const rsnMap = Object.fromEntries((links ?? []).map(l => [l.discord_id, l.rsn]))
+  return (activity ?? [])
+    .filter(a => a.display_name)
+    .map(a => ({
+      discord_id: a.discord_id as string,
+      display_name: a.display_name as string,
+      rsn: rsnMap[a.discord_id] ?? null as string | null,
+      role_name: a.role_name as string | null,
+    }))
+    .sort((a, b) => a.display_name.localeCompare(b.display_name))
+}
+
 export async function fetchPublicMembers() {
   const db = getSupabaseAdmin()
   const [{ data: links }, { data: activity }] = await Promise.all([

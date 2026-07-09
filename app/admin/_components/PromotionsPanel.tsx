@@ -1,32 +1,46 @@
 'use client'
 import { useState } from 'react'
-import type { Promotion } from '../_lib/data'
+import type { Promotion, Role } from '../_lib/data'
 
-export default function PromotionsPanel({ initialPromotions, roles }: { initialPromotions: Promotion[]; roles: string[] }) {
+type Member = { discord_id: string; display_name: string; rsn: string | null; role_name: string | null }
+type Props = { initialPromotions: Promotion[]; roles: Role[]; members: Member[] }
+
+export default function PromotionsPanel({ initialPromotions, roles, members }: Props) {
   const [promotions, setPromotions] = useState(initialPromotions)
-  const [discordId, setDiscordId] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [rsn, setRsn] = useState('')
-  const [fromRole, setFromRole] = useState(roles[0] ?? '')
-  const [toRole, setToRole] = useState(roles[1] ?? '')
+  const [selectedId, setSelectedId] = useState('')
+  const [toRoleId, setToRoleId] = useState(roles[0]?.id ?? '')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<number | null>(null)
   const [search, setSearch] = useState('')
 
+  const selected = members.find(m => m.discord_id === selectedId) ?? null
+  const fromRoleId = roles.find(r => r.name === selected?.role_name)?.id ?? ''
+  const fromRoleName = roles.find(r => r.id === fromRoleId)?.name ?? selected?.role_name ?? ''
+  const toRoleName = roles.find(r => r.id === toRoleId)?.name ?? ''
+
   async function add() {
-    if (!fromRole || !toRole) return
+    if (!selectedId || !toRoleId) return
     setSaving(true); setStatus(null)
     const res = await fetch('/api/admin/promotions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ discord_id: discordId || null, display_name: displayName || null, rsn: rsn || null, from_role: fromRole, to_role: toRole, notes: notes || null }),
+      body: JSON.stringify({
+        discord_id: selected!.discord_id,
+        display_name: selected!.display_name,
+        rsn: selected!.rsn,
+        from_role: fromRoleName,
+        to_role: toRoleName,
+        from_role_id: fromRoleId || null,
+        to_role_id: toRoleId,
+        notes: notes || null,
+      }),
     })
     const data = await res.json()
     if (res.ok) {
       setPromotions(prev => [data.promotion, ...prev])
-      setDiscordId(''); setDisplayName(''); setRsn(''); setNotes('')
-      setStatus('✅ Promotion logged')
+      setSelectedId(''); setNotes('')
+      setStatus(data.roleSwapped ? '✅ Promoted and Discord role updated' : '✅ Logged (role swap skipped — check Discord IDs)')
     } else setStatus(`❌ ${data.error}`)
     setSaving(false)
   }
@@ -52,37 +66,41 @@ export default function PromotionsPanel({ initialPromotions, roles }: { initialP
     <div className="space-y-6">
       <div className="rounded-xl border border-[#333358] bg-[#161628] p-5 space-y-4 max-w-2xl">
         <h2 className="text-sm font-semibold text-[#e8e8f0]">Log Promotion</h2>
-        <div className="flex gap-3 flex-wrap">
-          <div className="flex-1 min-w-[140px]">
-            <label className="text-xs text-[#9898c0] mb-1 block">Display Name</label>
-            <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Discord username"
-              className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]" />
-          </div>
-          <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-[#9898c0] mb-1 block">RSN</label>
-            <input value={rsn} onChange={e => setRsn(e.target.value)} placeholder="In-game name"
-              className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]" />
-          </div>
-          <div className="flex-1 min-w-[140px]">
-            <label className="text-xs text-[#9898c0] mb-1 block">Discord ID (optional)</label>
-            <input value={discordId} onChange={e => setDiscordId(e.target.value)} placeholder="e.g. 123456789"
-              className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]" />
-          </div>
+
+        <div>
+          <label className="text-xs text-[#9898c0] mb-1 block">Member</label>
+          <select value={selectedId} onChange={e => setSelectedId(e.target.value)}
+            className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
+            <option value="">— select a member —</option>
+            {members.map(m => (
+              <option key={m.discord_id} value={m.discord_id}>
+                {m.display_name}{m.rsn ? ` (${m.rsn})` : ''}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {selected && (
+          <div className="rounded-lg bg-[#1c1c36] border border-[#333358] px-4 py-3 text-xs text-[#7878a8] flex gap-4">
+            <span>Discord: <span className="text-[#9898c0]">{selected.display_name}</span></span>
+            {selected.rsn && <span>RSN: <span className="text-[#9898c0]">{selected.rsn}</span></span>}
+            <span>Current rank: <span className="text-[#c89b3c]">{selected.role_name ?? 'none'}</span></span>
+          </div>
+        )}
+
         <div className="flex gap-3 flex-wrap items-end">
-          <div className="flex-1 min-w-[120px]">
+          <div className="flex-1 min-w-[130px]">
             <label className="text-xs text-[#9898c0] mb-1 block">From Rank</label>
-            <select value={fromRole} onChange={e => setFromRole(e.target.value)}
-              className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
-              {roles.map(r => <option key={r}>{r}</option>)}
-            </select>
+            <div className="rounded-lg bg-[#111122] border border-[#333358] text-[#7878a8] px-3 py-2 text-sm">
+              {fromRoleName || <span className="text-[#424268]">auto-detected</span>}
+            </div>
           </div>
           <span className="text-[#7878a8] pb-2">→</span>
-          <div className="flex-1 min-w-[120px]">
+          <div className="flex-1 min-w-[130px]">
             <label className="text-xs text-[#9898c0] mb-1 block">To Rank</label>
-            <select value={toRole} onChange={e => setToRole(e.target.value)}
+            <select value={toRoleId} onChange={e => setToRoleId(e.target.value)}
               className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none">
-              {roles.map(r => <option key={r}>{r}</option>)}
+              {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           </div>
           <div className="flex-1 min-w-[160px]">
@@ -91,10 +109,11 @@ export default function PromotionsPanel({ initialPromotions, roles }: { initialP
               className="w-full rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268]" />
           </div>
         </div>
+
         <div className="flex items-center gap-3">
-          <button onClick={add} disabled={saving || !fromRole || !toRole}
+          <button onClick={add} disabled={saving || !selectedId || !toRoleId}
             className="px-4 py-2 rounded-lg bg-[#57F287] text-[#0f0f1e] text-sm font-semibold hover:bg-[#3dd470] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {saving ? 'Saving…' : 'Log Promotion'}
+            {saving ? 'Promoting…' : 'Promote'}
           </button>
           {status && <span className="text-sm text-[#a0a0c0]">{status}</span>}
         </div>
