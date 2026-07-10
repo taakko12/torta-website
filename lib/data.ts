@@ -23,9 +23,11 @@ export async function getStaffMembers(): Promise<{ owner: StaffMember[]; staff: 
   type Row = { display_name: string | null; role_name: string | null; role_names: string[] | null }
   const all = (members ?? []) as Row[]
   const hasRole = (m: Row, role: string) => m.role_names?.includes(role) || m.role_name === role
+  const ownerMembers = all.filter(m => owner_role_name && hasRole(m, owner_role_name))
+  const ownerIds = new Set(ownerMembers.map(m => m.display_name))
   return {
-    owner: all.filter(m => owner_role_name && hasRole(m, owner_role_name)),
-    staff: all.filter(m => staff_role_names?.some(r => hasRole(m, r))),
+    owner: ownerMembers,
+    staff: all.filter(m => !ownerIds.has(m.display_name) && staff_role_names?.some(r => hasRole(m, r))),
   }
 }
 
