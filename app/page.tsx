@@ -7,6 +7,7 @@ import {
   getMonthlyPlankLeaderboard,
   getRecentAchievements,
   getCompWinsLeaderboard,
+  getStaffMembers,
   type RecentDrop,
   type RecentPlank,
 } from '@/lib/data'
@@ -93,13 +94,14 @@ function RecentPlankCard({ plank }: { plank: RecentPlank | null }) {
 }
 
 export default async function Home() {
-  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins] = await Promise.all([
+  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins, staff] = await Promise.all([
     getMostRecentDrop(),
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
     getMonthlyPlankLeaderboard(),
     getRecentAchievements(5),
     getCompWinsLeaderboard(),
+    getStaffMembers(),
   ])
 
   const month = currentMonthLabel()
@@ -127,6 +129,25 @@ export default async function Home() {
         <p className="hidden xl:block text-xs font-semibold uppercase tracking-[0.25em] text-[#7878a8] mt-6">
           EST. 2026 &nbsp;·&nbsp; Clan Tracker
         </p>
+        {(staff.owner.length > 0 || staff.staff.length > 0) && (
+          <div className="flex items-center justify-center gap-6 mt-6 flex-wrap">
+            {staff.owner.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6868a0]">Owner</span>
+                <span className="text-sm text-[#c89b3c] font-medium">{staff.owner.map(m => m.display_name ?? '?').join(', ')}</span>
+              </div>
+            )}
+            {staff.owner.length > 0 && staff.staff.length > 0 && (
+              <div className="w-px h-4 bg-[#333358]" />
+            )}
+            {staff.staff.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6868a0]">Staff</span>
+                <span className="text-sm text-[#9898c0]">{staff.staff.map(m => m.display_name ?? '?').join(', ')}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Comp Wins Leaderboard ── */}

@@ -3,6 +3,29 @@ import { getSupabaseAdmin } from './supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
+export type StaffMember = { display_name: string | null; role_name: string | null }
+
+export async function getStaffMembers(): Promise<{ owner: StaffMember[]; staff: StaffMember[] }> {
+  const admin = getSupabaseAdmin()
+  const { data: config } = await admin.from('guild_config')
+    .select('owner_role_name, staff_role_names')
+    .eq('guild_id', GUILD_ID).maybeSingle()
+  if (!config) return { owner: [], staff: [] }
+  const { owner_role_name, staff_role_names } = config as { owner_role_name: string | null; staff_role_names: string[] | null }
+  const roleNames = [...(owner_role_name ? [owner_role_name] : []), ...(staff_role_names ?? [])].filter(Boolean)
+  if (!roleNames.length) return { owner: [], staff: [] }
+  const { data: members } = await admin.from('discord_activity')
+    .select('display_name, role_name')
+    .eq('guild_id', GUILD_ID)
+    .in('role_name', roleNames)
+    .order('display_name')
+  const all = (members ?? []) as StaffMember[]
+  return {
+    owner: all.filter(m => m.role_name === owner_role_name),
+    staff: all.filter(m => staff_role_names?.includes(m.role_name ?? '')),
+  }
+}
+
 async function getRsnDisplayNames(): Promise<Map<string, string>> {
   const admin = getSupabaseAdmin()
   const [{ data: links }, { data: activity }] = await Promise.all([

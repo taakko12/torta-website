@@ -4,7 +4,9 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
-const ALLOWED = ['planks_channel_id', 'drops_channel_id', 'lootsubmit_channel_id', 'welcome_channel_id', 'welcome_mod_channel_id', 'welcome_role_id', 'clanchat_channel_id', 'broadcast_channel_id', 'inactivity_channel_id', 'recap_channel_id', 'changelog_channel_id', 'rules_content']
+const ALLOWED_STR  = ['planks_channel_id', 'drops_channel_id', 'lootsubmit_channel_id', 'welcome_channel_id', 'welcome_mod_channel_id', 'welcome_role_id', 'clanchat_channel_id', 'broadcast_channel_id', 'inactivity_channel_id', 'recap_channel_id', 'changelog_channel_id', 'rules_content', 'owner_role_name', 'comp_sotw_days', 'comp_botw_days']
+const ALLOWED_ARR  = ['staff_role_names']
+const ALLOWED_NUM  = ['comp_poll_day', 'comp_poll_hour']
 
 async function auth() {
   const session = await getServerSession()
@@ -23,10 +25,16 @@ export async function PATCH(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
-  const patch: Record<string, string | null> = { guild_id: GUILD_ID }
+  const patch: Record<string, unknown> = { guild_id: GUILD_ID }
   const changed: string[] = []
-  for (const key of ALLOWED) {
+  for (const key of ALLOWED_STR) {
     if (key in body) { patch[key] = body[key] || null; changed.push(key) }
+  }
+  for (const key of ALLOWED_ARR) {
+    if (key in body) { patch[key] = Array.isArray(body[key]) ? body[key] : null; changed.push(key) }
+  }
+  for (const key of ALLOWED_NUM) {
+    if (key in body && body[key] != null) { patch[key] = Number(body[key]); changed.push(key) }
   }
   await getSupabaseAdmin().from('guild_config').upsert(patch, { onConflict: 'guild_id' })
   logAdminAction(session, 'config', 'update', changed.join(', '))

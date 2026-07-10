@@ -27,6 +27,12 @@ export type GuildConfig = {
   changelog_channel_id?: string | null
   rules_content?: string | null
   role_panel_config?: RolePanel | null
+  owner_role_name?: string | null
+  staff_role_names?: string[] | null
+  comp_sotw_days?: string | null
+  comp_botw_days?: string | null
+  comp_poll_day?: number | null
+  comp_poll_hour?: number | null
 }
 export type RolePanel = { channelId: string | null; messageId: string | null; roles: { roleId: string; emoji: string; label: string }[] }
 export type DiscordActivity = { discord_id: string; display_name: string | null; role_name: string | null; rsn: string | null; promotion_note: string | null; message_count: number; month_count: number; last_message_at: string | null }

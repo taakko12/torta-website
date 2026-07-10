@@ -355,6 +355,92 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
         </div>
       </div>
 
+      {/* Staff Display */}
+      <div className={card}>
+        <div className="px-5 py-3 border-b border-[#333358]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Staff Display</h2>
+          <p className="text-xs text-[#7878a8] mt-1">Controls who appears in the Owner / Staff section on the public homepage. Updates automatically when Discord roles change.</p>
+        </div>
+        <div className="px-5 divide-y divide-[#1c1c36]">
+          <div className="flex items-center gap-4 py-3">
+            <div className="w-52 shrink-0">
+              <div className="text-sm text-[#c0c0e0]">Owner Role</div>
+              <div className="text-xs text-[#7878a8] mt-0.5">Single role shown as "Owner"</div>
+            </div>
+            <select value={config.owner_role_name ?? ''} onChange={e => saveConfig({ owner_role_name: e.target.value || null })} className={sel}>
+              <option value="">— Not set —</option>
+              {roles.map(r => <option key={r.id} value={r.name}>@{r.name}</option>)}
+            </select>
+          </div>
+          <div className="py-3">
+            <div className="text-sm text-[#c0c0e0] mb-1">Staff Roles</div>
+            <div className="text-xs text-[#7878a8] mb-3">All members with these roles appear under "Staff"</div>
+            <div className="flex flex-wrap gap-2">
+              {roles.map(r => {
+                const active = (config.staff_role_names ?? []).includes(r.name)
+                return (
+                  <button key={r.id}
+                    onClick={() => {
+                      const cur = config.staff_role_names ?? []
+                      saveConfig({ staff_role_names: active ? cur.filter(n => n !== r.name) : [...cur, r.name] })
+                    }}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${active ? 'bg-[#7c5ce8]/20 border-[#7c5ce8]/60 text-[#b09cf8]' : 'border-[#333358] text-[#7878a8] hover:text-[#e8e8f0]'}`}>
+                    @{r.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Competition Schedule */}
+      <div className={card}>
+        <div className="px-5 py-3 border-b border-[#333358]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Competition Schedule</h2>
+          <p className="text-xs text-[#7878a8] mt-1">Shown on the public Events page. Poll countdown uses the day/hour below — keep it in sync with your BOTW/SOTW Poll Roll schedule.</p>
+        </div>
+        <div className="px-5 divide-y divide-[#1c1c36]">
+          {([
+            ['SOTW Date Range', 'comp_sotw_days', 'e.g. "1st–7th of each month"'] as const,
+            ['BOTW Date Range', 'comp_botw_days', 'e.g. "8th–14th of each month"'] as const,
+          ]).map(([label, key, placeholder]) => (
+            <div key={key} className="flex items-center gap-4 py-3">
+              <div className="w-52 shrink-0">
+                <div className="text-sm text-[#c0c0e0]">{label}</div>
+                <div className="text-xs text-[#7878a8] mt-0.5">{placeholder}</div>
+              </div>
+              <input
+                defaultValue={(config[key] as string | null | undefined) ?? ''}
+                placeholder={placeholder}
+                onBlur={e => saveConfig({ [key]: e.target.value || null })}
+                className="flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60"
+              />
+            </div>
+          ))}
+          <div className="py-3">
+            <div className="text-sm text-[#c0c0e0] mb-1">Poll Goes Live</div>
+            <div className="text-xs text-[#7878a8] mb-3">When the next BOTW/SOTW vote opens — drives the countdown on the Events page</div>
+            {(() => {
+              const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+              const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
+              return (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-[#9898c0]">Every</span>
+                  <select value={config.comp_poll_day ?? 6} onChange={e => saveConfig({ comp_poll_day: +e.target.value })} className={inp2}>
+                    {days.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                  </select>
+                  <span className="text-xs text-[#9898c0]">at</span>
+                  <select value={config.comp_poll_hour ?? 12} onChange={e => saveConfig({ comp_poll_hour: +e.target.value })} className={inp2}>
+                    {Array.from({length:24},(_,h) => <option key={h} value={h}>{String(h).padStart(2,'0')}:00 UTC</option>)}
+                  </select>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      </div>
+
       {/* Loot Scrape */}
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">

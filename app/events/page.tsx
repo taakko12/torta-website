@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getActiveCompetitionsWithStandings, getUpcomingCompetitions } from '@/lib/wom'
 import type { Competition, CompetitionWithStandings } from '@/lib/wom'
 import { ClientDate } from '@/components/ClientDate'
+import PollCountdown from '@/components/PollCountdown'
 
 export const revalidate = 60
 
@@ -34,15 +35,19 @@ type Row =
   | { kind: 'event'; data: ClanEvent; time: Date | null }
   | { kind: 'raid'; data: Raid; time: Date }
 
+type CompConfig = { comp_sotw_days: string | null; comp_botw_days: string | null; comp_poll_day: number | null; comp_poll_hour: number | null }
+
 async function fetchEvents() {
   const db = getSupabaseAdmin()
-  const [{ data: events }, { data: raids }, activeComps, upcomingComps] = await Promise.all([
+  const [{ data: events }, { data: raids }, activeComps, upcomingComps, { data: configRow }] = await Promise.all([
     db.from('clan_events').select('id, title, description, event_type, scheduled_at, event_rsvps(count)').eq('guild_id', GUILD_ID).order('scheduled_at', { ascending: true, nullsFirst: false }),
     db.from('raids').select('id, name, description, timestamp, signups, attendees').eq('guild_id', GUILD_ID).order('timestamp', { ascending: true }),
     getActiveCompetitionsWithStandings(),
     getUpcomingCompetitions(),
+    db.from('guild_config').select('comp_sotw_days, comp_botw_days, comp_poll_day, comp_poll_hour').eq('guild_id', GUILD_ID).maybeSingle(),
   ])
-  return { events: (events ?? []) as ClanEvent[], raids: (raids ?? []) as Raid[], activeComps, upcomingComps }
+  const compConfig = configRow as CompConfig | null
+  return { events: (events ?? []) as ClanEvent[], raids: (raids ?? []) as Raid[], activeComps, upcomingComps, compConfig }
 }
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -70,7 +75,7 @@ function timeLabel(date: Date) {
 }
 
 export default async function EventsPage() {
-  const { events, raids, activeComps, upcomingComps } = await fetchEvents()
+  const { events, raids, activeComps, upcomingComps, compConfig } = await fetchEvents()
   const now = Date.now()
 
   const rows: Row[] = [
@@ -93,6 +98,31 @@ export default async function EventsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#6868a0] mb-2">Clan Schedule</p>
         <h1 className="text-3xl font-black uppercase tracking-widest text-gradient-gold">Events</h1>
       </div>
+
+      {(compConfig?.comp_sotw_days || compConfig?.comp_botw_days || compConfig?.comp_poll_day != null) && (
+        <div className="rounded-xl border border-[#5865F2]/20 bg-[#161628] p-5 mb-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7878a8] mb-3">Competition Schedule</p>
+          <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            {compConfig?.comp_sotw_days && (
+              <div>
+                <span className="text-[#57F287] font-semibold">SOTW</span>
+                <span className="text-[#9898c0] ml-2">{compConfig.comp_sotw_days}</span>
+              </div>
+            )}
+            {compConfig?.comp_botw_days && (
+              <div>
+                <span className="text-[#ED4245] font-semibold">BOTW</span>
+                <span className="text-[#9898c0] ml-2">{compConfig.comp_botw_days}</span>
+              </div>
+            )}
+          </div>
+          {compConfig?.comp_poll_day != null && compConfig?.comp_poll_hour != null && (
+            <p className="text-xs text-[#7878a8] mt-3">
+              Next poll in <PollCountdown pollDay={compConfig.comp_poll_day} pollHour={compConfig.comp_poll_hour} /> — vote in <span className="text-[#c89b3c]">#events</span>
+            </p>
+          )}
+        </div>
+      )}
 
       {(activeComps.length > 0 || upcomingComps.length > 0) && (
         <div className="mb-10">
