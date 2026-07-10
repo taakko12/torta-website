@@ -14,15 +14,18 @@ export async function getStaffMembers(): Promise<{ owner: StaffMember[]; staff: 
   const { owner_role_name, staff_role_names } = config as { owner_role_name: string | null; staff_role_names: string[] | null }
   const roleNames = [...(owner_role_name ? [owner_role_name] : []), ...(staff_role_names ?? [])].filter(Boolean)
   if (!roleNames.length) return { owner: [], staff: [] }
+  // Fetch all members and filter in JS — clan size is small, and we need to check both
+  // role_name (top role, legacy) and role_names (all roles, populated after bot update)
   const { data: members } = await admin.from('discord_activity')
-    .select('display_name, role_name')
+    .select('display_name, role_name, role_names')
     .eq('guild_id', GUILD_ID)
-    .in('role_name', roleNames)
     .order('display_name')
-  const all = (members ?? []) as StaffMember[]
+  type Row = { display_name: string | null; role_name: string | null; role_names: string[] | null }
+  const all = (members ?? []) as Row[]
+  const hasRole = (m: Row, role: string) => m.role_names?.includes(role) || m.role_name === role
   return {
-    owner: all.filter(m => m.role_name === owner_role_name),
-    staff: all.filter(m => staff_role_names?.includes(m.role_name ?? '')),
+    owner: all.filter(m => owner_role_name && hasRole(m, owner_role_name)),
+    staff: all.filter(m => staff_role_names?.some(r => hasRole(m, r))),
   }
 }
 
