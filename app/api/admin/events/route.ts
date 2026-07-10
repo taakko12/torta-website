@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const supabase = getSupabaseAdmin()
 
   if (eventId) {
-    const { data } = await supabase.from('event_rsvps').select('discord_id, display_name, rsvped_at').eq('event_id', eventId).order('rsvped_at')
+    const { data } = await supabase.from('event_rsvps').select('discord_id, display_name, rsvped_at, attended').eq('event_id', eventId).order('rsvped_at')
     return NextResponse.json({ rsvps: data ?? [] })
   }
 
@@ -67,6 +67,13 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ event })
+}
+
+export async function PATCH(req: Request) {
+  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { event_id, discord_id, attended } = await req.json()
+  await getSupabaseAdmin().from('event_rsvps').update({ attended }).eq('event_id', event_id).eq('discord_id', discord_id)
+  return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(req: Request) {

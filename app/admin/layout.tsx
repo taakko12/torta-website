@@ -1,5 +1,6 @@
 import { getServerSession, isAdmin } from '@/lib/auth'
 import AdminNav from './_components/AdminNav'
+import { fetchOpenTicketCount, fetchPendingApplicationCount } from './_lib/data'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession()
@@ -26,11 +27,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     )
   }
 
+  const [openTickets, pendingApplications] = await Promise.all([fetchOpenTicketCount(), fetchPendingApplicationCount()])
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest mb-6">Staff Panel</h1>
       <div className="flex gap-6 items-start">
-        <AdminNav />
+        <AdminNav openTickets={openTickets} pendingApplications={pendingApplications} />
         <div className="flex-1 min-w-0 space-y-6">
           {children}
         </div>

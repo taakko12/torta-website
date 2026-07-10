@@ -4,7 +4,7 @@ import type { ClanEvent, Raid, Channel } from '../_lib/data'
 import type { Competition, CompetitionWithStandings } from '@/lib/wom'
 import { formatMetric } from '@/lib/wom'
 
-type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string }
+type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string; attended: boolean | null }
 type Props = {
   initialEvents: ClanEvent[]
   initialRaids: Raid[]
@@ -55,6 +55,14 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     const res = await fetch(`/api/admin/events?rsvps=${eventId}`)
     const { rsvps: data } = await res.json()
     setRsvps(data ?? [])
+  }
+
+  async function toggleAttendance(eventId: string, discordId: string, attended: boolean) {
+    await fetch('/api/admin/events', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_id: eventId, discord_id: discordId, attended }),
+    })
+    setRsvps(rs => rs.map(r => r.discord_id === discordId ? { ...r, attended } : r))
   }
 
   async function scheduleRaid() {
@@ -159,8 +167,18 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
               {isOpen && (
                 <div className="px-5 pb-3">
                   {rsvps.length === 0 ? <p className="text-xs text-[#7878a8]">No RSVPs yet.</p> : (
-                    <div className="flex flex-wrap gap-2">
-                      {rsvps.map(r => <span key={r.discord_id} className="text-xs px-2 py-1 rounded-full bg-[#1c1c36] text-[#a0a0c0]">{r.display_name ?? r.discord_id}</span>)}
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-[#5a5a7a] mb-2">Click name to toggle attendance</p>
+                      <div className="flex flex-wrap gap-2">
+                        {rsvps.map(r => (
+                          <button key={r.discord_id}
+                            onClick={() => toggleAttendance(ev.id, r.discord_id, !r.attended)}
+                            className={`text-xs px-2 py-1 rounded-full transition-colors ${r.attended ? 'bg-[#57F287]/20 text-[#57F287]' : 'bg-[#1c1c36] text-[#a0a0c0] hover:bg-[#57F287]/10 hover:text-[#57F287]'}`}>
+                            {r.attended ? '✓ ' : ''}{r.display_name ?? r.discord_id}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-[#5a5a7a] mt-2">{rsvps.filter(r => r.attended).length}/{rsvps.length} marked attended</p>
                     </div>
                   )}
                 </div>

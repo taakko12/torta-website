@@ -30,7 +30,6 @@ type Section = typeof SECTIONS[number]['key']
 const ACHIEVEMENT_TYPES = [
   { label: 'All', value: '' },
   { label: '⬆️ Level Up', value: 'Level Up' },
-  { label: '📦 Collection Log', value: 'Collection Log' },
   { label: '✨ XP Milestone', value: 'XP Milestone' },
   { label: '⏱️ Personal Best', value: 'Personal Best' },
 ]
@@ -169,7 +168,7 @@ async function DeathsSection({ isAlltime, month }: { isAlltime: boolean; month: 
 }
 
 async function AchievementsSection({ type }: { type: string }) {
-  const achievements = await getAllAchievements(type, 100)
+  const achievements = await getAllAchievements(type || undefined, 100, true)
   return (
     <>
       <div className="flex flex-wrap gap-2 mb-4">

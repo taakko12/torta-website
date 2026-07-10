@@ -183,6 +183,16 @@ export async function fetchTickets(): Promise<Ticket[]> {
   }))
 }
 
+export async function fetchOpenTicketCount(): Promise<number> {
+  const { count } = await getSupabaseAdmin().from('tickets').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('status', 'open')
+  return count ?? 0
+}
+
+export async function fetchPendingApplicationCount(): Promise<number> {
+  const { count } = await getSupabaseAdmin().from('applications').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('status', 'pending')
+  return count ?? 0
+}
+
 export async function fetchTicket(id: number): Promise<{ ticket: Ticket; messages: TicketMessage[] } | null> {
   const db = getSupabaseAdmin()
   const [{ data: ticket }, { data: messages }] = await Promise.all([

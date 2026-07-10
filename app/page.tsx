@@ -8,6 +8,7 @@ import {
   getRecentAchievements,
   getCompWinsLeaderboard,
   getStaffMembers,
+  getCurrentMotmWinner,
   type RecentDrop,
   type RecentPlank,
 } from '@/lib/data'
@@ -94,7 +95,7 @@ function RecentPlankCard({ plank }: { plank: RecentPlank | null }) {
 }
 
 export default async function Home() {
-  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins, staff] = await Promise.all([
+  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins, staff, motm] = await Promise.all([
     getMostRecentDrop(),
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
@@ -102,6 +103,7 @@ export default async function Home() {
     getRecentAchievements(5),
     getCompWinsLeaderboard(),
     getStaffMembers(),
+    getCurrentMotmWinner(),
   ])
 
   const month = currentMonthLabel()
@@ -257,6 +259,21 @@ export default async function Home() {
               </Link>
             </div>
           </div>
+
+          {/* MOTM */}
+          {motm && (
+            <div className="rounded-xl border border-[#c89b3c]/25 bg-[#161628] p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-[#e8e8f0]">👑 Clannie of the Month</h2>
+                <span className="text-xs text-[#9898c0]">{new Date(motm.month + '-02').toLocaleString('en-US', { month: 'long', year: 'numeric' })}</span>
+              </div>
+              <p className="text-xl font-bold text-[#c89b3c]">{motm.winner_name}</p>
+              {motm.note && <p className="text-sm text-[#9898c0] mt-1">{motm.note}</p>}
+              <Link href="/motm" className="mt-3 block text-xs text-[#9898c0] hover:text-[#c89b3c] transition-colors">
+                Nominate for next month →
+              </Link>
+            </div>
+          )}
 
           {/* Achievements */}
           <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">

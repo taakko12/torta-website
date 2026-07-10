@@ -167,12 +167,23 @@ export async function getPlayerStats(rsn: string): Promise<PlayerStats> {
   }
 }
 
-export async function getAllAchievements(type?: string, limit = 50): Promise<Achievement[]> {
+export async function getAllAchievements(type?: string, limit = 50, publicOnly = false): Promise<Achievement[]> {
   let q = supabase.from('achievements').select('id, player_name, title, description, recorded_at')
-    .eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(limit)
+    .eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false })
   if (type) q = q.ilike('title', `%${type}%`)
+  if (publicOnly) {
+    q = q.not('title', 'ilike', '%Collection Log%').limit(limit * 10)
+  } else {
+    q = q.limit(limit)
+  }
   const { data } = await q
-  return data ?? []
+  const all = (data ?? []) as Achievement[]
+  if (!publicOnly) return all
+  return all.filter(a => {
+    if (!a.title.includes('Level Up')) return true
+    const m = a.description.match(/level (\d+)/i)
+    return m ? Number(m[1]) >= 90 : false
+  }).slice(0, limit)
 }
 
 export async function getMostRecentPlank(): Promise<RecentPlank | null> {
@@ -231,6 +242,17 @@ export async function getCompWinsLeaderboard(): Promise<CompWinsLeaderboard> {
       .sort((a, b) => b.wins - a.wins)
       .slice(0, 3)
   return { botw: toBoard(boards.botw?.users), sotw: toBoard(boards.sotw?.users) }
+}
+
+export async function getCurrentMotmWinner(): Promise<{ winner_name: string; note: string | null; month: string } | null> {
+  const admin = getSupabaseAdmin()
+  const { data } = await admin.from('motm_winners')
+    .select('winner_name, note, month')
+    .eq('guild_id', GUILD_ID)
+    .order('month', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data
 }
 
 export async function getPlayerActivity(rsn: string): Promise<PlayerActivity> {

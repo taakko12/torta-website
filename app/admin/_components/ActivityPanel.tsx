@@ -137,6 +137,26 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const ingamePages = Math.ceil(ingameRows.length / PAGE)
   const vcPages = Math.ceil(filteredVc.length / PAGE)
 
+  function downloadCsv() {
+    const rows = combined ? filteredCombined : filteredEnriched.map(d => ({
+      key: d.discord_id, name: d.display_name ?? d.discord_id, rsn: d.rsn ?? primaryLinkMap[d.discord_id] ?? null,
+      type: 'Discord' as const, role: d.role_name, month_count: d.month_count, message_count: d.message_count, last_at: d.last_message_at,
+    }))
+    const header = 'Name,RSN,Type,Role,This Month,All Time,Last Seen'
+    const lines = rows.map(r => [
+      `"${(r.name ?? '').replace(/"/g, '""')}"`,
+      `"${(r.rsn ?? '').replace(/"/g, '""')}"`,
+      r.type,
+      `"${(r.role ?? '').replace(/"/g, '""')}"`,
+      r.month_count,
+      r.message_count,
+      r.last_at ? new Date(r.last_at).toLocaleDateString() : '',
+    ].join(','))
+    const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
+    a.download = `activity-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+  }
+
   const th = 'px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7878a8]'
   const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
 
@@ -153,6 +173,10 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
             {allRanks.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         )}
+        <button onClick={downloadCsv}
+          className="text-xs px-3 py-1.5 rounded-lg border border-[#333358] text-[#9898c0] hover:text-[#e8e8f0] hover:border-[#57F287]/50 transition-colors">
+          ↓ CSV
+        </button>
         <button onClick={() => { setCombined(c => !c); setCombinedPage(0) }}
           className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#333358] text-[#9898c0] hover:text-[#e8e8f0]'}`}>
           {combined ? 'Split View' : 'Combined View'}
