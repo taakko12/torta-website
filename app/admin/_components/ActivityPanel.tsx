@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { DiscordActivity, IngameActivity, VcActivity, LinkRow } from '../_lib/data'
 
 type Props = {
@@ -41,6 +41,14 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   const [mergeFromRsn, setMergeFromRsn] = useState<string | null>(null)
   const [mergeToRsn, setMergeToRsn] = useState('')
   const [merging, setMerging] = useState(false)
+  const [rankFilter, setRankFilter] = useState('')
+
+  const allRanks = useMemo(() => {
+    const s = new Set<string>()
+    for (const d of discordRows) if (d.role_name) s.add(d.role_name)
+    for (const v of vc) if (v.role_name) s.add(v.role_name)
+    return [...s].sort()
+  }, [discordRows, vc])
 
   // Primary RSN per discord_id (for display enrichment)
   const primaryLinkMap = Object.fromEntries(localLinks.filter(l => l.primary_rsn).map(l => [l.discord_id, l.rsn]))
@@ -120,17 +128,31 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
     return rows.sort((a, b) => b.month_count - a.month_count)
   })() : []
 
-  const combinedPages = Math.ceil(combinedData.length / PAGE)
-  const discordPages = Math.ceil(enriched.length / PAGE)
+  const filteredCombined = rankFilter ? combinedData.filter(r => r.role === rankFilter) : combinedData
+  const filteredEnriched = rankFilter ? enriched.filter(d => d.role_name === rankFilter) : enriched
+  const filteredVc = rankFilter ? vc.filter(v => v.role_name === rankFilter) : vc
+
+  const combinedPages = Math.ceil(filteredCombined.length / PAGE)
+  const discordPages = Math.ceil(filteredEnriched.length / PAGE)
   const ingamePages = Math.ceil(ingameRows.length / PAGE)
-  const vcPages = Math.ceil(vc.length / PAGE)
+  const vcPages = Math.ceil(filteredVc.length / PAGE)
 
   const th = 'px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7878a8]'
   const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {allRanks.length > 0 && (
+          <select
+            value={rankFilter}
+            onChange={e => { setRankFilter(e.target.value); setCombinedPage(0); setDiscordPage(0); setVcPage(0) }}
+            className="text-xs px-3 py-1.5 rounded-lg border border-[#333358] bg-[#161628] text-[#9898c0] hover:text-[#e8e8f0] outline-none cursor-pointer"
+          >
+            <option value="">All Ranks</option>
+            {allRanks.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        )}
         <button onClick={() => { setCombined(c => !c); setCombinedPage(0) }}
           className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${combined ? 'border-[#7c5ce8] bg-[#7c5ce8]/15 text-[#b09cf8]' : 'border-[#333358] text-[#9898c0] hover:text-[#e8e8f0]'}`}>
           {combined ? 'Split View' : 'Combined View'}
@@ -140,7 +162,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
       {combined ? (
         <div className={card}>
           <button onClick={() => setCombinedOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {combinedData.length > 0 && <span className="text-[#7878a8] normal-case">({combinedData.length})</span>}</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Chat Activity — Combined {filteredCombined.length > 0 && <span className="text-[#7878a8] normal-case">({filteredCombined.length})</span>}</h2>
             <span className="text-[#7878a8] text-sm">{combinedOpen ? '▲' : '▼'}</span>
           </button>
           {combinedOpen && <div className="overflow-x-auto">
@@ -151,7 +173,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                 <th className={`${th} text-right`}>All Time</th><th className={`${th} text-right`}>Last Seen</th>
               </tr></thead>
               <tbody>
-                {combinedData.slice(combinedPage * PAGE, (combinedPage + 1) * PAGE).map((row, i) => (
+                {filteredCombined.slice(combinedPage * PAGE, (combinedPage + 1) * PAGE).map((row, i) => (
                   <tr key={row.key} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                     <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{combinedPage * PAGE + i + 1}</td>
                     <td className="px-4 py-2.5"><span className="text-sm font-medium text-[#e8e8f0]">{row.name}</span>{row.rsn && row.type !== 'In-Game' && <span className="text-xs text-[#3d9970] ml-2">⚔️ {row.rsn}</span>}{row.role && <span className="text-xs text-[#7c5ce8] ml-2">{row.role}</span>}</td>
@@ -176,7 +198,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
         {/* Discord */}
         <div className={card}>
           <button onClick={() => setDiscordOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {enriched.length > 0 && <span className="text-[#7878a8] normal-case">({enriched.length})</span>}</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Discord Activity {filteredEnriched.length > 0 && <span className="text-[#7878a8] normal-case">({filteredEnriched.length})</span>}</h2>
             <span className="text-[#7878a8] text-sm">{discordOpen ? '▲' : '▼'}</span>
           </button>
           {discordOpen && (<>
@@ -188,7 +210,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                   <th className={`${th} text-right`}>This Month</th><th className={`${th} text-right`}>All Time</th><th className={`${th} text-right`}>Last Seen</th>
                 </tr></thead>
                 <tbody>
-                  {enriched.slice(discordPage * PAGE, (discordPage + 1) * PAGE).map((row, i) => (
+                  {filteredEnriched.slice(discordPage * PAGE, (discordPage + 1) * PAGE).map((row, i) => (
                     <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                       <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{discordPage * PAGE + i + 1}</td>
                       <td className="px-4 py-2.5">
@@ -332,7 +354,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
       {/* VC Activity — always shown */}
       <div className={card}>
         <button onClick={() => setVcOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 border-b border-[#333358] hover:bg-[#1c1c36]/50 transition-colors">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {vc.length > 0 && <span className="text-[#7878a8] normal-case">({vc.length})</span>}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Voice Channel Activity {filteredVc.length > 0 && <span className="text-[#7878a8] normal-case">({filteredVc.length})</span>}</h2>
           <span className="text-[#7878a8] text-sm">{vcOpen ? '▲' : '▼'}</span>
         </button>
         {vcOpen && (<>
@@ -344,7 +366,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
                 <th className={`${th} text-right`}>All Time</th><th className={`${th} text-right`}>Last Seen</th>
               </tr></thead>
               <tbody>
-                {vc.slice(vcPage * PAGE, (vcPage + 1) * PAGE).map((row, i) => (
+                {filteredVc.slice(vcPage * PAGE, (vcPage + 1) * PAGE).map((row, i) => (
                   <tr key={row.discord_id} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                     <td className="px-4 py-2.5 text-xs text-[#7878a8]">#{vcPage * PAGE + i + 1}</td>
                     <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{row.display_name ?? row.discord_id}</td>
