@@ -71,7 +71,7 @@ export default function MotmPage() {
       {/* Vote form */}
       <div className="rounded-xl border border-[#333358] bg-[#161628] p-5 mb-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7878a8] mb-3">Cast Your Vote</p>
-        <p className="text-xs text-[#5a5a7a] mb-4">Anonymous. One vote per IP per month — you can change it any time.</p>
+        <p className="text-xs text-[#5a5a7a] mb-4">Anonymous. One vote per user per month.</p>
         <div className="flex gap-2">
           <input
             value={nominee} onChange={e => setNominee(e.target.value)}
