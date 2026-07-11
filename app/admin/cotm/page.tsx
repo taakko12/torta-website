@@ -13,7 +13,7 @@ export default function MotmAdminPage() {
   const [status, setStatus] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/motm').then(r => r.json()).then(d => {
+    fetch('/api/cotm').then(r => r.json()).then(d => {
       setLeaderboard(d.leaderboard ?? [])
       setWinners(d.winners ?? [])
       setMonth(d.month ?? '')
@@ -22,7 +22,7 @@ export default function MotmAdminPage() {
 
   async function setWinner() {
     if (!winnerName.trim()) return
-    const res = await fetch('/api/admin/motm', {
+    const res = await fetch('/api/admin/cotm', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ winner_name: winnerName.trim(), note: winnerNote.trim() || null, month }),
     })
@@ -37,7 +37,7 @@ export default function MotmAdminPage() {
   }
 
   async function removeWinner(m: string) {
-    await fetch('/api/admin/motm', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: m }) })
+    await fetch('/api/admin/cotm', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ month: m }) })
     setWinners(ws => ws.filter(w => w.month !== m))
   }
 

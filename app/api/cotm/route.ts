@@ -3,7 +3,7 @@ import { createHash } from 'crypto'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
-const SALT = process.env.MOTM_IP_SALT ?? 'torta-motm'
+const SALT = process.env.COTM_IP_SALT ?? 'torta-cotm'
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7) // YYYY-MM
@@ -21,8 +21,8 @@ export async function GET() {
   const month = currentMonth()
   const db = getSupabaseAdmin()
   const [{ data: votes }, { data: winner }] = await Promise.all([
-    db.from('motm_nominations').select('nominee_name').eq('guild_id', GUILD_ID).eq('month', month),
-    db.from('motm_winners').select('winner_name, note, month').eq('guild_id', GUILD_ID).order('month', { ascending: false }).limit(6),
+    db.from('cotm_nominations').select('nominee_name').eq('guild_id', GUILD_ID).eq('month', month),
+    db.from('cotm_winners').select('winner_name, note, month').eq('guild_id', GUILD_ID).order('month', { ascending: false }).limit(6),
   ])
   const tally: Record<string, number> = {}
   for (const v of votes ?? []) tally[v.nominee_name] = (tally[v.nominee_name] ?? 0) + 1
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const { nominee_name } = await req.json()
   if (!nominee_name?.trim()) return NextResponse.json({ error: 'nominee_name required' }, { status: 400 })
   const db = getSupabaseAdmin()
-  const { error } = await db.from('motm_nominations').upsert(
+  const { error } = await db.from('cotm_nominations').upsert(
     { guild_id: GUILD_ID, nominee_name: nominee_name.trim(), voter_ip_hash: ipHash, month },
     { onConflict: 'guild_id,voter_ip_hash,month' }
   )

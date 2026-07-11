@@ -6,7 +6,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/feed', label: 'Feed' },
   { href: '/events', label: 'Events' },
-  { href: '/motm', label: 'MOTM' },
+  { href: '/cotm', label: 'COTM' },
   { href: '/apply', label: 'Apply' },
   { href: '/submit-drop', label: 'Submit Drop' },
   { href: '/player', label: 'Players' },

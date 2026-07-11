@@ -244,9 +244,9 @@ export async function getCompWinsLeaderboard(): Promise<CompWinsLeaderboard> {
   return { botw: toBoard(boards.botw?.users), sotw: toBoard(boards.sotw?.users) }
 }
 
-export async function getCurrentMotmWinner(): Promise<{ winner_name: string; note: string | null; month: string } | null> {
+export async function getCurrentCotmWinner(): Promise<{ winner_name: string; note: string | null; month: string } | null> {
   const admin = getSupabaseAdmin()
-  const { data } = await admin.from('motm_winners')
+  const { data } = await admin.from('cotm_winners')
     .select('winner_name, note, month')
     .eq('guild_id', GUILD_ID)
     .order('month', { ascending: false })

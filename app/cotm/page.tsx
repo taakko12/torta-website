@@ -13,7 +13,7 @@ export default function MotmPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/motm').then(r => r.json()).then(d => {
+    fetch('/api/cotm').then(r => r.json()).then(d => {
       setLeaderboard(d.leaderboard ?? [])
       setWinners(d.winners ?? [])
       setMonth(d.month ?? '')
@@ -24,7 +24,7 @@ export default function MotmPage() {
   async function nominate() {
     if (!nominee.trim()) return
     setStatus(null)
-    const res = await fetch('/api/motm', {
+    const res = await fetch('/api/cotm', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nominee_name: nominee.trim() }),
     })
