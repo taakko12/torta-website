@@ -12,7 +12,30 @@ function gpFormat(n: number) {
 }
 
 export async function POST(req: Request) {
-  const { rsn, item_name, gp_value, screenshot_url, notes } = await req.json()
+  const ct = req.headers.get('content-type') ?? ''
+  let rsn: string, item_name: string, gp_value: string | number, notes: string | null, screenshot_url: string | null = null
+
+  if (ct.includes('multipart/form-data')) {
+    const fd = await req.formData()
+    rsn = String(fd.get('rsn') ?? '')
+    item_name = String(fd.get('item_name') ?? '')
+    gp_value = String(fd.get('gp_value') ?? '')
+    notes = fd.get('notes') ? String(fd.get('notes')) : null
+    const file = fd.get('image') as File | null
+    if (file && file.size > 0) {
+      const db = getSupabaseAdmin()
+      const ext = file.name.split('.').pop() ?? 'png'
+      const path = `${Date.now()}-${rsn.trim().replace(/\s+/g, '_')}.${ext}`
+      const { error } = await db.storage.from('drop-screenshots').upload(path, await file.arrayBuffer(), { contentType: file.type })
+      if (error) return NextResponse.json({ error: 'Image upload failed' }, { status: 500 })
+      screenshot_url = db.storage.from('drop-screenshots').getPublicUrl(path).data.publicUrl
+    }
+  } else {
+    const body = await req.json()
+    rsn = body.rsn; item_name = body.item_name; gp_value = body.gp_value
+    notes = body.notes ?? null; screenshot_url = body.screenshot_url?.trim() || null
+  }
+
   if (!rsn?.trim() || !item_name?.trim() || !gp_value) {
     return NextResponse.json({ error: 'rsn, item_name, and gp_value are required' }, { status: 400 })
   }

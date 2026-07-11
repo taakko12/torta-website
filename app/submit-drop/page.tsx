@@ -16,6 +16,7 @@ export default function SubmitDropPage() {
   const [item, setItem] = useState('')
   const [gpRaw, setGpRaw] = useState('')
   const [screenshot, setScreenshot] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [notes, setNotes] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -26,10 +27,21 @@ export default function SubmitDropPage() {
   async function submit() {
     if (!rsn.trim() || !item.trim() || isNaN(gp) || gp < 1) return
     setStatus('sending')
-    const res = await fetch('/api/submit-drop', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rsn, item_name: item, gp_value: gp, screenshot_url: screenshot || null, notes }),
-    })
+    let res: Response
+    if (imageFile) {
+      const fd = new FormData()
+      fd.append('rsn', rsn.trim())
+      fd.append('item_name', item.trim())
+      fd.append('gp_value', String(gp))
+      fd.append('notes', notes.trim())
+      fd.append('image', imageFile)
+      res = await fetch('/api/submit-drop', { method: 'POST', body: fd })
+    } else {
+      res = await fetch('/api/submit-drop', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rsn, item_name: item, gp_value: gp, screenshot_url: screenshot || null, notes }),
+      })
+    }
     if (res.ok) { setStatus('done') } else {
       const { error: e } = await res.json(); setError(e ?? 'Failed'); setStatus('error')
     }
@@ -70,8 +82,24 @@ export default function SubmitDropPage() {
           {gpPreview && <p className="text-xs text-[#c89b3c] mt-1">{gpPreview}</p>}
         </div>
         <div>
-          <label className="text-xs text-[#9898c0] mb-1 block">Screenshot URL (optional)</label>
-          <input value={screenshot} onChange={e => setScreenshot(e.target.value)} placeholder="https://imgur.com/…" className={inp} />
+          <label className="text-xs text-[#9898c0] mb-1 block">Screenshot (optional)</label>
+          <label className="flex items-center gap-2 cursor-pointer w-full rounded-lg bg-[#1c1c36] border border-[#333358] px-3 py-2 text-sm hover:border-[#7c5ce8]/60 transition-colors">
+            <span className="text-[#6868a0]">📎</span>
+            <span className={imageFile ? 'text-[#e8e8f0]' : 'text-[#424268]'}>
+              {imageFile ? imageFile.name : 'Attach image…'}
+            </span>
+            <input type="file" accept="image/*" className="hidden"
+              onChange={e => { setImageFile(e.target.files?.[0] ?? null); setScreenshot('') }} />
+          </label>
+          {!imageFile && (
+            <input value={screenshot} onChange={e => setScreenshot(e.target.value)}
+              placeholder="or paste a URL (https://imgur.com/…)" className={`${inp} mt-2`} />
+          )}
+          {imageFile && (
+            <button onClick={() => setImageFile(null)} className="text-xs text-[#5a5a7a] hover:text-[#ED4245] mt-1 transition-colors">
+              ✕ Remove
+            </button>
+          )}
         </div>
         <div>
           <label className="text-xs text-[#9898c0] mb-1 block">Notes (optional)</label>
