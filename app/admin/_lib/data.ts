@@ -49,7 +49,8 @@ export type ChangelogEntry = { id: number; guild_id: string; title: string; cont
 export type BlacklistEntry = { id: number; guild_id: string; discord_id: string | null; rsn: string | null; reason: string; removed_by_name: string | null; created_at: string }
 export type Promotion = { id: number; guild_id: string; discord_id: string | null; display_name: string | null; rsn: string | null; from_role: string; to_role: string; promoted_by_name: string | null; notes: string | null; promoted_at: string }
 export type Drop = { id: number; guild_id: string; player_name: string; gp_value: number; item_name: string | null; image_url: string | null; screenshot_url: string | null; recorded_at: string }
-export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[] }
+export type CofferEntry = { player: string; net: number }
+export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[]; cofferLeaderboard: CofferEntry[] }
 export type Ticket = { id: number; guild_id: string; discord_id: string; display_name: string | null; subject: string | null; status: string; created_at: string; closed_at: string | null; message_count?: number }
 export type TicketMessage = { id: number; ticket_id: number; author_discord_id: string; author_name: string | null; content: string; direction: 'inbound' | 'outbound'; sent_at: string }
 
@@ -152,6 +153,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     { count: blacklistCount },
     { data: nextEvents },
     { data: recentLogs },
+    { data: cofferRows },
   ] = await Promise.all([
     db.from('rsn_links').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('primary_rsn', true),
     db.from('rsn_links').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID).eq('primary_rsn', true).gte('linked_at', weekAgo),
@@ -159,7 +161,17 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     db.from('blacklist').select('*', { count: 'exact', head: true }).eq('guild_id', GUILD_ID),
     db.from('clan_events').select('title, scheduled_at').eq('guild_id', GUILD_ID).gte('scheduled_at', new Date().toISOString()).order('scheduled_at').limit(1),
     db.from('command_logs').select('*').eq('guild_id', GUILD_ID).order('logged_at', { ascending: false }).limit(8),
+    db.from('coffer_deposits').select('player, gp, action').eq('guild_id', GUILD_ID),
   ])
+  const cofferTotals: Record<string, number> = {}
+  for (const row of (cofferRows ?? []) as { player: string; gp: number; action: string }[]) {
+    cofferTotals[row.player] = (cofferTotals[row.player] ?? 0) + (row.action === 'deposited' ? Number(row.gp) : -Number(row.gp))
+  }
+  const cofferLeaderboard = Object.entries(cofferTotals)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([player, net]) => ({ player, net }))
   return {
     memberCount: memberCount ?? 0,
     newThisWeek: newThisWeek ?? 0,
@@ -167,6 +179,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     blacklistCount: blacklistCount ?? 0,
     nextEvent: nextEvents?.[0] ?? null,
     recentLogs: (recentLogs ?? []) as CommandLog[],
+    cofferLeaderboard,
   }
 }
 

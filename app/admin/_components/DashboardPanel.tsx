@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import type { DashboardStats } from '../_lib/data'
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -35,6 +36,24 @@ export default function DashboardPanel({ stats }: { stats: DashboardStats }) {
           </div>
         ))}
       </div>
+
+      {stats.cofferLeaderboard.length > 0 && (
+        <div className="rounded-xl border border-[#F39C12]/25 bg-[#161628] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-[#e8e8f0]">🏦 Coffer Leaders</h2>
+            <Link href="/admin/coffer" className="text-xs text-[#9898c0] hover:text-[#F39C12] transition-colors">Manage →</Link>
+          </div>
+          <ul className="space-y-2">
+            {stats.cofferLeaderboard.map((e, i) => (
+              <li key={e.player} className="flex items-center gap-3">
+                <span className="text-base w-6 shrink-0">{['🥇', '🥈', '🥉'][i] ?? `${i + 1}.`}</span>
+                <span className="flex-1 text-sm font-medium text-[#e8e8f0] truncate">{e.player}</span>
+                <span className="font-mono text-sm text-[#F39C12]">{e.net.toLocaleString()} gp</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
         <div className="px-5 py-3 border-b border-[#333358]">

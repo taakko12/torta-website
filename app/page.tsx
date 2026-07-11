@@ -7,6 +7,7 @@ import {
   getMonthlyPlankLeaderboard,
   getRecentAchievements,
   getCompWinsLeaderboard,
+  getCofferLeaderboard,
   getStaffMembers,
   getCurrentCotmWinner,
   type RecentDrop,
@@ -95,13 +96,14 @@ function RecentPlankCard({ plank }: { plank: RecentPlank | null }) {
 }
 
 export default async function Home() {
-  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins, staff, cotm] = await Promise.all([
+  const [recentDrop, recentPlank, topDrops, topPlanks, achievements, compWins, cofferLeaderboard, staff, cotm] = await Promise.all([
     getMostRecentDrop(),
     getMostRecentPlank(),
     getMonthlyDropLeaderboard(),
     getMonthlyPlankLeaderboard(),
     getRecentAchievements(5),
     getCompWinsLeaderboard(),
+    getCofferLeaderboard(),
     getStaffMembers(),
     getCurrentCotmWinner(),
   ])
@@ -212,7 +214,7 @@ export default async function Home() {
         <div className="flex-1 min-w-0 space-y-8">
 
           {/* Mini leaderboards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-[#e8e8f0]">💰 Loot Leaders</h2>
@@ -258,6 +260,24 @@ export default async function Home() {
                 View full leaderboard →
               </Link>
             </div>
+
+            {cofferLeaderboard.length > 0 && (
+              <div className="rounded-xl border border-[#F39C12]/25 bg-[#161628] p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-[#e8e8f0]">🏦 Top Donors</h2>
+                  <span className="text-xs text-[#9898c0]">All-Time</span>
+                </div>
+                <ul className="space-y-2">
+                  {cofferLeaderboard.map((e, i) => (
+                    <li key={e.player} className="flex items-center justify-between gap-2">
+                      <span className="text-base w-6 shrink-0">{MEDALS[i] ?? `${i + 1}.`}</span>
+                      <span className="flex-1 text-sm font-medium text-[#e8e8f0] truncate">{e.player}</span>
+                      <span className="font-mono text-sm text-[#F39C12]">{e.net.toLocaleString()} gp</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* COTM */}

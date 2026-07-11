@@ -255,6 +255,21 @@ export async function getCurrentCotmWinner(): Promise<{ winner_name: string; not
   return data
 }
 
+export type CofferLeaderboardEntry = { player: string; net: number }
+
+export async function getCofferLeaderboard(): Promise<CofferLeaderboardEntry[]> {
+  const { data } = await getSupabaseAdmin().from('coffer_deposits').select('player, gp, action').eq('guild_id', GUILD_ID)
+  const totals: Record<string, number> = {}
+  for (const row of (data ?? []) as { player: string; gp: number; action: string }[]) {
+    totals[row.player] = (totals[row.player] ?? 0) + (row.action === 'deposited' ? Number(row.gp) : -Number(row.gp))
+  }
+  return Object.entries(totals)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([player, net]) => ({ player, net }))
+}
+
 export async function getPlayerActivity(rsn: string): Promise<PlayerActivity> {
   const admin = getSupabaseAdmin()
   const [{ data: ingame }, { data: link }] = await Promise.all([
