@@ -5,13 +5,14 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
 const MEDALS = ['🥇', '🥈', '🥉']
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://tortapounders.vercel.app'
 
 function buildEmbed(leaderboard: { player: string; net: number }[]) {
   const top = leaderboard.filter(e => e.net > 0).slice(0, 10)
   const description = top.length === 0
     ? 'No coffer donations yet.'
     : top.map((e, i) => `${MEDALS[i] ?? `${i + 1}.`} **${e.player}** — ${e.net.toLocaleString()} gp`).join('\n')
-  return { title: '🏦 Clan Coffer Leaderboard', description, color: 0xF39C12, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically with each donation' } }
+  return { title: '🏦 Clan Coffer Leaderboard', url: `${SITE}/admin/coffer`, description, color: 0xF39C12, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically with each donation' } }
 }
 
 async function auth() {

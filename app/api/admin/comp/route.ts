@@ -6,6 +6,8 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
 const MEDALS = ['🥇', '🥈', '🥉']
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://tortapounders.vercel.app'
+
 function buildLeaderboardEmbed(board: { users: Record<string, { wins: number }> }, title: string, color: number) {
   const sorted = Object.entries(board.users)
     .filter(([, u]) => u.wins > 0)
@@ -14,7 +16,7 @@ function buildLeaderboardEmbed(board: { users: Record<string, { wins: number }> 
   const description = sorted.length === 0
     ? 'No wins recorded yet.'
     : sorted.map(([id, u], i) => `${MEDALS[i] ?? `${i + 1}.`} <@${id}> — **${u.wins}** win${u.wins === 1 ? '' : 's'}`).join('\n\n')
-  return { title, color, description, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically whenever wins change' } }
+  return { title, url: `${SITE}/#leaderboards`, color, description, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically whenever wins change' } }
 }
 
 async function pushLeaderboardEmbed(board: { users: Record<string, { wins: number }>; leaderboardMessage?: { channelId: string; messageId: string } | null }, title: string, color: number) {
