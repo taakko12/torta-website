@@ -3,6 +3,30 @@ import { getServerSession, isAdmin } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
+const DISCORD_API = 'https://discord.com/api/v10'
+const MEDALS = ['🥇', '🥈', '🥉']
+
+function buildLeaderboardEmbed(board: { users: Record<string, { wins: number }> }, title: string, color: number) {
+  const sorted = Object.entries(board.users)
+    .filter(([, u]) => u.wins > 0)
+    .sort((a, b) => b[1].wins - a[1].wins)
+    .slice(0, 3)
+  const description = sorted.length === 0
+    ? 'No wins recorded yet.'
+    : sorted.map(([id, u], i) => `${MEDALS[i] ?? `${i + 1}.`} <@${id}> — **${u.wins}** win${u.wins === 1 ? '' : 's'}`).join('\n\n')
+  return { title, color, description, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically whenever wins change' } }
+}
+
+async function pushLeaderboardEmbed(board: { users: Record<string, { wins: number }>; leaderboardMessage?: { channelId: string; messageId: string } | null }, title: string, color: number) {
+  const token = process.env.DISCORD_BOT_TOKEN
+  if (!token || !board.leaderboardMessage) return
+  const { channelId, messageId } = board.leaderboardMessage
+  await fetch(`${DISCORD_API}/channels/${channelId}/messages/${messageId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bot ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [buildLeaderboardEmbed(board, title, color)] }),
+  }).catch(() => null)
+}
 
 async function auth() {
   const session = await getServerSession()
@@ -65,5 +89,8 @@ export async function POST(req: Request) {
   else if (action === 'set') board.users[discord_id].wins = Math.max(0, amount ?? 0)
 
   await saveGuildData(data)
+  const label = type === 'botw' ? '💀 Boss of the Week' : '📈 Skill of the Week'
+  const color = type === 'botw' ? 0xed4245 : 0x57f287
+  pushLeaderboardEmbed(board, label, color) // fire-and-forget
   return NextResponse.json({ wins: board.users[discord_id].wins })
 }
