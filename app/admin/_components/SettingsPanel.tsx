@@ -5,16 +5,18 @@ import type { Channel, Role, GuildConfig, RolePanel } from '../_lib/data'
 type Props = { config: GuildConfig; channels: Channel[]; roles: Role[] }
 
 const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
-  ['TrackScape Clan Chat',      'clanchat_channel_id',      'In-game clan chat relay'],
-  ['TrackScape Broadcasts',     'broadcast_channel_id',     'Drops, pets, achievements'],
-  ['Planks Channel',            'planks_channel_id',        'Death notifications (Dink)'],
-  ['Drops Channel',             'drops_channel_id',         'Loot drops (Dink)'],
-  ['Loot Submit Channel',       'lootsubmit_channel_id',    'Staff review for manual submissions'],
-  ['Welcome Channel',           'welcome_channel_id',       'New member welcome messages'],
-  ['Welcome Mod Channel',       'welcome_mod_channel_id',   'Staff review for welcomes'],
-  ['Weekly Recap Channel',      'recap_channel_id',         'Sunday activity recap post'],
-  ['Moderator Recap Channel',   'inactivity_channel_id',    'Monday moderator recap post'],
-  ['Changelog Channel',         'changelog_channel_id',     'Optional: post new changelog entries here'],
+  ['TrackScape Clan Chat',        'clanchat_channel_id',              'In-game clan chat relay'],
+  ['TrackScape Broadcasts',       'broadcast_channel_id',             'Drops, pets, quests, achievements'],
+  ['Coffer Channel',              'coffer_channel_id',                'Coffer deposits/withdrawals (defaults to Broadcasts if not set)'],
+  ['Coffer Leaderboard Channel',  'coffer_leaderboard_channel_id',    'Channel that holds the pinned coffer leaderboard embed'],
+  ['Planks Channel',              'planks_channel_id',                'Death notifications (Dink)'],
+  ['Drops Channel',               'drops_channel_id',                 'Loot drops (Dink)'],
+  ['Loot Submit Channel',         'lootsubmit_channel_id',            'Staff review for manual submissions'],
+  ['Welcome Channel',             'welcome_channel_id',               'New member welcome messages'],
+  ['Welcome Mod Channel',         'welcome_mod_channel_id',           'Staff review for welcomes'],
+  ['Weekly Recap Channel',        'recap_channel_id',                 'Sunday activity recap post'],
+  ['Moderator Recap Channel',     'inactivity_channel_id',            'Monday moderator recap post'],
+  ['Changelog Channel',           'changelog_channel_id',             'Optional: post new changelog entries here'],
 ]
 
 export default function SettingsPanel({ config: initialConfig, channels, roles }: Props) {
@@ -22,6 +24,8 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
   const [rolePanel, setRolePanel] = useState<RolePanel>(initialConfig.role_panel_config ?? { channelId: null, messageId: null, roles: [] })
   const [welcomePosting, setWelcomePosting] = useState(false)
   const [welcomeStatus, setWelcomeStatus] = useState<string | null>(null)
+  const [cofferPosting, setCofferPosting] = useState(false)
+  const [cofferStatus, setCofferStatus] = useState<string | null>(null)
   const [scrapeRunning, setScrapeRunning] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
   const [panelRole, setPanelRole] = useState('')
@@ -78,6 +82,14 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
     const updated = { ...config, ...patch }
     setConfig(updated)
     await fetch('/api/admin/config', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
+  }
+
+  async function postCofferLeaderboard() {
+    setCofferPosting(true); setCofferStatus(null)
+    const res = await fetch('/api/admin/coffer', { method: 'POST' })
+    const data = await res.json()
+    setCofferPosting(false)
+    setCofferStatus(res.ok ? '✅ Coffer leaderboard posted!' : `❌ ${data.error}`)
   }
 
   async function postWelcomeMessage() {
@@ -194,6 +206,26 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             {welcomePosting ? 'Posting…' : 'Post Welcome Message'}
           </button>
           {welcomeStatus && <span className="text-xs text-[#a0a0c0] w-full">{welcomeStatus}</span>}
+        </div>
+      </div>
+
+      {/* Coffer Leaderboard Embed */}
+      <div className={card}>
+        <div className="px-5 py-3 border-b border-[#333358]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Coffer Leaderboard Embed</h2>
+          <p className="text-xs text-[#7878a8] mt-1">Posts (or refreshes) the pinned coffer leaderboard in the channel set above. Auto-updates on every donation, but use this to repost if the message gets deleted.</p>
+        </div>
+        <div className="px-5 py-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-[#a0a0c0]">
+            {config.coffer_leaderboard_channel_id
+              ? (() => { const ch = channels.find(c => c.id === config.coffer_leaderboard_channel_id); return <>Posting to <span className="text-[#c89b3c]">{ch ? `#${ch.name}` : <span className="font-mono text-xs opacity-60">{config.coffer_leaderboard_channel_id}</span>}</span></> })()
+              : <span className="text-[#7878a8]">Coffer leaderboard channel not set above</span>}
+          </span>
+          <button onClick={postCofferLeaderboard} disabled={!config.coffer_leaderboard_channel_id || cofferPosting}
+            className="ml-auto px-4 py-2 rounded-lg bg-[#F39C12]/90 text-white text-sm font-semibold hover:bg-[#F39C12] transition-colors disabled:opacity-40">
+            {cofferPosting ? 'Posting…' : 'Post / Refresh Leaderboard'}
+          </button>
+          {cofferStatus && <span className="text-xs text-[#a0a0c0] w-full">{cofferStatus}</span>}
         </div>
       </div>
 

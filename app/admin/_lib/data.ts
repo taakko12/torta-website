@@ -22,6 +22,8 @@ export type GuildConfig = {
   welcome_role_id?: string | null
   clanchat_channel_id?: string | null
   broadcast_channel_id?: string | null
+  coffer_channel_id?: string | null
+  coffer_leaderboard_channel_id?: string | null
   inactivity_channel_id?: string | null
   recap_channel_id?: string | null
   changelog_channel_id?: string | null
