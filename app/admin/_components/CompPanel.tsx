@@ -4,9 +4,16 @@ import { useState, useEffect } from 'react'
 type Entry = { discord_id: string; display_name: string; wins: number }
 type Member = { discord_id: string; display_name: string | null }
 type Data = { botw: Entry[]; sotw: Entry[]; members: Member[] }
+type Pick = { id: number; metric: string; picked_at: string }
 
 const LABELS = { botw: '💀 Boss of the Week', sotw: '📈 Skill of the Week' } as const
 type CompType = keyof typeof LABELS
+
+const HISTORY_SIZE = 5
+
+function fmt(metric: string) {
+  return metric.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
 
 export default function CompPanel() {
   const [data, setData] = useState<Data | null>(null)
@@ -14,10 +21,42 @@ export default function CompPanel() {
   const [addId, setAddId] = useState('')
   const [adding, setAdding] = useState(false)
   const [msg, setMsg] = useState('')
+  const [picks, setPicks] = useState<Pick[]>([])
+  const [excluded, setExcluded] = useState<string[]>([])
+  const [newMetric, setNewMetric] = useState('')
+  const [picksLoading, setPicksLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/comp').then(r => r.json()).then(setData)
   }, [])
+
+  useEffect(() => {
+    setPicksLoading(true)
+    fetch(`/api/admin/comp/picks?type=${tab}`)
+      .then(r => r.json())
+      .then(d => { setPicks(d.picks ?? []); setExcluded(d.excluded ?? []) })
+      .finally(() => setPicksLoading(false))
+  }, [tab])
+
+  async function addPick() {
+    if (!newMetric.trim()) return
+    await fetch('/api/admin/comp/picks', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ poll_type: tab, metric: newMetric.trim() }),
+    })
+    const d = await fetch(`/api/admin/comp/picks?type=${tab}`).then(r => r.json())
+    setPicks(d.picks ?? []); setExcluded(d.excluded ?? [])
+    setNewMetric('')
+  }
+
+  async function deletePick(id: number) {
+    await fetch('/api/admin/comp/picks', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setPicks(p => p.filter(x => x.id !== id))
+    setExcluded(picks.filter(x => x.id !== id).slice(0, HISTORY_SIZE).map(x => x.metric))
+  }
 
   async function update(discord_id: string, action: 'add' | 'remove' | 'set', amount?: number) {
     const res = await fetch('/api/admin/comp', {
@@ -126,6 +165,56 @@ export default function CompPanel() {
             </tbody>
           </table>
         )}
+      </div>
+
+      {/* Poll History */}
+      <div className={`${card} overflow-hidden`}>
+        <div className="px-5 py-3 border-b border-[#333358] flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Poll History</h2>
+            <p className="text-[10px] text-[#5a5a7a] mt-0.5">Controls which options are excluded from next week's roll</p>
+          </div>
+          {excluded.length > 0 && (
+            <div className="text-[10px] text-[#7878a8]">
+              Excluded next roll: <span className="text-[#ED4245]">{excluded.map(fmt).join(', ')}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 py-4">
+          <div className="flex gap-2 mb-4">
+            <input
+              value={newMetric} onChange={e => setNewMetric(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addPick()}
+              placeholder={tab === 'sotw' ? 'e.g. fishing, slayer' : 'e.g. zulrah, vorkath'}
+              className={`flex-1 ${inp}`}
+            />
+            <button onClick={addPick} disabled={!newMetric.trim()}
+              className="px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors">
+              Add
+            </button>
+          </div>
+
+          {picksLoading ? (
+            <p className="text-sm text-[#7878a8] py-4 text-center">Loading…</p>
+          ) : picks.length === 0 ? (
+            <p className="text-sm text-[#7878a8] py-4 text-center">No picks recorded. Add past winners above to seed the exclusion list.</p>
+          ) : (
+            <ul className="space-y-1">
+              {picks.map((p, i) => (
+                <li key={p.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg ${i < HISTORY_SIZE ? 'bg-[#ED4245]/8 border border-[#ED4245]/20' : 'bg-[#1c1c36]'}`}>
+                  <span className={`text-[10px] w-14 shrink-0 font-medium ${i < HISTORY_SIZE ? 'text-[#ED4245]' : 'text-[#5a5a7a]'}`}>
+                    {i < HISTORY_SIZE ? 'excluded' : 'older'}
+                  </span>
+                  <span className="flex-1 text-sm text-[#e8e8f0]">{fmt(p.metric)}</span>
+                  <span className="text-[10px] text-[#5a5a7a]">{new Date(p.picked_at).toLocaleDateString()}</span>
+                  <button onClick={() => deletePick(p.id)}
+                    className="text-[10px] text-[#5a5a7a] hover:text-[#ED4245] transition-colors px-1">✕</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )
