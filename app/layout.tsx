@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
+import Link from 'next/link'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
@@ -19,7 +20,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <footer className="relative mt-10 py-8 text-center text-xs text-[#7878a8]">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#2c2c4e] to-transparent" />
-          Torta · Built with Next.js &amp; Supabase
+          <p>Torta · Built with Next.js &amp; Supabase</p>
+          <p className="mt-1 space-x-3">
+            <Link href="/terms" className="hover:text-[#c89b3c] transition-colors">Terms of Service</Link>
+            <span>·</span>
+            <Link href="/privacy" className="hover:text-[#c89b3c] transition-colors">Privacy Policy</Link>
+          </p>
         </footer>
       </body>
     </html>
