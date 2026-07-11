@@ -268,7 +268,7 @@ export default async function Home() {
                   <span className="text-xs text-[#9898c0]">All-Time</span>
                 </div>
                 <ul className="space-y-2">
-                  {cofferLeaderboard.map((e, i) => (
+                  {cofferLeaderboard.slice(0, 5).map((e, i) => (
                     <li key={e.player} className="flex items-center justify-between gap-2">
                       <span className="text-base w-6 shrink-0">{MEDALS[i] ?? `${i + 1}.`}</span>
                       <span className="flex-1 text-sm font-medium text-[#e8e8f0] truncate">{e.player}</span>
@@ -276,6 +276,9 @@ export default async function Home() {
                     </li>
                   ))}
                 </ul>
+                <Link href="/feed?section=coffer" className="mt-4 block text-center text-xs text-[#9898c0] hover:text-[#F39C12] transition-colors">
+                  View full leaderboard →
+                </Link>
               </div>
             )}
           </div>

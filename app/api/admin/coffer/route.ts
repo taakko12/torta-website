@@ -12,7 +12,7 @@ function buildEmbed(leaderboard: { player: string; net: number }[]) {
   const description = top.length === 0
     ? 'No coffer donations yet.'
     : top.map((e, i) => `${MEDALS[i] ?? `${i + 1}.`} **${e.player}** — ${e.net.toLocaleString()} gp`).join('\n')
-  return { title: '🏦 Clan Coffer Leaderboard', url: `${SITE}/admin/coffer`, description, color: 0xF39C12, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically with each donation' } }
+  return { title: '🏦 Clan Coffer Leaderboard', url: `${SITE}/feed?section=coffer`, description, color: 0xF39C12, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically with each donation' } }
 }
 
 async function auth() {

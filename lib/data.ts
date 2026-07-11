@@ -266,7 +266,6 @@ export async function getCofferLeaderboard(): Promise<CofferLeaderboardEntry[]> 
   return Object.entries(totals)
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
     .map(([player, net]) => ({ player, net }))
 }
 
