@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 
 type Application = {
-  id: number; rsn: string; discord_username: string | null; timezone: string | null
+  id: number; rsn: string; discord_username: string | null; discord_user_id: string | null; timezone: string | null
   about: string; why: string; status: string; notes: string | null
   created_at: string; reviewed_at: string | null; reviewed_by: string | null
 }
@@ -67,10 +67,15 @@ export default function ApplicationsPage() {
                 <div className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#1c1c36]/50 cursor-pointer"
                   onClick={() => setExpanded(expanded === app.id ? null : app.id)}>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="text-sm font-semibold text-[#e8e8f0]">{app.rsn}</span>
                       {app.discord_username && <span className="text-xs text-[#7878a8]">@{app.discord_username}</span>}
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${STATUS_COLORS[app.status] ?? STATUS_COLORS.pending}`}>{app.status}</span>
+                      {app.discord_user_id ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#57F287]/10 text-[#57F287]">DM enabled</span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#333358] text-[#5a5a7a]">no user ID</span>
+                      )}
                     </div>
                     <div className="text-xs text-[#5a5a7a] flex items-center gap-3">
                       {app.timezone && <span>{app.timezone}</span>}

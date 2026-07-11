@@ -4,6 +4,7 @@ import { useState } from 'react'
 export default function ApplyPage() {
   const [rsn, setRsn] = useState('')
   const [discord, setDiscord] = useState('')
+  const [discordId, setDiscordId] = useState('')
   const [timezone, setTimezone] = useState('')
   const [about, setAbout] = useState('')
   const [why, setWhy] = useState('')
@@ -15,7 +16,7 @@ export default function ApplyPage() {
     setStatus('sending')
     const res = await fetch('/api/applications', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rsn, discord_username: discord, timezone, about, why }),
+      body: JSON.stringify({ rsn, discord_username: discord, discord_user_id: discordId, timezone, about, why }),
     })
     if (res.ok) { setStatus('done') } else {
       const { error: e } = await res.json(); setError(e ?? 'Failed'); setStatus('error')
@@ -49,7 +50,17 @@ export default function ApplyPage() {
         </div>
         <div>
           <label className="text-xs text-[#9898c0] mb-1 block">Discord Username</label>
-          <input value={discord} onChange={e => setDiscord(e.target.value)} placeholder="username (so we can find you)" className={inp} />
+          <input value={discord} onChange={e => setDiscord(e.target.value)} placeholder="e.g. username#0000 or @username" className={inp} />
+        </div>
+        <div>
+          <label className="text-xs text-[#9898c0] mb-1 block">
+            Discord User ID
+            <span className="ml-2 text-[#5a5a7a] normal-case font-normal">optional — lets us DM you directly</span>
+          </label>
+          <input value={discordId} onChange={e => setDiscordId(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 123456789012345678" className={inp} />
+          <p className="text-[10px] text-[#5a5a7a] mt-1">
+            Find it: Discord Settings → Advanced → enable Developer Mode, then right-click your profile and click <em>Copy User ID</em>.
+          </p>
         </div>
         <div>
           <label className="text-xs text-[#9898c0] mb-1 block">Timezone</label>
