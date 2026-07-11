@@ -25,6 +25,7 @@ export default function CompPanel() {
   const [excluded, setExcluded] = useState<string[]>([])
   const [newMetric, setNewMetric] = useState('')
   const [picksLoading, setPicksLoading] = useState(false)
+  const [picksError, setPicksError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/comp').then(r => r.json()).then(setData)
@@ -40,10 +41,16 @@ export default function CompPanel() {
 
   async function addPick() {
     if (!newMetric.trim()) return
-    await fetch('/api/admin/comp/picks', {
+    setPicksError(null)
+    const res = await fetch('/api/admin/comp/picks', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ poll_type: tab, metric: newMetric.trim() }),
     })
+    if (!res.ok) {
+      const { error } = await res.json()
+      setPicksError(error ?? 'Failed to add pick')
+      return
+    }
     const d = await fetch(`/api/admin/comp/picks?type=${tab}`).then(r => r.json())
     setPicks(d.picks ?? []); setExcluded(d.excluded ?? [])
     setNewMetric('')
@@ -195,6 +202,7 @@ export default function CompPanel() {
             </button>
           </div>
 
+          {picksError && <p className="text-sm text-[#ED4245] mb-3">{picksError}</p>}
           {picksLoading ? (
             <p className="text-sm text-[#7878a8] py-4 text-center">Loading…</p>
           ) : picks.length === 0 ? (

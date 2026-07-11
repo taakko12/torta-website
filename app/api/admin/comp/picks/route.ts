@@ -31,7 +31,8 @@ export async function POST(req: Request) {
   if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { poll_type, metric } = await req.json()
   if (!poll_type || !metric) return NextResponse.json({ error: 'poll_type and metric required' }, { status: 400 })
-  await getSupabaseAdmin().from('comp_picks').insert({ guild_id: GUILD_ID, poll_type, metric: metric.trim().toLowerCase() })
+  const { error } = await getSupabaseAdmin().from('comp_picks').insert({ guild_id: GUILD_ID, poll_type, metric: metric.trim().toLowerCase() })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
 
