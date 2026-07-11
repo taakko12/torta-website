@@ -12,7 +12,7 @@ const NAV = [
   { href: '/admin/events',         label: 'Events' },
   { href: '/admin/applications',   label: 'Applications', badge: 'applications' as const },
   { href: '/admin/loot',           label: 'Loot' },
-  { href: '/admin/comp',           label: 'Comp Wins' },
+  { href: '/admin/comp',           label: 'Manage Competitions' },
   { href: '/admin/messenger',      label: 'Messenger' },
   { href: '/admin/recruitments',   label: 'Recruitments' },
   { href: '/admin/cotm',           label: 'COTM' },
