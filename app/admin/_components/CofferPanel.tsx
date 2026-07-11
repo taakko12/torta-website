@@ -2,20 +2,22 @@
 import { useState, useEffect } from 'react'
 
 type LeaderboardEntry = { player: string; net: number; deposited: number }
-type DepositRow = { id: number; player: string; gp: number; action: string; recorded_at: string }
+type DepositRow = { id: number; player: string; gp: number; action: string; source: string; logged_by: string | null; recorded_at: string }
 type Config = { cofferChannelId: string | null; leaderboardChannelId: string | null; leaderboardMessageId: string | null }
-type Data = { leaderboard: LeaderboardEntry[]; recent: DepositRow[]; config: Config }
+type Data = { leaderboard: LeaderboardEntry[]; recent: DepositRow[]; members: string[]; config: Config }
 
 const MEDALS = ['🥇', '🥈', '🥉']
-
-function fmt(n: number) {
-  return n.toLocaleString() + ' gp'
-}
 
 export default function CofferPanel() {
   const [data, setData] = useState<Data | null>(null)
   const [tab, setTab] = useState<'leaderboard' | 'activity'>('leaderboard')
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  // manual log form
+  const [logPlayer, setLogPlayer] = useState('')
+  const [logGp, setLogGp] = useState('')
+  const [logAction, setLogAction] = useState<'deposited' | 'withdrawn'>('deposited')
+  const [logging, setLogging] = useState(false)
+  const [logMsg, setLogMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   async function load() {
     const d = await fetch('/api/admin/coffer').then(r => r.json())
@@ -31,7 +33,26 @@ export default function CofferPanel() {
     setDeletingId(null)
   }
 
+  async function submitManualLog() {
+    if (!logPlayer.trim() || !logGp) return
+    setLogging(true); setLogMsg(null)
+    const res = await fetch('/api/admin/coffer', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: logPlayer.trim(), gp: Number(logGp), action: logAction }),
+    })
+    const d = await res.json()
+    setLogging(false)
+    if (res.ok) {
+      setLogMsg({ ok: true, text: `✅ Logged ${logAction} of ${Number(logGp).toLocaleString()} gp for ${logPlayer.trim()}` })
+      setLogPlayer(''); setLogGp('')
+      await load()
+    } else {
+      setLogMsg({ ok: false, text: `❌ ${d.error}` })
+    }
+  }
+
   const card = 'rounded-xl border border-[#333358] bg-[#161628]'
+  const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
 
   if (!data) return <p className="text-sm text-[#7878a8] py-8 text-center">Loading…</p>
 
@@ -53,11 +74,43 @@ export default function CofferPanel() {
         </div>
         <div className={`${card} p-5`}>
           <p className="text-xs text-[#7878a8] mb-1">Leaderboard Channel</p>
-          <p className="text-sm font-medium text-[#e8e8f0] mt-1">
-            {data.config.leaderboardChannelId ? `#${data.config.leaderboardChannelId}` : 'Not set'}
+          <p className="text-sm font-medium text-[#e8e8f0] mt-1 truncate">
+            {data.config.leaderboardChannelId ? `<#${data.config.leaderboardChannelId}>` : '—'}
           </p>
-          <p className="text-xs text-[#5a5a7a] mt-1">set via /coffer setup</p>
+          <p className="text-xs text-[#5a5a7a] mt-1">set via admin/settings</p>
         </div>
+      </div>
+
+      {/* Manual log */}
+      <div className={`${card} p-5`}>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-3">Manual Coffer Entry</h2>
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[160px]">
+            <input
+              list="coffer-rsn-list"
+              value={logPlayer}
+              onChange={e => setLogPlayer(e.target.value)}
+              placeholder="Player RSN"
+              className={`w-full ${inp}`}
+            />
+            <datalist id="coffer-rsn-list">
+              {data.members.map(rsn => <option key={rsn} value={rsn} />)}
+            </datalist>
+          </div>
+          <input
+            type="number" min="1" value={logGp} onChange={e => setLogGp(e.target.value)}
+            placeholder="Amount (gp)" className={`w-44 ${inp}`}
+          />
+          <select value={logAction} onChange={e => setLogAction(e.target.value as 'deposited' | 'withdrawn')} className={inp}>
+            <option value="deposited">Deposited</option>
+            <option value="withdrawn">Withdrawn</option>
+          </select>
+          <button onClick={submitManualLog} disabled={logging || !logPlayer.trim() || !logGp}
+            className="px-4 py-2 rounded-lg bg-[#F39C12] text-white text-sm font-semibold hover:bg-[#e08e0b] disabled:opacity-40 transition-colors">
+            {logging ? 'Logging…' : 'Log Entry'}
+          </button>
+        </div>
+        {logMsg && <p className={`text-xs mt-2 ${logMsg.ok ? 'text-[#57F287]' : 'text-[#ED4245]'}`}>{logMsg.text}</p>}
       </div>
 
       {/* Tab nav */}
@@ -94,8 +147,8 @@ export default function CofferPanel() {
                   <tr key={e.player} className="border-b border-[#1c1c36] last:border-0 hover:bg-[#1c1c36]/50">
                     <td className="px-4 py-2.5 text-sm text-[#7878a8]">{MEDALS[idx] ?? idx + 1}</td>
                     <td className="px-4 py-2.5 text-sm font-medium text-[#e8e8f0]">{e.player}</td>
-                    <td className={`px-4 py-2.5 text-sm font-bold font-mono ${e.net >= 0 ? 'text-[#F39C12]' : 'text-[#ED4245]'}`}>{fmt(e.net)}</td>
-                    <td className="px-4 py-2.5 text-sm text-[#7878a8] font-mono">{fmt(e.deposited)}</td>
+                    <td className={`px-4 py-2.5 text-sm font-bold font-mono ${e.net >= 0 ? 'text-[#F39C12]' : 'text-[#ED4245]'}`}>{e.net.toLocaleString()} gp</td>
+                    <td className="px-4 py-2.5 text-sm text-[#7878a8] font-mono">{e.deposited.toLocaleString()} gp</td>
                   </tr>
                 ))}
               </tbody>
@@ -120,6 +173,7 @@ export default function CofferPanel() {
                   <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Player</th>
                   <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Action</th>
                   <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Amount</th>
+                  <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Logged by</th>
                   <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Date</th>
                   <th className="px-4 py-2"></th>
                 </tr>
@@ -134,12 +188,15 @@ export default function CofferPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-sm font-mono text-[#c89b3c]">{Number(row.gp).toLocaleString()} gp</td>
+                    <td className="px-4 py-2.5">
+                      {row.source === 'manual'
+                        ? <span className="text-xs text-[#9898c0]"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#7c5ce8]/20 text-[#b09cf8] mr-1.5">manual</span>{row.logged_by ?? '—'}</span>
+                        : <span className="text-[10px] text-[#5a5a7a]">trackscape</span>}
+                    </td>
                     <td className="px-4 py-2.5 text-xs text-[#7878a8]">{new Date(row.recorded_at).toLocaleDateString()}</td>
                     <td className="px-4 py-2.5 text-right">
                       <button onClick={() => deleteEntry(row.id)} disabled={deletingId === row.id}
-                        className="text-[10px] text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40 px-1">
-                        ✕
-                      </button>
+                        className="text-[10px] text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40 px-1">✕</button>
                     </td>
                   </tr>
                 ))}

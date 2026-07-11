@@ -35,9 +35,10 @@ export async function GET() {
   if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const db = getSupabaseAdmin()
-  const [{ data: deposits }, { data: config }] = await Promise.all([
-    db.from('coffer_deposits').select('id, player, gp, action, recorded_at').eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(300),
+  const [{ data: deposits }, { data: config }, { data: links }] = await Promise.all([
+    db.from('coffer_deposits').select('id, player, gp, action, source, logged_by, recorded_at').eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(300),
     db.from('guild_config').select('coffer_channel_id, coffer_leaderboard_channel_id, coffer_leaderboard_message_id').eq('guild_id', GUILD_ID).maybeSingle(),
+    db.from('rsn_links').select('rsn').eq('guild_id', GUILD_ID).eq('primary_rsn', true),
   ])
 
   const leaderboard = computeLeaderboard((deposits ?? []) as { player: string; gp: number; action: string }[])
@@ -45,6 +46,7 @@ export async function GET() {
   return NextResponse.json({
     leaderboard,
     recent: deposits ?? [],
+    members: (links ?? []).map((l: { rsn: string }) => l.rsn).sort(),
     config: {
       cofferChannelId: config?.coffer_channel_id ?? null,
       leaderboardChannelId: config?.coffer_leaderboard_channel_id ?? null,
@@ -88,6 +90,25 @@ export async function POST() {
   }
 
   await db.from('guild_config').upsert({ guild_id: GUILD_ID, coffer_leaderboard_message_id: messageId }, { onConflict: 'guild_id' })
+  return NextResponse.json({ ok: true })
+}
+
+export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { player, gp, action } = await req.json()
+  if (!player || !gp || !['deposited', 'withdrawn'].includes(action))
+    return NextResponse.json({ error: 'player, gp, and action (deposited|withdrawn) are required' }, { status: 400 })
+
+  const db = getSupabaseAdmin()
+  // Look up the mod's primary RSN so we know who logged it
+  const { data: link } = await db.from('rsn_links').select('rsn').eq('guild_id', GUILD_ID).eq('discord_id', session.discordId!).eq('primary_rsn', true).maybeSingle()
+  const logged_by = link?.rsn ?? session.discordId!
+
+  const { error } = await db.from('coffer_deposits').insert({
+    guild_id: GUILD_ID, player: player.trim(), gp: Number(gp), action, source: 'manual', logged_by,
+  })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
 
