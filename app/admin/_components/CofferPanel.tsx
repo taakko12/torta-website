@@ -32,7 +32,6 @@ export default function CofferPanel() {
   }
 
   const card = 'rounded-xl border border-[#333358] bg-[#161628]'
-  const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
 
   if (!data) return <p className="text-sm text-[#7878a8] py-8 text-center">Loading…</p>
 
