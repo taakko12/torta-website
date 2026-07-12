@@ -9,7 +9,6 @@ function gpFormat(n: number) {
 }
 
 type Submission = { id: number; rsn: string; item_name: string; gp_value: number; screenshot_url: string | null; notes: string | null; status: string; created_at: string }
-type ReviewEntry = { type: 'drop' | 'sub'; id: number; label: string }
 
 export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const [tab, setTab] = useState<'drops' | 'submissions'>('drops')
@@ -22,32 +21,6 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const [editGp, setEditGp] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [reviewingEntry, setReviewingEntry] = useState<ReviewEntry | null>(null)
-  const [reviewReason, setReviewReason] = useState('')
-  const [submittingReview, setSubmittingReview] = useState(false)
-
-  function toggleReview(type: ReviewEntry['type'], id: number, label: string) {
-    if (reviewingEntry?.type === type && reviewingEntry.id === id) {
-      setReviewingEntry(null)
-      setReviewReason('')
-    } else {
-      setReviewingEntry({ type, id, label })
-      setReviewReason('')
-    }
-  }
-
-  async function submitReview() {
-    if (!reviewingEntry || !reviewReason.trim()) return
-    setSubmittingReview(true)
-    await fetch('/api/admin/loot-review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: reviewingEntry.type, label: reviewingEntry.label, reason: reviewReason.trim() }),
-    })
-    setSubmittingReview(false)
-    setReviewingEntry(null)
-    setReviewReason('')
-  }
 
   function startEdit(d: Drop) {
     setEditingId(d.id)
@@ -107,30 +80,6 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const tabCls = (t: typeof tab) =>
     `px-4 py-2 text-sm font-medium transition-colors border-b-2 ${tab === t ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7878a8] hover:text-[#e8e8f0]'}`
 
-  const reviewForm = (
-    <div className="flex gap-2 items-start">
-      <textarea
-        autoFocus
-        value={reviewReason}
-        onChange={e => setReviewReason(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitReview() }}
-        placeholder="Reason for review…"
-        rows={2}
-        className="flex-1 rounded-lg bg-[#0f0f1e] border border-[#FEE75C]/30 text-[#e8e8f0] px-3 py-2 text-xs outline-none resize-none placeholder:text-[#3a3a5a] focus:border-[#FEE75C]/60 transition-colors"
-      />
-      <div className="flex flex-col gap-1 shrink-0">
-        <button onClick={submitReview} disabled={submittingReview || !reviewReason.trim()}
-          className="text-xs px-3 py-1.5 rounded bg-[#FEE75C]/20 text-[#d4b800] hover:bg-[#FEE75C]/30 disabled:opacity-40 font-medium">
-          {submittingReview ? '…' : 'Send'}
-        </button>
-        <button onClick={() => { setReviewingEntry(null); setReviewReason('') }}
-          className="text-xs px-3 py-1.5 rounded text-[#5a5a7a] hover:text-[#e8e8f0] hover:bg-[#2a2a4a]">
-          Cancel
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="space-y-4">
       <div className="flex border-b border-[#333358] rounded-t-xl overflow-hidden bg-[#161628]">
@@ -148,46 +97,33 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
             <p className="px-5 py-8 text-center text-sm text-[#7878a8]">No submissions yet.</p>
           ) : (
             <ul className="divide-y divide-[#1c1c36]">
-              {submissions.map(s => {
-                const isReviewing = reviewingEntry?.type === 'sub' && reviewingEntry.id === s.id
-                return (
-                  <li key={s.id} className="px-5 py-3">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-semibold text-[#e8e8f0]">{s.rsn}</span>
-                          <span className="text-xs text-[#c89b3c] font-mono">{gpFormat(s.gp_value)}</span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${s.status === 'approved' ? 'bg-[#57F287]/15 text-[#57F287]' : s.status === 'rejected' ? 'bg-[#ED4245]/15 text-[#ED4245]' : 'bg-[#c89b3c]/15 text-[#c89b3c]'}`}>{s.status}</span>
-                        </div>
-                        <p className="text-xs text-[#9898c0]">{s.item_name}</p>
-                        {s.notes && <p className="text-xs text-[#5a5a7a] mt-0.5">{s.notes}</p>}
-                        {s.screenshot_url && (
-                          <a href={s.screenshot_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#5865F2] hover:text-[#9da8fa]">view screenshot</a>
-                        )}
+              {submissions.map(s => (
+                <li key={s.id} className="px-5 py-3">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-semibold text-[#e8e8f0]">{s.rsn}</span>
+                        <span className="text-xs text-[#c89b3c] font-mono">{gpFormat(s.gp_value)}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${s.status === 'approved' ? 'bg-[#57F287]/15 text-[#57F287]' : s.status === 'rejected' ? 'bg-[#ED4245]/15 text-[#ED4245]' : 'bg-[#c89b3c]/15 text-[#c89b3c]'}`}>{s.status}</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {s.status === 'pending' && (
-                          <>
-                            <button onClick={() => reviewSub(s.id, 'approve')} className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] hover:bg-[#57F287]/30">Approve</button>
-                            <button onClick={() => reviewSub(s.id, 'reject')} className="text-xs px-2 py-1 rounded bg-[#ED4245]/20 text-[#ED4245] hover:bg-[#ED4245]/30">Reject</button>
-                          </>
-                        )}
-                        <button
-                          onClick={() => toggleReview('sub', s.id, `${s.rsn} — ${s.item_name}`)}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${isReviewing ? 'bg-[#FEE75C]/20 text-[#d4b800]' : 'text-[#5a5a7a] hover:text-[#FEE75C]'}`}
-                          title="Request moderator review"
-                        >
-                          🚩
-                        </button>
-                        {s.status !== 'pending' && (
-                          <button onClick={() => deleteSub(s.id)} className="text-xs text-[#5a5a7a] hover:text-[#ED4245]">✕</button>
-                        )}
-                      </div>
+                      <p className="text-xs text-[#9898c0]">{s.item_name}</p>
+                      {s.notes && <p className="text-xs text-[#5a5a7a] mt-0.5">{s.notes}</p>}
+                      {s.screenshot_url && (
+                        <a href={s.screenshot_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#5865F2] hover:text-[#9da8fa]">view screenshot</a>
+                      )}
                     </div>
-                    {isReviewing && <div className="mt-3">{reviewForm}</div>}
-                  </li>
-                )
-              })}
+                    {s.status === 'pending' && (
+                      <div className="flex gap-2 shrink-0">
+                        <button onClick={() => reviewSub(s.id, 'approve')} className="text-xs px-2 py-1 rounded bg-[#57F287]/20 text-[#57F287] hover:bg-[#57F287]/30">Approve</button>
+                        <button onClick={() => reviewSub(s.id, 'reject')} className="text-xs px-2 py-1 rounded bg-[#ED4245]/20 text-[#ED4245] hover:bg-[#ED4245]/30">Reject</button>
+                      </div>
+                    )}
+                    {s.status !== 'pending' && (
+                      <button onClick={() => deleteSub(s.id)} className="text-xs text-[#5a5a7a] hover:text-[#ED4245]">✕</button>
+                    )}
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </div>
@@ -215,71 +151,52 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1c1c36]">
-              {filtered.slice(0, 150).map(d => {
-                const isReviewing = reviewingEntry?.type === 'drop' && reviewingEntry.id === d.id
-                return (
-                  <Fragment key={d.id}>
-                    <tr className="hover:bg-[#1c1c36] transition-colors">
-                      <td className="px-4 py-2 font-medium text-[#e8e8f0]">{d.player_name}</td>
-                      <td className="px-4 py-2 text-[#9898c0]">{d.item_name ?? '—'}</td>
-                      <td className="px-4 py-2 text-right font-mono">
-                        {editingId === d.id ? (
-                          <div className="flex items-center justify-end gap-1">
-                            <input
-                              autoFocus
-                              value={editGp}
-                              onChange={e => setEditGp(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter') saveEdit(d.id); if (e.key === 'Escape') setEditingId(null) }}
-                              className="w-32 rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-0.5 text-xs outline-none text-right"
-                            />
-                            <button onClick={() => saveEdit(d.id)} disabled={savingId === d.id}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-[#57F287]/20 text-[#57F287] hover:bg-[#57F287]/30 disabled:opacity-40">
-                              {savingId === d.id ? '…' : '✓'}
-                            </button>
-                            <button onClick={() => setEditingId(null)} className="text-[10px] px-1.5 py-0.5 rounded text-[#5a5a7a] hover:text-[#ED4245]">✕</button>
-                          </div>
-                        ) : (
-                          <button onClick={() => startEdit(d)} className="text-[#c89b3c] hover:text-[#e8be5a] transition-colors group">
-                            {gpFormat(d.gp_value)}
-                            <span className="ml-1 text-[10px] text-[#424268] group-hover:text-[#5a5a7a] opacity-0 group-hover:opacity-100 transition-opacity">✎</span>
+              {filtered.slice(0, 150).map(d => (
+                <Fragment key={d.id}>
+                  <tr className="hover:bg-[#1c1c36] transition-colors">
+                    <td className="px-4 py-2 font-medium text-[#e8e8f0]">{d.player_name}</td>
+                    <td className="px-4 py-2 text-[#9898c0]">{d.item_name ?? '—'}</td>
+                    <td className="px-4 py-2 text-right font-mono">
+                      {editingId === d.id ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <input
+                            autoFocus
+                            value={editGp}
+                            onChange={e => setEditGp(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveEdit(d.id); if (e.key === 'Escape') setEditingId(null) }}
+                            className="w-32 rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-0.5 text-xs outline-none text-right"
+                          />
+                          <button onClick={() => saveEdit(d.id)} disabled={savingId === d.id}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-[#57F287]/20 text-[#57F287] hover:bg-[#57F287]/30 disabled:opacity-40">
+                            {savingId === d.id ? '…' : '✓'}
                           </button>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-[#5a5a7a] whitespace-nowrap">
-                        {new Date(d.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </td>
-                      <td className="px-4 py-2">
-                        {(d.image_url || d.screenshot_url) ? (
-                          <a href={d.screenshot_url ?? d.image_url!} target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-[#5865F2] hover:text-[#9da8fa] transition-colors">view</a>
-                        ) : <span className="text-xs text-[#424268]">—</span>}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => toggleReview('drop', d.id, `${d.player_name} — ${d.item_name ?? 'Unknown'}`)}
-                            className={`text-xs transition-colors ${isReviewing ? 'text-[#d4b800]' : 'text-[#5a5a7a] hover:text-[#FEE75C]'}`}
-                            title="Request moderator review"
-                          >
-                            🚩
-                          </button>
-                          <button onClick={() => deleteDrop(d.id)} disabled={deletingId === d.id}
-                            className="text-xs text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40">
-                            {deletingId === d.id ? '…' : '✕'}
-                          </button>
+                          <button onClick={() => setEditingId(null)} className="text-[10px] px-1.5 py-0.5 rounded text-[#5a5a7a] hover:text-[#ED4245]">✕</button>
                         </div>
-                      </td>
-                    </tr>
-                    {isReviewing && (
-                      <tr className="bg-[#1a1a30]">
-                        <td colSpan={6} className="px-4 py-3 border-b border-[#1c1c36]">
-                          {reviewForm}
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                )
-              })}
+                      ) : (
+                        <button onClick={() => startEdit(d)} className="text-[#c89b3c] hover:text-[#e8be5a] transition-colors group">
+                          {gpFormat(d.gp_value)}
+                          <span className="ml-1 text-[10px] text-[#424268] group-hover:text-[#5a5a7a] opacity-0 group-hover:opacity-100 transition-opacity">✎</span>
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-[#5a5a7a] whitespace-nowrap">
+                      {new Date(d.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-2">
+                      {(d.image_url || d.screenshot_url) ? (
+                        <a href={d.screenshot_url ?? d.image_url!} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-[#5865F2] hover:text-[#9da8fa] transition-colors">view</a>
+                      ) : <span className="text-xs text-[#424268]">—</span>}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <button onClick={() => deleteDrop(d.id)} disabled={deletingId === d.id}
+                        className="text-xs text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40">
+                        {deletingId === d.id ? '…' : '✕'}
+                      </button>
+                    </td>
+                  </tr>
+                </Fragment>
+              ))}
             </tbody>
           </table>
           {filtered.length > 150 && (

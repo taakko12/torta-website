@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   getMonthlyDropLeaderboard, getAlltimeDropLeaderboard,
   getMonthlyPlankLeaderboard, getAlltimePlankLeaderboard,
@@ -8,6 +7,7 @@ import {
 } from '@/lib/data'
 import { DropLeaderboardTable, PlankLeaderboardTable } from '@/components/LeaderboardTable'
 import { ClientDate } from '@/components/ClientDate'
+import { RecentDropFeed } from '@/components/RecentDropFeed'
 import { currentMonthLabel, formatGp } from '@/lib/utils'
 
 export const revalidate = 30
@@ -110,40 +110,6 @@ async function RecentSection() {
   )
 }
 
-function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
-  const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
-  const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
-
-  if (drops.length === 0)
-    return <div className="rounded-xl border border-[#333358] bg-[#161628] py-12 text-center text-sm text-[#9898c0]">No drops recorded yet.</div>
-
-  return (
-    <div className="space-y-2">
-      {drops.map(d => (
-        <div key={d.id} className="rounded-xl border border-[#333358] bg-[#161628] p-4 flex items-center gap-4">
-          {d.image_url && (
-            <Image src={d.image_url} alt={d.item_name ?? 'item'} width={36} height={36} className="rounded shrink-0 object-contain" unoptimized />
-          )}
-          <div className="flex-1 min-w-0">
-            <span className="text-sm font-semibold text-[#e8e8f0] capitalize">{d.player_name}</span>
-            {d.item_name && d.item_name !== 'Monthly aggregate' && (
-              <span className="text-xs text-[#9898c0] ml-2">{d.item_name}</span>
-            )}
-            <div className="text-xs text-[#7878a8] mt-0.5"><ClientDate iso={d.recorded_at} /></div>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="font-mono font-semibold text-[#c89b3c]">{formatGp(d.gp_value)}</div>
-            {d.discord_message_id && (
-              <a href={`https://discord.com/channels/${GUILD_ID}/${DROPS_CHANNEL}/${d.discord_message_id}`}
-                target="_blank" rel="noopener noreferrer"
-                className="text-[10px] text-[#7878a8] hover:text-[#c89b3c] transition-colors">↗ Discord</a>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 async function DeathsSection({ isAlltime, month }: { isAlltime: boolean; month: string }) {
   const entries = isAlltime ? await getAlltimePlankLeaderboard() : await getMonthlyPlankLeaderboard()
