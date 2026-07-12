@@ -2,6 +2,28 @@
 import { useState, useMemo } from 'react'
 import type { LinkRow, DiscordActivity, IngameActivity, VcActivity, MemberNote, Absence } from '../_lib/data'
 
+function WomSyncButton() {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [msg, setMsg] = useState('')
+  async function run() {
+    setState('loading')
+    const res = await fetch('/api/admin/wom-sync', { method: 'POST' })
+    const d = await res.json()
+    if (res.ok) { setState('done'); setMsg('Departure check triggered — results will appear in the mod channel.') }
+    else { setState('error'); setMsg(d.error ?? 'Failed') }
+    setTimeout(() => setState('idle'), 5000)
+  }
+  return (
+    <div className="flex items-center gap-3">
+      <button onClick={run} disabled={state === 'loading'}
+        className="px-4 py-2 rounded-lg bg-[#ED4245]/20 border border-[#ED4245]/40 text-[#ED4245] text-sm font-semibold hover:bg-[#ED4245]/30 transition-colors disabled:opacity-40">
+        {state === 'loading' ? 'Running…' : '🔍 Run WOM Departure Check'}
+      </button>
+      {msg && <p className={`text-xs ${state === 'error' ? 'text-[#ED4245]' : 'text-[#57F287]'}`}>{msg}</p>}
+    </div>
+  )
+}
+
 type Props = {
   initialLinks: LinkRow[]
   discordActivity: DiscordActivity[]
@@ -144,6 +166,12 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
 
   return (
     <div className="space-y-6">
+      {/* WOM departure check */}
+      <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">WOM Moderation</h2>
+        <p className="text-xs text-[#7878a8] mb-4">Checks for members no longer in the WOM group who still have Discord roles. Runs automatically each WOM sync; click to trigger immediately.</p>
+        <WomSyncButton />
+      </div>
       {/* Link form */}
       <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">Link Member to RSN</h2>
