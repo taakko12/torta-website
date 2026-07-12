@@ -2,15 +2,8 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
-const WEBHOOK_URL = process.env.FEEDBACK_WEBHOOK_URL
-const ADMIN_URL = 'https://tortapounders.vercel.app/admin/feedback'
-
-const CATEGORY_COLORS: Record<string, number> = {
-  Events:  0x5865F2,
-  Discord: 0x57F287,
-  Bot:     0xFEE75C,
-  Website: 0xEB459E,
-}
+const BOT_BASE_URL = process.env.BOT_BASE_URL
+const BOT_ADMIN_SECRET = process.env.BOT_ADMIN_SECRET
 
 const VALID_CATEGORIES = ['Events', 'Discord', 'Bot', 'Website']
 
@@ -20,33 +13,19 @@ export async function POST(req: Request) {
   if (!message || typeof message !== 'string' || message.trim().length < 3)
     return NextResponse.json({ error: 'Message too short' }, { status: 400 })
 
-  const supabase = getSupabaseAdmin()
-  const { data, error } = await supabase
+  const { error } = await getSupabaseAdmin()
     .from('feedback')
     .insert({ guild_id: GUILD_ID, category, message: message.trim() })
-    .select('id')
-    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  if (WEBHOOK_URL) {
-    await fetch(WEBHOOK_URL, {
+  if (BOT_BASE_URL && BOT_ADMIN_SECRET) {
+    fetch(`${BOT_BASE_URL}/api/feedback-notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        embeds: [{
-          title: '📬 New Feedback',
-          color: CATEGORY_COLORS[category] ?? 0x7c5ce8,
-          fields: [
-            { name: 'Category', value: category, inline: true },
-            { name: 'Message', value: message.trim() },
-          ],
-          footer: { text: `View in admin panel → ${ADMIN_URL}` },
-          timestamp: new Date().toISOString(),
-        }],
-      }),
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': BOT_ADMIN_SECRET },
+      body: JSON.stringify({ guildId: GUILD_ID, category, message: message.trim() }),
     }).catch(() => {})
   }
 
-  return NextResponse.json({ ok: true, id: data.id })
+  return NextResponse.json({ ok: true })
 }
