@@ -1,37 +1,110 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const links = [
+type NavItem = { href: string; label: string }
+
+const PRIMARY: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/feed', label: 'Feed' },
   { href: '/events', label: 'Events' },
+]
+
+const COMPETE: NavItem[] = [
+  { href: '/hiscores', label: 'Hiscores' },
+  { href: '/player', label: 'Players' },
   { href: '/cotm', label: 'COTM' },
+  { href: '/bingo', label: 'Bingo' },
+]
+
+const COMMUNITY: NavItem[] = [
   { href: '/apply', label: 'Apply' },
   { href: '/submit-drop', label: 'Submit Drop' },
-  { href: '/player', label: 'Players' },
-  { href: '/hiscores', label: 'Hiscores' },
-  { href: '/bingo', label: 'Bingo' },
+  { href: '/feedback', label: 'Feedback' },
   { href: '/rules', label: 'Rules' },
   { href: '/changelog', label: 'Changelog' },
 ]
 
-const linkCls = 'text-sm font-medium text-[#8080b0] hover:text-[#e8e8f0] transition-colors rounded-lg hover:bg-white/5'
+const linkCls = 'text-sm font-medium text-[#8080b0] hover:text-[#e8e8f0] transition-colors'
+
+function DropdownMenu({ label, items, active }: { label: string; items: NavItem[]; active: boolean }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+  const hasActive = items.some(i => pathname.startsWith(i.href))
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/5 ${
+          hasActive ? 'text-[#c89b3c]' : 'text-[#8080b0] hover:text-[#e8e8f0]'
+        }`}
+      >
+        {label}
+        <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 12 12" fill="currentColor">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 z-50">
+          <div className="rounded-xl border border-[#1e1e38] bg-[#0f0f1e]/95 backdrop-blur-md shadow-xl shadow-black/40 py-1 min-w-[140px]">
+            {items.map(({ href, label: itemLabel }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-white/5 ${
+                  pathname.startsWith(href) && href !== '/'
+                    ? 'text-[#c89b3c] font-medium'
+                    : 'text-[#8080b0] hover:text-[#e8e8f0]'
+                }`}
+              >
+                {itemLabel}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
+  const allLinks = [...PRIMARY, ...COMPETE, ...COMMUNITY]
+
   return (
     <>
       {/* Desktop nav */}
       <ul className="hidden lg:flex items-center gap-1">
-        {links.map(({ href, label }) => (
+        {PRIMARY.map(({ href, label }) => (
           <li key={href}>
-            <Link href={href} className={`px-3 py-1.5 block ${linkCls}`}>{label}</Link>
+            <Link
+              href={href}
+              className={`block px-3 py-1.5 rounded-lg ${linkCls} hover:bg-white/5 ${
+                (href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'text-[#c89b3c]' : ''
+              }`}
+            >
+              {label}
+            </Link>
           </li>
         ))}
+        <li><DropdownMenu label="Compete" items={COMPETE} active={COMPETE.some(i => pathname.startsWith(i.href))} /></li>
+        <li><DropdownMenu label="Community" items={COMMUNITY} active={COMMUNITY.some(i => pathname.startsWith(i.href))} /></li>
       </ul>
 
       {/* Mobile hamburger */}
@@ -55,12 +128,16 @@ export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
       {open && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-[#0f0f1e]/95 backdrop-blur-md border-b border-[#1c1c36] py-2 px-4">
           <ul className="flex flex-col">
-            {links.map(({ href, label }) => (
+            {allLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link
                   href={href}
                   onClick={() => setOpen(false)}
-                  className={`block px-3 py-2.5 ${linkCls} ${pathname === href ? 'text-[#c89b3c]' : ''}`}
+                  className={`block px-3 py-2.5 text-sm font-medium transition-colors rounded-lg hover:bg-white/5 ${
+                    (href === '/' ? pathname === '/' : pathname.startsWith(href))
+                      ? 'text-[#c89b3c]'
+                      : 'text-[#8080b0] hover:text-[#e8e8f0]'
+                  }`}
                 >
                   {label}
                 </Link>

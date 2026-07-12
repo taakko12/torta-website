@@ -44,6 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/admin/messenger', label: 'Messenger', icon: '📢' },
       { href: '/admin/changelog', label: 'Changelog', icon: '📋' },
+      { href: '/admin/feedback',  label: 'Feedback',  icon: '📬' },
     ],
   },
   {
