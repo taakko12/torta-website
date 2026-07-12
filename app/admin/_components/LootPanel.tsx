@@ -20,10 +20,18 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editGp, setEditGp] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   function startEdit(d: Drop) {
     setEditingId(d.id)
     setEditGp(String(d.gp_value))
+  }
+
+  async function deleteDrop(id: number) {
+    setDeletingId(id)
+    await fetch('/api/admin/drops', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    setDrops(ds => ds.filter(d => d.id !== id))
+    setDeletingId(null)
   }
 
   async function saveEdit(id: number) {
@@ -139,6 +147,7 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
                 <th className="px-4 py-3 text-right">GP Value</th>
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Preview</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1c1c36]">
@@ -177,6 +186,12 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
                       <a href={d.screenshot_url ?? d.image_url!} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-[#5865F2] hover:text-[#9da8fa] transition-colors">view</a>
                     ) : <span className="text-xs text-[#424268]">—</span>}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <button onClick={() => deleteDrop(d.id)} disabled={deletingId === d.id}
+                      className="text-xs text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40">
+                      {deletingId === d.id ? '…' : '✕'}
+                    </button>
                   </td>
                 </tr>
               ))}

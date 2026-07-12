@@ -11,6 +11,17 @@ async function auth() {
   return session
 }
 
+export async function DELETE(req: Request) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  const { error } = await getSupabaseAdmin().from('drops').delete().eq('id', id).eq('guild_id', GUILD_ID)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  logAdminAction(session, 'drops', 'delete', `id ${id}`)
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
