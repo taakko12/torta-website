@@ -8,20 +8,20 @@ import type { RecentDropItem } from '@/lib/data'
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
 
-type ReviewState = { id: number; reason: string; submitting: boolean; done: boolean }
+type ReviewState = { id: string; reason: string; submitting: boolean; done: boolean }
 
 export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
   const [reviews, setReviews] = useState<Record<string, ReviewState>>({})
 
-  function openReview(id: number) {
+  function openReview(id: string) {
     setReviews(r => ({ ...r, [id]: { id, reason: '', submitting: false, done: false } }))
   }
 
-  function closeReview(id: number) {
+  function closeReview(id: string) {
     setReviews(r => { const n = { ...r }; delete n[id]; return n })
   }
 
-  function setReason(id: number, reason: string) {
+  function setReason(id: string, reason: string) {
     setReviews(r => ({ ...r, [id]: { ...r[id], reason } }))
   }
 
