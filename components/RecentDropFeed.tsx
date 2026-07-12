@@ -36,6 +36,9 @@ export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
         dropId: drop.id,
         label: `${drop.player_name}${drop.item_name ? ` — ${drop.item_name}` : ''} (${formatGp(drop.gp_value)})`,
         reason: state.reason.trim(),
+        discordUrl: drop.discord_message_id
+          ? `https://discord.com/channels/${GUILD_ID}/${DROPS_CHANNEL}/${drop.discord_message_id}`
+          : null,
       }),
     })
     setReviews(r => ({ ...r, [drop.id]: { ...r[drop.id], submitting: false, done: true } }))
