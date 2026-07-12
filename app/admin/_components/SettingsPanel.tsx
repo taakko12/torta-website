@@ -22,10 +22,9 @@ const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
 export default function SettingsPanel({ config: initialConfig, channels, roles }: Props) {
   const [config, setConfig] = useState<GuildConfig>(initialConfig)
   const [rolePanel, setRolePanel] = useState<RolePanel>(initialConfig.role_panel_config ?? { channelId: null, messageId: null, roles: [] })
-  const [welcomePosting, setWelcomePosting] = useState(false)
   const [welcomeStatus, setWelcomeStatus] = useState<string | null>(null)
-  const [cofferPosting, setCofferPosting] = useState(false)
   const [cofferStatus, setCofferStatus] = useState<string | null>(null)
+  const [refreshingAll, setRefreshingAll] = useState(false)
   const [scrapeRunning, setScrapeRunning] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
   const [panelRole, setPanelRole] = useState('')
@@ -85,20 +84,15 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
     await fetch('/api/admin/config', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
   }
 
-  async function postCofferLeaderboard() {
-    setCofferPosting(true); setCofferStatus(null)
-    const res = await fetch('/api/admin/coffer', { method: 'POST' })
-    const data = await res.json()
-    setCofferPosting(false)
-    setCofferStatus(res.ok ? '✅ Coffer leaderboard posted!' : `❌ ${data.error}`)
-  }
-
-  async function postWelcomeMessage() {
-    setWelcomePosting(true); setWelcomeStatus(null)
-    const res = await fetch('/api/admin/welcome', { method: 'POST' })
-    const data = await res.json()
-    setWelcomePosting(false)
-    setWelcomeStatus(res.ok ? '✅ Welcome panel posted!' : `❌ ${data.error}`)
+  async function refreshAllEmbeds() {
+    setRefreshingAll(true); setWelcomeStatus(null); setCofferStatus(null)
+    const [wRes, cRes] = await Promise.all([
+      config.welcome_channel_id ? fetch('/api/admin/welcome', { method: 'POST' }) : Promise.resolve(null),
+      config.coffer_leaderboard_channel_id ? fetch('/api/admin/coffer', { method: 'POST' }) : Promise.resolve(null),
+    ])
+    if (wRes) { const d = await wRes.json(); setWelcomeStatus(wRes.ok ? '✅' : `❌ ${d.error}`) }
+    if (cRes) { const d = await cRes.json(); setCofferStatus(cRes.ok ? '✅' : `❌ ${d.error}`) }
+    setRefreshingAll(false)
   }
 
   async function addPanelRole() {
@@ -190,43 +184,39 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
         </div>
       </div>
 
-      {/* Welcome Panel */}
+      {/* Pinned Embeds */}
       <div className={card}>
-        <div className="px-5 py-3 border-b border-[#333358]">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Welcome Panel</h2>
-          <p className="text-xs text-[#7878a8] mt-1">Posts the clan rules embed with an "I Agree" button. Set Welcome Channel above first.</p>
+        <div className="px-5 py-3 border-b border-[#333358] flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Pinned Embeds</h2>
+            <p className="text-xs text-[#7878a8] mt-1">Re-posts any pinned Discord embeds — use if a message was deleted or needs updating.</p>
+          </div>
+          <button onClick={refreshAllEmbeds} disabled={refreshingAll}
+            className="shrink-0 px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
+            {refreshingAll ? 'Refreshing…' : '🔄 Refresh All'}
+          </button>
         </div>
-        <div className="px-5 py-4 flex flex-wrap items-center gap-3">
-          <span className="text-sm text-[#a0a0c0]">
+        <div className="px-5 divide-y divide-[#1c1c36]">
+          <div className="py-3 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-[#c0c0e0]">Welcome Panel</p>
+              <p className="text-xs text-[#5a5a7a]">Rules embed with "I Agree" button</p>
+            </div>
             {config.welcome_channel_id
-              ? (() => { const ch = channels.find(c => c.id === config.welcome_channel_id); return <>Posting to <span className="text-[#c89b3c]">{ch ? `#${ch.name}` : <span className="font-mono text-xs opacity-60">{config.welcome_channel_id}</span>}</span></> })()
-              : <span className="text-[#7878a8]">Welcome channel not set</span>}
-          </span>
-          <button onClick={postWelcomeMessage} disabled={!config.welcome_channel_id || welcomePosting}
-            className="ml-auto px-4 py-2 rounded-lg bg-[#7c5ce8] text-white text-sm font-semibold hover:bg-[#6a4fd6] transition-colors disabled:opacity-40">
-            {welcomePosting ? 'Posting…' : 'Post Welcome Message'}
-          </button>
-          {welcomeStatus && <span className="text-xs text-[#a0a0c0] w-full">{welcomeStatus}</span>}
-        </div>
-      </div>
-
-      {/* Coffer Leaderboard Embed */}
-      <div className={card}>
-        <div className="px-5 py-3 border-b border-[#333358]">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Coffer Leaderboard Embed</h2>
-          <p className="text-xs text-[#7878a8] mt-1">Posts (or refreshes) the pinned coffer leaderboard in the channel set above. Auto-updates on every donation, but use this to repost if the message gets deleted.</p>
-        </div>
-        <div className="px-5 py-4 flex flex-wrap items-center gap-3">
-          <span className="text-sm text-[#a0a0c0]">
+              ? <span className="text-xs text-[#9898c0]">#{channels.find(c => c.id === config.welcome_channel_id)?.name ?? config.welcome_channel_id}</span>
+              : <span className="text-xs text-[#424268]">channel not set</span>}
+            {welcomeStatus && <span className="text-xs shrink-0">{welcomeStatus}</span>}
+          </div>
+          <div className="py-3 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-[#c0c0e0]">Coffer Leaderboard</p>
+              <p className="text-xs text-[#5a5a7a]">Auto-updates on donations; re-post if deleted</p>
+            </div>
             {config.coffer_leaderboard_channel_id
-              ? (() => { const ch = channels.find(c => c.id === config.coffer_leaderboard_channel_id); return <>Posting to <span className="text-[#c89b3c]">{ch ? `#${ch.name}` : <span className="font-mono text-xs opacity-60">{config.coffer_leaderboard_channel_id}</span>}</span></> })()
-              : <span className="text-[#7878a8]">Coffer leaderboard channel not set above</span>}
-          </span>
-          <button onClick={postCofferLeaderboard} disabled={!config.coffer_leaderboard_channel_id || cofferPosting}
-            className="ml-auto px-4 py-2 rounded-lg bg-[#F39C12]/90 text-white text-sm font-semibold hover:bg-[#F39C12] transition-colors disabled:opacity-40">
-            {cofferPosting ? 'Posting…' : 'Post / Refresh Leaderboard'}
-          </button>
-          {cofferStatus && <span className="text-xs text-[#a0a0c0] w-full">{cofferStatus}</span>}
+              ? <span className="text-xs text-[#9898c0]">#{channels.find(c => c.id === config.coffer_leaderboard_channel_id)?.name ?? config.coffer_leaderboard_channel_id}</span>
+              : <span className="text-xs text-[#424268]">channel not set</span>}
+            {cofferStatus && <span className="text-xs shrink-0">{cofferStatus}</span>}
+          </div>
         </div>
       </div>
 
