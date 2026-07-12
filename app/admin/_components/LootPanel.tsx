@@ -10,12 +10,34 @@ function gpFormat(n: number) {
 
 type Submission = { id: number; rsn: string; item_name: string; gp_value: number; screenshot_url: string | null; notes: string | null; status: string; created_at: string }
 
-export default function LootPanel({ drops }: { drops: Drop[] }) {
+export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const [tab, setTab] = useState<'drops' | 'submissions'>('drops')
   const [search, setSearch] = useState('')
   const [minGp, setMinGp] = useState('')
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [subsLoaded, setSubsLoaded] = useState(false)
+  const [drops, setDrops] = useState<Drop[]>(initialDrops)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editGp, setEditGp] = useState('')
+  const [savingId, setSavingId] = useState<number | null>(null)
+
+  function startEdit(d: Drop) {
+    setEditingId(d.id)
+    setEditGp(String(d.gp_value))
+  }
+
+  async function saveEdit(id: number) {
+    const gp = Number(editGp)
+    if (!gp || gp < 1) { setEditingId(null); return }
+    setSavingId(id)
+    await fetch('/api/admin/drops', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, gp_value: gp }),
+    })
+    setDrops(ds => ds.map(d => d.id === id ? { ...d, gp_value: gp } : d))
+    setSavingId(null)
+    setEditingId(null)
+  }
 
   useEffect(() => {
     if (tab !== 'submissions' || subsLoaded) return
@@ -124,7 +146,29 @@ export default function LootPanel({ drops }: { drops: Drop[] }) {
                 <tr key={d.id} className="hover:bg-[#1c1c36] transition-colors">
                   <td className="px-4 py-2 font-medium text-[#e8e8f0]">{d.player_name}</td>
                   <td className="px-4 py-2 text-[#9898c0]">{d.item_name ?? '—'}</td>
-                  <td className="px-4 py-2 text-right font-mono text-[#c89b3c]">{gpFormat(d.gp_value)}</td>
+                  <td className="px-4 py-2 text-right font-mono">
+                    {editingId === d.id ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <input
+                          autoFocus
+                          value={editGp}
+                          onChange={e => setEditGp(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(d.id); if (e.key === 'Escape') setEditingId(null) }}
+                          className="w-32 rounded bg-[#1c1c36] border border-[#7c5ce8]/60 text-[#e8e8f0] px-2 py-0.5 text-xs outline-none text-right"
+                        />
+                        <button onClick={() => saveEdit(d.id)} disabled={savingId === d.id}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-[#57F287]/20 text-[#57F287] hover:bg-[#57F287]/30 disabled:opacity-40">
+                          {savingId === d.id ? '…' : '✓'}
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="text-[10px] px-1.5 py-0.5 rounded text-[#5a5a7a] hover:text-[#ED4245]">✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(d)} className="text-[#c89b3c] hover:text-[#e8be5a] transition-colors group">
+                        {gpFormat(d.gp_value)}
+                        <span className="ml-1 text-[10px] text-[#424268] group-hover:text-[#5a5a7a] opacity-0 group-hover:opacity-100 transition-opacity">✎</span>
+                      </button>
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-[#5a5a7a] whitespace-nowrap">
                     {new Date(d.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
