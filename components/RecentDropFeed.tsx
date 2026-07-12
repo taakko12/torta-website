@@ -10,7 +10,22 @@ const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
 
 type ReviewState = { id: string; reason: string; submitting: boolean; done: boolean }
 
+function filterDrops(drops: RecentDropItem[], query: string): RecentDropItem[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return drops
+  const cmp = q.match(/^([><])(\d+(?:\.\d+)?)(m|k)?$/)
+  if (cmp) {
+    const threshold = parseFloat(cmp[2]) * (cmp[3] === 'm' ? 1_000_000 : cmp[3] === 'k' ? 1_000 : 1)
+    return drops.filter(d => cmp[1] === '>' ? d.gp_value > threshold : d.gp_value < threshold)
+  }
+  return drops.filter(d =>
+    d.player_name.toLowerCase().includes(q) ||
+    (d.item_name ?? '').toLowerCase().includes(q)
+  )
+}
+
 export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
+  const [search, setSearch] = useState('')
   const [reviews, setReviews] = useState<Record<string, ReviewState>>({})
 
   function openReview(id: string) {
@@ -44,12 +59,31 @@ export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
     setReviews(r => ({ ...r, [drop.id]: { ...r[drop.id], submitting: false, done: true } }))
   }
 
+  const filtered = filterDrops(drops, search)
+
   if (drops.length === 0)
     return <div className="rounded-xl border border-[#333358] bg-[#161628] py-12 text-center text-sm text-[#9898c0]">No drops recorded yet.</div>
 
   return (
-    <div className="space-y-2">
-      {drops.map(d => {
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search player, item, >1m, <500k…"
+          className="flex-1 rounded-xl bg-[#161628] border border-[#333358] text-[#e8e8f0] px-4 py-2.5 text-sm outline-none focus:border-[#7c5ce8]/60 transition-colors placeholder:text-[#424268]"
+        />
+        {search && (
+          <span className="text-xs text-[#7878a8] shrink-0">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
+        )}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="rounded-xl border border-[#333358] bg-[#161628] py-10 text-center text-sm text-[#9898c0]">No drops match your search.</div>
+      )}
+
+      <div className="space-y-2">
+      {filtered.map(d => {
         const rev = reviews[d.id]
         return (
           <div key={d.id} className="rounded-xl border border-[#333358] bg-[#161628] p-4">
@@ -114,6 +148,7 @@ export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
