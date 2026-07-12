@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 
-const CATEGORIES = ['Events', 'Discord', 'Bot', 'Website'] as const
+const CATEGORIES = ['Events', 'Discord', 'Bot', 'Website', 'Other'] as const
 
 export default function FeedbackPage() {
   const [category, setCategory] = useState('')

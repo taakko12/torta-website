@@ -5,7 +5,7 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const BOT_BASE_URL = process.env.BOT_BASE_URL
 const BOT_ADMIN_SECRET = process.env.BOT_ADMIN_SECRET
 
-const VALID_CATEGORIES = ['Events', 'Discord', 'Bot', 'Website']
+const VALID_CATEGORIES = ['Events', 'Discord', 'Bot', 'Website', 'Other']
 
 export async function POST(req: Request) {
   const { category, message } = await req.json()
