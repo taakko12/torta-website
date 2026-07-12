@@ -31,9 +31,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-xl font-bold text-[#c89b3c] uppercase tracking-widest mb-6">Staff Panel</h1>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#444468] mb-0.5">Torta</p>
+          <h1 className="text-lg font-bold text-[#c89b3c] uppercase tracking-widest leading-none">Staff Panel</h1>
+        </div>
+        {session.user && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111122] border border-[#1e1e38]">
+            {session.user.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={session.user.image} alt="" className="w-6 h-6 rounded-full" />
+            )}
+            <span className="text-xs text-[#9898c0]">{session.user.name}</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex gap-6 items-start">
-        <AdminNav openTickets={openTickets} pendingApplications={pendingApplications} />
+        {/* Sticky sidebar */}
+        <div className="sticky top-4 self-start">
+          <AdminNav openTickets={openTickets} pendingApplications={pendingApplications} />
+        </div>
         <div className="flex-1 min-w-0 space-y-6">
           {children}
         </div>
