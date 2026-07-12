@@ -11,7 +11,7 @@ const DROPS_CHANNEL = process.env.NEXT_PUBLIC_DROPS_CHANNEL_ID!
 type ReviewState = { id: number; reason: string; submitting: boolean; done: boolean }
 
 export function RecentDropFeed({ drops }: { drops: RecentDropItem[] }) {
-  const [reviews, setReviews] = useState<Record<number, ReviewState>>({})
+  const [reviews, setReviews] = useState<Record<string, ReviewState>>({})
 
   function openReview(id: number) {
     setReviews(r => ({ ...r, [id]: { id, reason: '', submitting: false, done: false } }))
