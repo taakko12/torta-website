@@ -6,6 +6,7 @@ import { logAdminAction } from '@/lib/logAction'
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const BOT = process.env.DISCORD_BOT_TOKEN!
 const DISCORD = 'https://discord.com/api/v10'
+const GUEST_ROLE_ID = process.env.GUEST_ROLE_ID || '1519867633069981818'
 
 async function auth() {
   const session = await getServerSession()
@@ -16,9 +17,10 @@ async function auth() {
 async function swapRole(userId: string, fromRoleId: string | null, toRoleId: string): Promise<boolean> {
   const headers = { Authorization: `Bot ${BOT}` }
   const base = `${DISCORD}/guilds/${GUILD_ID}/members/${userId}/roles`
-  const [addRes, removeRes] = await Promise.all([
+  const [addRes] = await Promise.all([
     fetch(`${base}/${toRoleId}`, { method: 'PUT', headers }),
-    fromRoleId ? fetch(`${base}/${fromRoleId}`, { method: 'DELETE', headers }) : Promise.resolve({ ok: true }),
+    fromRoleId ? fetch(`${base}/${fromRoleId}`, { method: 'DELETE', headers }) : Promise.resolve(null),
+    fetch(`${base}/${GUEST_ROLE_ID}`, { method: 'DELETE', headers }), // always strip Guest on promotion
   ])
   return addRes.ok
 }
