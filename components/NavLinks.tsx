@@ -9,13 +9,13 @@ const PRIMARY: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/feed', label: 'Feed' },
   { href: '/events', label: 'Events' },
+  { href: '/bingo', label: 'Bingo' },
 ]
 
 const COMPETE: NavItem[] = [
   { href: '/hiscores', label: 'Hiscores' },
   { href: '/player', label: 'Players' },
   { href: '/cotm', label: 'COTM' },
-  { href: '/bingo', label: 'Bingo' },
 ]
 
 const COMMUNITY: NavItem[] = [
@@ -103,7 +103,7 @@ export default function NavLinks({ isAdmin }: { isAdmin: boolean }) {
             </Link>
           </li>
         ))}
-        <li><DropdownMenu label="Compete" items={COMPETE} active={COMPETE.some(i => pathname.startsWith(i.href))} /></li>
+        <li><DropdownMenu label="Stats" items={COMPETE} active={COMPETE.some(i => pathname.startsWith(i.href))} /></li>
         <li><DropdownMenu label="Community" items={COMMUNITY} active={COMMUNITY.some(i => pathname.startsWith(i.href))} /></li>
       </ul>
 
