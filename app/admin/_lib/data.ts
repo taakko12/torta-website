@@ -51,7 +51,7 @@ export type Absence = { id: number; guild_id: string; discord_id: string; displa
 export type ChangelogEntry = { id: number; guild_id: string; title: string; content: string | null; category: string; discord_message_id: string | null; created_by_discord_id: string | null; created_by_name: string | null; published_at: string }
 export type BlacklistEntry = { id: number; guild_id: string; discord_id: string | null; rsn: string | null; reason: string; removed_by_name: string | null; created_at: string }
 export type Promotion = { id: number; guild_id: string; discord_id: string | null; display_name: string | null; rsn: string | null; from_role: string; to_role: string; promoted_by_name: string | null; notes: string | null; promoted_at: string }
-export type Drop = { id: number; guild_id: string; player_name: string; gp_value: number; item_name: string | null; image_url: string | null; screenshot_url: string | null; recorded_at: string }
+export type Drop = { id: number; guild_id: string; player_name: string; gp_value: number; item_name: string | null; image_url: string | null; screenshot_url: string | null; recorded_at: string; flagged?: boolean | null; flag_reason?: string | null }
 export type CofferEntry = { player: string; net: number }
 export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[]; cofferLeaderboard: CofferEntry[] }
 export type Ticket = { id: number; guild_id: string; discord_id: string; display_name: string | null; subject: string | null; status: string; created_at: string; closed_at: string | null; message_count?: number }
@@ -142,7 +142,7 @@ export async function fetchPromotions(): Promise<Promotion[]> {
 }
 
 export async function fetchDrops(): Promise<Drop[]> {
-  const { data } = await getSupabaseAdmin().from('drops').select('id, guild_id, player_name, gp_value, item_name, image_url, screenshot_url, recorded_at').eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(300)
+  const { data } = await getSupabaseAdmin().from('drops').select('id, guild_id, player_name, gp_value, item_name, image_url, screenshot_url, recorded_at, flagged, flag_reason').eq('guild_id', GUILD_ID).order('recorded_at', { ascending: false }).limit(300)
   return (data ?? []) as Drop[]
 }
 

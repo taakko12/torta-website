@@ -21,10 +21,19 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
   const [editGp, setEditGp] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [clearingFlagId, setClearingFlagId] = useState<number | null>(null)
+  const [flaggedOnly, setFlaggedOnly] = useState(false)
 
   function startEdit(d: Drop) {
     setEditingId(d.id)
     setEditGp(String(d.gp_value))
+  }
+
+  async function clearFlag(id: number) {
+    setClearingFlagId(id)
+    await fetch('/api/admin/drops', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, clear_flag: true }) })
+    setDrops(ds => ds.map(d => d.id === id ? { ...d, flagged: false, flag_reason: null } : d))
+    setClearingFlagId(null)
   }
 
   async function deleteDrop(id: number) {
@@ -67,7 +76,10 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
 
   const pendingSubs = submissions.filter(s => s.status === 'pending').length
 
+  const flaggedCount = drops.filter(d => d.flagged).length
+
   const filtered = drops.filter(d => {
+    if (flaggedOnly && !d.flagged) return false
     const min = parseInt(minGp) || 0
     if (d.gp_value < min) return false
     if (!search) return true
@@ -134,6 +146,12 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
           className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268] w-56" />
         <input value={minGp} onChange={e => setMinGp(e.target.value)} placeholder="Min GP (e.g. 1000000)"
           className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none placeholder:text-[#424268] w-44" />
+        <button
+          onClick={() => setFlaggedOnly(f => !f)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${flaggedOnly ? 'bg-[#FEE75C]/20 text-[#d4b800] border border-[#FEE75C]/30' : 'bg-[#1c1c36] border border-[#333358] text-[#7878a8] hover:text-[#e8e8f0]'}`}
+        >
+          🚩 Flagged{flaggedCount > 0 && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${flaggedOnly ? 'bg-[#FEE75C]/30 text-[#d4b800]' : 'bg-[#ED4245]/20 text-[#ED4245]'}`}>{flaggedCount}</span>}
+        </button>
         <span className="text-xs text-[#7878a8]">{filtered.length} drops · {gpFormat(totalGp)} gp total</span>
       </div>
 
@@ -189,12 +207,28 @@ export default function LootPanel({ drops: initialDrops }: { drops: Drop[] }) {
                       ) : <span className="text-xs text-[#424268]">—</span>}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button onClick={() => deleteDrop(d.id)} disabled={deletingId === d.id}
-                        className="text-xs text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40">
-                        {deletingId === d.id ? '…' : '✕'}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {d.flagged && (
+                          <button onClick={() => clearFlag(d.id)} disabled={clearingFlagId === d.id}
+                            className="text-[10px] px-2 py-0.5 rounded bg-[#57F287]/15 text-[#57F287] hover:bg-[#57F287]/25 transition-colors disabled:opacity-40 whitespace-nowrap">
+                            {clearingFlagId === d.id ? '…' : '✓ Clear Flag'}
+                          </button>
+                        )}
+                        <button onClick={() => deleteDrop(d.id)} disabled={deletingId === d.id}
+                          className="text-xs text-[#5a5a7a] hover:text-[#ED4245] transition-colors disabled:opacity-40">
+                          {deletingId === d.id ? '…' : '✕'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                  {d.flagged && d.flag_reason && (
+                    <tr className="bg-[#FEE75C]/5 border-b border-[#FEE75C]/10">
+                      <td colSpan={6} className="px-4 py-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#d4b800] mr-2">🚩 Flagged for review:</span>
+                        <span className="text-xs text-[#c8b870]">{d.flag_reason}</span>
+                      </td>
+                    </tr>
+                  )}
                 </Fragment>
               ))}
             </tbody>

@@ -25,8 +25,17 @@ export async function DELETE(req: Request) {
 export async function PATCH(req: Request) {
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id, gp_value } = await req.json()
-  if (!id || gp_value == null) return NextResponse.json({ error: 'id and gp_value required' }, { status: 400 })
+  const { id, gp_value, clear_flag } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  if (clear_flag) {
+    const { error } = await getSupabaseAdmin().from('drops').update({ flagged: false, flag_reason: null }).eq('id', id).eq('guild_id', GUILD_ID)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    logAdminAction(session, 'drops', 'clear-flag', `id ${id}`)
+    return NextResponse.json({ ok: true })
+  }
+
+  if (gp_value == null) return NextResponse.json({ error: 'gp_value required' }, { status: 400 })
   const gp = Number(gp_value)
   if (!Number.isFinite(gp) || gp < 1) return NextResponse.json({ error: 'Invalid gp_value' }, { status: 400 })
   const { error } = await getSupabaseAdmin().from('drops').update({ gp_value: gp }).eq('id', id).eq('guild_id', GUILD_ID)
