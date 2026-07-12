@@ -56,6 +56,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
   const [schedJobs, setSchedJobs] = useState<SchedJobs>(SCHED_DEFAULTS)
   const [schedSaving, setSchedSaving] = useState<SchedKey | null>(null)
   const [schedMsg, setSchedMsg] = useState<Partial<Record<SchedKey, string>>>({})
+  const [recapFiltersOpen, setRecapFiltersOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/scheduled-jobs').then(r => r.json()).then((d: Partial<SchedJobs>) =>
@@ -353,6 +354,42 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
               </div>
             )
           })()}
+
+          {/* Recap Filters — collapsible */}
+          <div className="py-3">
+            <button onClick={() => setRecapFiltersOpen(o => !o)}
+              className="flex items-center gap-2 w-full text-left group">
+              <span className="text-sm font-medium text-[#c0c0e0] group-hover:text-[#e8e8f0] transition-colors">⚙️ Recap Filters</span>
+              <span className="text-xs text-[#5a5a7a] flex-1">excluded roles, validation</span>
+              <span className="text-[#5a5a7a] text-xs">{recapFiltersOpen ? '▲' : '▼'}</span>
+            </button>
+            {recapFiltersOpen && (
+              <div className="mt-4 ml-7 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-[#9898c0] mb-1">Exclude from inactive list</p>
+                  <p className="text-[10px] text-[#5a5a7a] mb-2">Members with these roles won't appear in the Monday moderator recap inactive section. Add Staff, Owner, etc.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {roles.map(r => {
+                      const active = (config.recap_excluded_roles ?? []).includes(r.name)
+                      return (
+                        <button key={r.id}
+                          onClick={() => {
+                            const cur = config.recap_excluded_roles ?? []
+                            saveConfig({ recap_excluded_roles: active ? cur.filter(n => n !== r.name) : [...cur, r.name] })
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${active ? 'bg-[#ED4245]/15 border-[#ED4245]/50 text-[#ff8080]' : 'border-[#333358] text-[#7878a8] hover:text-[#e8e8f0]'}`}>
+                          @{r.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#5a5a7a]">
+                  The recap also automatically skips anyone no longer in the Discord server or (for in-game RSNs) no longer in the WOM group.
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Interval jobs */}
           {([

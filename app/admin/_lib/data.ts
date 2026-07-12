@@ -31,6 +31,7 @@ export type GuildConfig = {
   role_panel_config?: RolePanel | null
   owner_role_name?: string | null
   staff_role_names?: string[] | null
+  recap_excluded_roles?: string[] | null
   comp_sotw_days?: string | null
   comp_botw_days?: string | null
   comp_poll_day?: number | null
