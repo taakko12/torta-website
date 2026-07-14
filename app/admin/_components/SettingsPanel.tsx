@@ -500,6 +500,28 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
         </div>
       </div>
 
+      {/* Website Features */}
+      <div className={card}>
+        <div className="px-5 py-3 border-b border-[#333358]">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Website Features</h2>
+          <p className="text-xs text-[#7878a8] mt-1">Toggle public-facing features on or off.</p>
+        </div>
+        <div className="px-5 divide-y divide-[#1c1c36]">
+          <div className="py-3 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-[#c0c0e0]">Feedback Form</p>
+              <p className="text-xs text-[#5a5a7a]">Allow anyone to submit anonymous feedback at /feedback</p>
+            </div>
+            <button
+              onClick={() => saveConfig({ feedback_enabled: !config.feedback_enabled })}
+              className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 transition-colors duration-200 ${config.feedback_enabled ? 'bg-[#57F287] border-[#57F287]' : 'bg-[#2a2a4a] border-[#333358]'}`}
+            >
+              <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${config.feedback_enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Loot Scrape */}
       <div className={card}>
         <div className="px-5 py-3 border-b border-[#333358]">
