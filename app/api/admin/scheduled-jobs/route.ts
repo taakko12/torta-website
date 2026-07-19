@@ -7,12 +7,12 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const VALID_KEYS = ['weeklyRecap','modRecap','pollRoll','monthlyReset','womSync','vcFlush']
 
 const DEFAULTS = {
-  weeklyRecap:  { day: 0, hour: 20 },
-  modRecap:     { day: 1, hour: 9  },
-  pollRoll:     { day: 6, hour: 12 },
-  monthlyReset: { dayOfMonth: 1, hour: 0 },
-  womSync:      { intervalHours: 1 },
-  vcFlush:      { intervalMinutes: 5 },
+  weeklyRecap:  { day: 0, hour: 20, enabled: true },
+  modRecap:     { day: 1, hour: 9,  enabled: true },
+  pollRoll:     { day: 6, hour: 12, enabled: true },
+  monthlyReset: { dayOfMonth: 1, hour: 0, enabled: true },
+  womSync:      { intervalHours: 1, enabled: true },
+  vcFlush:      { intervalMinutes: 5, enabled: true },
 }
 
 async function auth() {

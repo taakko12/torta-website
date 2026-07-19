@@ -4,6 +4,15 @@ import type { Channel, Role, GuildConfig, RolePanel } from '../_lib/data'
 
 type Props = { config: GuildConfig; channels: Channel[]; roles: Role[] }
 
+function JobToggle({ enabled, onClick }: { enabled: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} title={enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}
+      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 transition-colors duration-200 ${enabled ? 'bg-[#57F287] border-[#57F287]' : 'bg-[#2a2a4a] border-[#333358]'}`}>
+      <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+    </button>
+  )
+}
+
 const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['TrackScape Clan Chat',        'clanchat_channel_id',              'In-game clan chat relay'],
   ['TrackScape Broadcasts',       'broadcast_channel_id',             'Drops, pets, quests, achievements'],
@@ -32,24 +41,23 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
   const [panelLabel, setPanelLabel] = useState('')
   const [panelChannel, setPanelChannel] = useState('')
 
-  type DayHourJob  = { day: number; hour: number }
-  type DomHourJob  = { dayOfMonth: number; hour: number }
-  type IntervalJob = { intervalHours?: number; intervalMinutes?: number }
+  type DayHourJob  = { day: number; hour: number; enabled: boolean }
+  type DomHourJob  = { dayOfMonth: number; hour: number; enabled: boolean }
   type SchedJobs = {
     weeklyRecap:   DayHourJob
     modRecap:      DayHourJob
     pollRoll:      DayHourJob
     monthlyReset:  DomHourJob
-    womSync:       { intervalHours: number }
-    vcFlush:       { intervalMinutes: number }
+    womSync:       { intervalHours: number; enabled: boolean }
+    vcFlush:       { intervalMinutes: number; enabled: boolean }
   }
   const SCHED_DEFAULTS: SchedJobs = {
-    weeklyRecap:  { day: 0, hour: 20 },
-    modRecap:     { day: 1, hour: 9  },
-    pollRoll:     { day: 6, hour: 12 },
-    monthlyReset: { dayOfMonth: 1, hour: 0 },
-    womSync:      { intervalHours: 1 },
-    vcFlush:      { intervalMinutes: 5 },
+    weeklyRecap:  { day: 0, hour: 20, enabled: true },
+    modRecap:     { day: 1, hour: 9,  enabled: true },
+    pollRoll:     { day: 6, hour: 12, enabled: true },
+    monthlyReset: { dayOfMonth: 1, hour: 0, enabled: true },
+    womSync:      { intervalHours: 1, enabled: true },
+    vcFlush:      { intervalMinutes: 5, enabled: true },
   }
   type SchedKey = keyof SchedJobs
   const [schedJobs, setSchedJobs] = useState<SchedJobs>(SCHED_DEFAULTS)
@@ -76,6 +84,15 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
 
   function patch<K extends SchedKey>(key: K, val: Partial<SchedJobs[K]>) {
     setSchedJobs(j => ({ ...j, [key]: { ...j[key], ...val } }))
+  }
+
+  async function toggleJobEnabled(key: SchedKey) {
+    const nextJob = { ...schedJobs[key], enabled: !schedJobs[key].enabled }
+    setSchedJobs(j => ({ ...j, [key]: nextJob }))
+    await fetch('/api/admin/scheduled-jobs', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, ...nextJob }),
+    })
   }
 
   async function saveConfig(patch: Partial<GuildConfig>) {
@@ -279,11 +296,11 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             { key: 'pollRoll'    as const, icon: '🎲', name: 'BOTW/SOTW Poll Roll',    desc: 'Posts weekly competition polls.', channelKey: 'poll_channel_id' as keyof GuildConfig },
           ]).map(({ key, icon, name, desc, channelKey }) => {
             const ch = channels.find(c => c.id === (config[channelKey] as string | null | undefined))
-            const job = schedJobs[key] as { day: number; hour: number }
+            const job = schedJobs[key] as { day: number; hour: number; enabled: boolean }
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
             const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
             return (
-              <div key={key} className="py-4">
+              <div key={key} className={`py-4 ${!job.enabled ? 'opacity-50' : ''}`}>
                 <div className="flex items-start gap-3 mb-3">
                   <span className="text-xl mt-0.5 shrink-0">{icon}</span>
                   <div className="flex-1 min-w-0">
@@ -293,6 +310,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
                   {ch
                     ? <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
                     : <span className="shrink-0 text-xs text-[#9898c0]">Channel not set</span>}
+                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled(key)} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">Every</span>
@@ -318,13 +336,14 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             const job = schedJobs.monthlyReset
             const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
             return (
-              <div className="py-4">
+              <div className={`py-4 ${!job.enabled ? 'opacity-50' : ''}`}>
                 <div className="flex items-start gap-3 mb-3">
                   <span className="text-xl mt-0.5 shrink-0">🔁</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-[#e8e8f0]">Monthly Activity Reset</div>
                     <div className="text-xs text-[#9898c0] mt-0.5">Zeros out monthly message and VC counts.</div>
                   </div>
+                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled('monthlyReset')} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">On the</span>
@@ -386,16 +405,17 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
             { key: 'womSync' as const, icon: '🔄', name: 'WOM Group Sync',  desc: 'Syncs member RSNs with Wise Old Man.', intervalKey: 'intervalHours' as const,   label: 'hours',   opts: [1,2,4,6,12,24] },
             { key: 'vcFlush' as const, icon: '🎙️', name: 'VC Session Flush', desc: 'Commits active voice session time to DB.', intervalKey: 'intervalMinutes' as const, label: 'min', opts: [1,5,10,15,30] },
           ]).map(({ key, icon, name, desc, intervalKey, label, opts }) => {
-            const job = schedJobs[key] as Record<string, number>
+            const job = schedJobs[key] as unknown as Record<string, number> & { enabled: boolean }
             const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
             return (
-              <div key={key} className="py-4">
+              <div key={key} className={`py-4 ${!job.enabled ? 'opacity-50' : ''}`}>
                 <div className="flex items-start gap-3 mb-3">
                   <span className="text-xl mt-0.5 shrink-0">{icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
                     <div className="text-xs text-[#9898c0] mt-0.5">{desc}</div>
                   </div>
+                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled(key)} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">Every</span>

@@ -1,9 +1,9 @@
-import { fetchLinks, fetchActivity, fetchMemberNotes, fetchAbsences } from '../_lib/data'
+import { fetchLinks, fetchActivity, fetchMemberNotes, fetchAbsences, fetchRoles, fetchWomLeftAlerts } from '../_lib/data'
 import MembersPanel from '../_components/MembersPanel'
 
 export default async function MembersPage() {
-  const [links, activity, notes, absences] = await Promise.all([
-    fetchLinks(), fetchActivity(), fetchMemberNotes(), fetchAbsences(),
+  const [links, activity, notes, absences, roles, womLeftAlerts] = await Promise.all([
+    fetchLinks(), fetchActivity(), fetchMemberNotes(), fetchAbsences(), fetchRoles(), fetchWomLeftAlerts(),
   ])
   return (
     <MembersPanel
@@ -13,6 +13,8 @@ export default async function MembersPage() {
       vcActivity={activity.vc}
       initialNotes={notes}
       absences={absences}
+      roles={roles}
+      initialWomLeftAlerts={womLeftAlerts}
     />
   )
 }

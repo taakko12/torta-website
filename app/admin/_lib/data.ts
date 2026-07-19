@@ -58,6 +58,7 @@ export type Drop = { id: number; guild_id: string; player_name: string; gp_value
 export type CofferEntry = { player: string; net: number }
 export type DashboardStats = { memberCount: number; newThisWeek: number; absenceCount: number; blacklistCount: number; nextEvent: { title: string; scheduled_at: string } | null; recentLogs: CommandLog[]; cofferLeaderboard: CofferEntry[] }
 export type Ticket = { id: number; guild_id: string; discord_id: string; display_name: string | null; subject: string | null; status: string; created_at: string; closed_at: string | null; message_count?: number }
+export type WomLeftAlert = { discord_id: string; rsn: string; created_at: string }
 export type TicketMessage = { id: number; ticket_id: number; author_discord_id: string; author_name: string | null; content: string; direction: 'inbound' | 'outbound'; sent_at: string }
 
 export async function fetchChannels(): Promise<Channel[]> {
@@ -127,6 +128,11 @@ export async function fetchMemberNotes(): Promise<MemberNote[]> {
 export async function fetchAbsences(): Promise<Absence[]> {
   const { data } = await getSupabaseAdmin().from('absences').select('*').eq('guild_id', GUILD_ID).is('returned_at', null).order('created_at', { ascending: false })
   return (data ?? []) as Absence[]
+}
+
+export async function fetchWomLeftAlerts(): Promise<WomLeftAlert[]> {
+  const { data } = await getSupabaseAdmin().from('wom_left_alerts').select('discord_id, rsn, created_at').eq('guild_id', GUILD_ID).is('resolved_at', null).order('created_at', { ascending: false })
+  return (data ?? []) as WomLeftAlert[]
 }
 
 export async function fetchChangelog(): Promise<ChangelogEntry[]> {

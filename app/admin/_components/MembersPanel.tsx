@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
-import type { LinkRow, DiscordActivity, IngameActivity, VcActivity, MemberNote, Absence } from '../_lib/data'
+import type { LinkRow, DiscordActivity, IngameActivity, VcActivity, MemberNote, Absence, Role, WomLeftAlert } from '../_lib/data'
 
 function WomSyncButton() {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
@@ -24,6 +24,57 @@ function WomSyncButton() {
   )
 }
 
+function WomDepartureRow({ alert, displayName, roleName, roles, onResolved }: {
+  alert: WomLeftAlert
+  displayName: string | null
+  roleName: string | null
+  roles: Role[]
+  onResolved: (discordId: string) => void
+}) {
+  const [toRoleId, setToRoleId] = useState(roles[0]?.id ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fromRoleId = roles.find(r => r.name === roleName)?.id ?? null
+
+  async function move() {
+    if (!toRoleId) return
+    setSaving(true); setError(null)
+    const toRoleName = roles.find(r => r.id === toRoleId)?.name ?? ''
+    const promoRes = await fetch('/api/admin/promotions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        discord_id: alert.discord_id, display_name: displayName, rsn: alert.rsn,
+        from_role: roleName, to_role: toRoleName, from_role_id: fromRoleId, to_role_id: toRoleId,
+        notes: 'Moved via WOM departure check',
+      }),
+    })
+    if (!promoRes.ok) { setError('Failed to update Discord role'); setSaving(false); return }
+    await fetch('/api/admin/wom-departures', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discord_id: alert.discord_id, rsn: alert.rsn }),
+    })
+    onResolved(alert.discord_id)
+  }
+
+  return (
+    <li className="px-4 py-2.5 flex items-center gap-3 flex-wrap">
+      <div className="flex-1 min-w-[140px]">
+        <span className="text-sm text-[#e8e8f0]">{displayName ?? alert.discord_id}</span>
+        <span className="text-xs text-[#7878a8] block">⚔️ {alert.rsn}{roleName ? ` · currently @${roleName}` : ''}</span>
+      </div>
+      <select value={toRoleId} onChange={e => setToRoleId(e.target.value)}
+        className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
+        {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+      </select>
+      <button onClick={move} disabled={saving || !toRoleId}
+        className="text-xs px-3 py-1.5 rounded-lg bg-[#7c5ce8] text-white font-semibold hover:bg-[#6a4fd6] disabled:opacity-40 transition-colors shrink-0">
+        {saving ? 'Moving…' : `Move to Role`}
+      </button>
+      {error && <span className="text-xs text-[#ED4245]">{error}</span>}
+    </li>
+  )
+}
+
 type Props = {
   initialLinks: LinkRow[]
   discordActivity: DiscordActivity[]
@@ -31,6 +82,8 @@ type Props = {
   vcActivity: VcActivity[]
   initialNotes: MemberNote[]
   absences: Absence[]
+  roles: Role[]
+  initialWomLeftAlerts: WomLeftAlert[]
 }
 
 function activityScore(discordId: string, discord: DiscordActivity[], ingame: IngameActivity[], vc: VcActivity[], links: LinkRow[]) {
@@ -41,10 +94,11 @@ function activityScore(discordId: string, discord: DiscordActivity[], ingame: In
   return Math.round((d?.month_count ?? 0) + ig * 2 + (v?.month_minutes ?? 0) * 0.1)
 }
 
-export default function MembersPanel({ initialLinks, discordActivity, ingameActivity, vcActivity, initialNotes, absences }: Props) {
+export default function MembersPanel({ initialLinks, discordActivity, ingameActivity, vcActivity, initialNotes, absences, roles, initialWomLeftAlerts }: Props) {
   const [tab, setTab] = useState<'links' | 'inactives'>('links')
   const [links, setLinks] = useState<LinkRow[]>(initialLinks)
   const [notes, setNotes] = useState<MemberNote[]>(initialNotes)
+  const [womLeftAlerts, setWomLeftAlerts] = useState<WomLeftAlert[]>(initialWomLeftAlerts)
   const [linkSearch, setLinkSearch] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editRsn, setEditRsn] = useState('')
@@ -167,10 +221,28 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
   return (
     <div className="space-y-6">
       {/* WOM departure check */}
-      <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">WOM Moderation</h2>
-        <p className="text-xs text-[#7878a8] mb-4">Checks for members no longer in the WOM group who still have Discord roles. Runs automatically each WOM sync; click to trigger immediately.</p>
-        <WomSyncButton />
+      <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">
+        <div className="p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c] mb-1">WOM Moderation</h2>
+          <p className="text-xs text-[#7878a8] mb-4">Checks for members no longer in the WOM group who still have Discord roles. Runs automatically each WOM sync; click to trigger immediately.</p>
+          <WomSyncButton />
+        </div>
+        {womLeftAlerts.length > 0 && (
+          <div className="border-t border-[#333358]">
+            <div className="px-5 py-2 border-b border-[#1c1c36]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#7878a8]">Awaiting Action ({womLeftAlerts.length}) — Kick/Dismiss is in the mod channel; move them to a role here</p>
+            </div>
+            <ul className="divide-y divide-[#1c1c36]">
+              {womLeftAlerts.map(a => {
+                const member = discordActivity.find(d => d.discord_id === a.discord_id)
+                return (
+                  <WomDepartureRow key={a.discord_id} alert={a} displayName={member?.display_name ?? null} roleName={member?.role_name ?? null} roles={roles}
+                    onResolved={discordId => setWomLeftAlerts(prev => prev.filter(x => x.discord_id !== discordId))} />
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </div>
       {/* Link form */}
       <div className="rounded-xl border border-[#333358] bg-[#161628] p-5">
