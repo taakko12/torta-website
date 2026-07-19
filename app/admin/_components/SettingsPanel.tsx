@@ -13,6 +13,15 @@ function JobToggle({ enabled, onClick }: { enabled: boolean; onClick: () => void
   )
 }
 
+const RECAP_SECTIONS = [
+  { key: 'discordChatters', label: '💬 Discord Chatters' },
+  { key: 'ingameChatters',  label: '⚔️ In-Game Chatters' },
+  { key: 'vcTime',          label: '🔊 VC Time' },
+  { key: 'topDrops',        label: '💰 Top Drops' },
+  { key: 'deaths',          label: '💀 Deaths' },
+] as const
+type RecapSectionKey = typeof RECAP_SECTIONS[number]['key']
+
 const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['TrackScape Clan Chat',        'clanchat_channel_id',              'In-game clan chat relay'],
   ['TrackScape Broadcasts',       'broadcast_channel_id',             'Drops, pets, quests, achievements'],
@@ -43,8 +52,9 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
 
   type DayHourJob  = { day: number; hour: number; enabled: boolean }
   type DomHourJob  = { dayOfMonth: number; hour: number; enabled: boolean }
+  type WeeklyRecapJob = DayHourJob & { sections: Record<RecapSectionKey, boolean> }
   type SchedJobs = {
-    weeklyRecap:   DayHourJob
+    weeklyRecap:   WeeklyRecapJob
     modRecap:      DayHourJob
     pollRoll:      DayHourJob
     monthlyReset:  DomHourJob
@@ -52,7 +62,7 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
     vcFlush:       { intervalMinutes: number; enabled: boolean }
   }
   const SCHED_DEFAULTS: SchedJobs = {
-    weeklyRecap:  { day: 0, hour: 20, enabled: true },
+    weeklyRecap:  { day: 0, hour: 20, enabled: true, sections: { discordChatters: true, ingameChatters: true, vcTime: true, topDrops: true, deaths: true } },
     modRecap:     { day: 1, hour: 9,  enabled: true },
     pollRoll:     { day: 6, hour: 12, enabled: true },
     monthlyReset: { dayOfMonth: 1, hour: 0, enabled: true },
@@ -92,6 +102,15 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
     await fetch('/api/admin/scheduled-jobs', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, ...nextJob }),
+    })
+  }
+
+  async function toggleRecapSection(section: RecapSectionKey) {
+    const nextJob = { ...schedJobs.weeklyRecap, sections: { ...schedJobs.weeklyRecap.sections, [section]: !schedJobs.weeklyRecap.sections[section] } }
+    setSchedJobs(j => ({ ...j, weeklyRecap: nextJob }))
+    await fetch('/api/admin/scheduled-jobs', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'weeklyRecap', ...nextJob }),
     })
   }
 
@@ -327,6 +346,20 @@ export default function SettingsPanel({ config: initialConfig, channels, roles }
                   </button>
                   {schedMsg[key] && <span className="text-xs text-[#57F287]">{schedMsg[key]}</span>}
                 </div>
+                {key === 'weeklyRecap' && (
+                  <div className="flex items-center gap-2 ml-8 mt-2 flex-wrap">
+                    <span className="text-xs text-[#9898c0]">Sections:</span>
+                    {RECAP_SECTIONS.map(({ key: sk, label }) => {
+                      const active = schedJobs.weeklyRecap.sections[sk] !== false
+                      return (
+                        <button key={sk} onClick={() => toggleRecapSection(sk)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${active ? 'bg-[#7c5ce8]/20 border-[#7c5ce8]/40 text-[#b0a0ff]' : 'border-[#333358] text-[#5a5a7a] hover:text-[#9898c0]'}`}>
+                          {active ? label : `${label} (off)`}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })}
