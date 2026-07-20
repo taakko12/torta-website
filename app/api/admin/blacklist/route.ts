@@ -1,25 +1,20 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin().from('blacklist').select('*').eq('guild_id', GUILD_ID).order('created_at', { ascending: false })
   return NextResponse.json({ entries: data ?? [] })
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, rsn, reason } = await req.json()
   if (!reason?.trim()) return NextResponse.json({ error: 'reason required' }, { status: 400 })
   if (!discord_id && !rsn) return NextResponse.json({ error: 'discord_id or rsn required' }, { status: 400 })
@@ -36,8 +31,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('blacklist').delete().eq('id', id).eq('guild_id', GUILD_ID)
   logAdminAction(session, 'blacklist', 'remove', String(id))

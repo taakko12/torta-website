@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
-
-async function auth() {
-  const s = await getServerSession()
-  if (!s || !await isAdmin(s.discordId!)) return null
-  return s
-}
 
 async function dmUser(discordId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN
@@ -31,7 +25,8 @@ async function dmUser(discordId: string, content: string) {
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin()
     .from('drop_submissions')
     .select('*')
@@ -42,8 +37,8 @@ export async function GET() {
 
 // PATCH: approve (inserts into drops table) or reject
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id, action } = await req.json()
   const db = getSupabaseAdmin()
   const { data: sub } = await db.from('drop_submissions').select('*').eq('id', id).eq('guild_id', GUILD_ID).single()
@@ -75,7 +70,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('drop_submissions').delete().eq('id', id).eq('guild_id', GUILD_ID)
   return NextResponse.json({ ok: true })

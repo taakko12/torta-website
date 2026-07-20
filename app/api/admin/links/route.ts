@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const db = getSupabaseAdmin()
   const [{ data: links }, { data: activity }] = await Promise.all([
     db.from('rsn_links').select('discord_id, rsn, linked_at, primary_rsn').eq('guild_id', GUILD_ID).order('primary_rsn', { ascending: false }).order('linked_at', { ascending: false }),
@@ -25,7 +19,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, rsn } = await req.json()
   if (!discord_id?.trim() || !rsn?.trim()) return NextResponse.json({ error: 'discord_id and rsn required' }, { status: 400 })
 
@@ -45,7 +40,8 @@ export async function POST(req: Request) {
 
 // Set a specific RSN as primary for a Discord user
 export async function PATCH(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, rsn } = await req.json()
   if (!discord_id || !rsn) return NextResponse.json({ error: 'discord_id and rsn required' }, { status: 400 })
 
@@ -57,7 +53,8 @@ export async function PATCH(req: Request) {
 
 // Delete a specific RSN link; if it was primary, auto-promote the next one
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, rsn } = await req.json()
   if (!discord_id) return NextResponse.json({ error: 'discord_id required' }, { status: 400 })
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
@@ -9,13 +9,6 @@ type PanelRole = { roleId: string; emoji: string; label: string }
 type Panel = { channelId: string | null; messageId: string | null; roles: PanelRole[] }
 
 const DEFAULT_PANEL: Panel = { channelId: null, messageId: null, roles: [] }
-
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
 
 function buildPanelBody(roles: PanelRole[]) {
   const desc = roles.length === 0
@@ -72,7 +65,8 @@ async function savePanel(panel: Panel) {
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin().from('guild_config')
     .select('role_panel_config').eq('guild_id', GUILD_ID).maybeSingle()
   return NextResponse.json({ panel: data?.role_panel_config ?? DEFAULT_PANEL })
@@ -80,7 +74,8 @@ export async function GET() {
 
 // Add a role to the panel
 export async function POST(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { roleId, emoji, label } = await req.json()
   if (!roleId || !emoji) return NextResponse.json({ error: 'roleId and emoji required' }, { status: 400 })
 
@@ -105,7 +100,8 @@ export async function POST(req: Request) {
 
 // Remove a role from the panel
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { roleId } = await req.json()
 
   const { data } = await getSupabaseAdmin().from('guild_config')
@@ -124,7 +120,8 @@ export async function DELETE(req: Request) {
 
 // Post/repost the panel to a channel
 export async function PATCH(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { channelId } = await req.json()
   if (!channelId) return NextResponse.json({ error: 'channelId required' }, { status: 400 })
 

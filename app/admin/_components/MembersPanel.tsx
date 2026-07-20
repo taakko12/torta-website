@@ -1,6 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
 import type { LinkRow, DiscordActivity, IngameActivity, VcActivity, MemberNote, Absence, Role, WomLeftAlert } from '../_lib/data'
+import { FIELD } from './ui'
 
 function WomSyncButton() {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
@@ -214,7 +215,7 @@ export default function MembersPanel({ initialLinks, discordActivity, ingameActi
   const unlinkedDiscord = useMemo(() => discordActivity.filter(d => !linkedDiscordIds.has(d.discord_id)), [discordActivity, linkedDiscordIds])
   const unlinkedIngame = useMemo(() => ingameActivity.filter(i => !linkedRsns.has(i.rsn.toLowerCase())), [ingameActivity, linkedRsns])
 
-  const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
+  const inp = FIELD
   const tabCls = (t: typeof tab) =>
     `px-4 py-2 text-sm font-medium transition-colors border-b-2 ${tab === t ? 'border-[#c89b3c] text-[#c89b3c]' : 'border-transparent text-[#7878a8] hover:text-[#e8e8f0]'}`
 

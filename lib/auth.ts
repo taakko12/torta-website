@@ -1,6 +1,7 @@
-import type { NextAuthOptions } from 'next-auth'
+import type { NextAuthOptions, Session } from 'next-auth'
 import { getServerSession as _get } from 'next-auth'
 import DiscordProvider from 'next-auth/providers/discord'
+import { NextResponse } from 'next/server'
 
 declare module 'next-auth' {
   interface Session { discordId?: string; isAdmin?: boolean }
@@ -34,6 +35,15 @@ export const authOptions: NextAuthOptions = {
 }
 
 export const getServerSession = () => _get(authOptions)
+
+// Shared admin-gate for API routes: `const session = await requireAdminSession(); if (session instanceof NextResponse) return session`
+export async function requireAdminSession(): Promise<Session | NextResponse> {
+  const session = await getServerSession()
+  if (!session || !await isAdmin(session.discordId!)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return session
+}
 
 export async function isAdmin(discordId: string): Promise<boolean> {
   const guildId = process.env.NEXT_PUBLIC_GUILD_ID!

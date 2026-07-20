@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const HISTORY_SIZE = 5
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const type = new URL(req.url).searchParams.get('type')
   if (!type) return NextResponse.json({ error: 'type required' }, { status: 400 })
   const { data } = await getSupabaseAdmin()
@@ -28,7 +23,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { poll_type, metric } = await req.json()
   if (!poll_type || !metric) return NextResponse.json({ error: 'poll_type and metric required' }, { status: 400 })
   const { error } = await getSupabaseAdmin().from('comp_picks').insert({ guild_id: GUILD_ID, poll_type, metric: metric.trim().toLowerCase() })
@@ -37,7 +33,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('comp_picks').delete().eq('id', id).eq('guild_id', GUILD_ID)
   return NextResponse.json({ ok: true })

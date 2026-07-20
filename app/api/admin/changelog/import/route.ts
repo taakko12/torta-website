@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 
 const REPOS = [
   { slug: 'taakko12/torta-website', label: 'Website' },
@@ -21,10 +21,8 @@ function parseCommit(message: string, repoLabel: string) {
 }
 
 export async function GET() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const token = process.env.GITHUB_TOKEN
   const headers: Record<string, string> = { Accept: 'application/vnd.github+json' }

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import type { Channel, GuildConfig } from '../_lib/data'
+import { CARD, FIELD_SM } from './ui'
 
 type Props = { config: GuildConfig; channels: Channel[]; saveConfig: (patch: Partial<GuildConfig>) => void }
 
@@ -35,8 +36,8 @@ export default function SettingsContentTab({ config, channels, saveConfig }: Pro
       : `❌ ${data.error}`)
   }
 
-  const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
-  const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
+  const card = CARD
+  const inp2 = FIELD_SM
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
   return (

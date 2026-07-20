@@ -1,5 +1,6 @@
 'use client'
 import type { Channel, GuildConfig } from '../_lib/data'
+import { FIELD } from './ui'
 
 const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['TrackScape Clan Chat',        'clanchat_channel_id',              'In-game clan chat relay'],
@@ -19,7 +20,7 @@ const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
 type Props = { config: GuildConfig; channels: Channel[]; saveConfig: (patch: Partial<GuildConfig>) => void }
 
 export default function SettingsChannelsTab({ config, channels, saveConfig }: Props) {
-  const sel = 'flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
+  const sel = `flex-1 ${FIELD}`
 
   return (
     <div className="rounded-xl border border-[#333358] bg-[#161628] overflow-hidden">

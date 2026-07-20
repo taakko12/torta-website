@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import type { Channel, Role, GuildConfig, RolePanel } from '../_lib/data'
+import { CARD, FIELD } from './ui'
 
 type Props = { config: GuildConfig; channels: Channel[]; roles: Role[]; saveConfig: (patch: Partial<GuildConfig>) => void }
 
@@ -38,8 +39,8 @@ export default function SettingsRolesTab({ config, channels, roles, saveConfig }
     if (res.ok) { const data = await res.json(); setRolePanel(data.panel) }
   }
 
-  const sel = 'flex-1 rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
-  const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
+  const sel = `flex-1 ${FIELD}`
+  const card = CARD
 
   return (
     <div className="space-y-6">

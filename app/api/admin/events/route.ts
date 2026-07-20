@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { searchParams } = new URL(req.url)
   const eventId = searchParams.get('rsvps')
 
@@ -30,8 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { title, description, event_type, scheduled_at, channel_id } = await req.json()
   if (!title?.trim() || !channel_id) return NextResponse.json({ error: 'title and channel_id required' }, { status: 400 })
@@ -70,15 +64,16 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { event_id, discord_id, attended } = await req.json()
   await getSupabaseAdmin().from('event_rsvps').update({ attended }).eq('event_id', event_id).eq('discord_id', discord_id)
   return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id, title } = await req.json()
   await getSupabaseAdmin().from('clan_events').delete().eq('id', id).eq('guild_id', GUILD_ID)
   logAdminAction(session, 'events', 'delete', title ?? id)

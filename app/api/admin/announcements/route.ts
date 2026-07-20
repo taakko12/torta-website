@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-async function auth() {
-  const s = await getServerSession()
-  if (!s || !await isAdmin(s.discordId!)) return null
-  return s
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin()
     .from('scheduled_announcements')
     .select('id, channel_id, message, scheduled_at, sent_at, created_by, created_at')
@@ -21,8 +16,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { channel_id, message, scheduled_at } = await req.json()
   if (!channel_id || !message?.trim() || !scheduled_at) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   const { data, error } = await getSupabaseAdmin()
@@ -34,7 +29,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('scheduled_announcements').delete().eq('id', id).eq('guild_id', GUILD_ID)
   return NextResponse.json({ ok: true })

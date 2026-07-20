@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
-
-async function auth() {
-  const s = await getServerSession()
-  if (!s || !await isAdmin(s.discordId!)) return null
-  return s
-}
 
 async function botDm(userId: string, content: string) {
   const token = process.env.DISCORD_BOT_TOKEN
@@ -29,7 +23,8 @@ async function botDm(userId: string, content: string) {
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin()
     .from('applications')
     .select('*')
@@ -39,8 +34,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id, status, notes } = await req.json()
   const db = getSupabaseAdmin()
 
@@ -95,7 +90,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('applications').delete().eq('id', id).eq('guild_id', GUILD_ID)
   return NextResponse.json({ ok: true })

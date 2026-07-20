@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
@@ -15,15 +15,9 @@ const CATEGORY_COLORS: Record<string, number> = {
   'Event':        0x57F287,
 }
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin()
     .from('changelog')
     .select('*')
@@ -34,8 +28,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { title, content, category, channelId } = await req.json()
   if (!title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -79,8 +73,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('changelog').delete().eq('id', id).eq('guild_id', GUILD_ID)
   logAdminAction(session, 'changelog', 'delete', String(id))

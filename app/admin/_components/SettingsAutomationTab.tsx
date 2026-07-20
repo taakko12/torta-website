@@ -1,15 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import type { Channel, Role, GuildConfig } from '../_lib/data'
-
-function JobToggle({ enabled, onClick }: { enabled: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} title={enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}
-      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 transition-colors duration-200 ${enabled ? 'bg-[#57F287] border-[#57F287]' : 'bg-[#2a2a4a] border-[#333358]'}`}>
-      <span className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-    </button>
-  )
-}
+import { CARD, FIELD_SM, Toggle } from './ui'
 
 const RECAP_SECTIONS = [
   { key: 'discordChatters', label: '💬 Discord Chatters' },
@@ -96,8 +88,8 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
     })
   }
 
-  const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
-  const inp2 = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60'
+  const card = CARD
+  const inp2 = FIELD_SM
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
   return (
@@ -128,7 +120,7 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
                   {ch
                     ? <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-[#7c5ce8]/10 text-[#b09cf8] border border-[#7c5ce8]/20">#{ch.name}</span>
                     : <span className="shrink-0 text-xs text-[#9898c0]">Channel not set</span>}
-                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled(key)} />
+                  <Toggle on={job.enabled} onClick={() => toggleJobEnabled(key)} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">Every</span>
@@ -174,7 +166,7 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
                     <div className="text-sm font-medium text-[#e8e8f0]">Monthly Activity Reset</div>
                     <div className="text-xs text-[#9898c0] mt-0.5">Zeros out monthly message and VC counts.</div>
                   </div>
-                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled('monthlyReset')} />
+                  <Toggle on={job.enabled} onClick={() => toggleJobEnabled('monthlyReset')} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">On the</span>
@@ -246,7 +238,7 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
                     <div className="text-sm font-medium text-[#e8e8f0]">{name}</div>
                     <div className="text-xs text-[#9898c0] mt-0.5">{desc}</div>
                   </div>
-                  <JobToggle enabled={job.enabled} onClick={() => toggleJobEnabled(key)} />
+                  <Toggle on={job.enabled} onClick={() => toggleJobEnabled(key)} />
                 </div>
                 <div className="flex items-center gap-2 ml-8 flex-wrap">
                   <span className="text-xs text-[#9898c0]">Every</span>
@@ -278,12 +270,7 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
                 <p className="text-sm text-[#c0c0e0]">{label}</p>
                 <p className="text-xs text-[#5a5a7a]">{desc}</p>
               </div>
-              <button
-                onClick={() => saveConfig({ [key]: !config[key] })}
-                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 transition-colors duration-200 ${config[key] ? 'bg-[#57F287] border-[#57F287]' : 'bg-[#2a2a4a] border-[#333358]'}`}
-              >
-                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 mt-0.5 ${config[key] ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </button>
+              <Toggle on={!!config[key]} onClick={() => saveConfig({ [key]: !config[key] })} />
             </div>
           ))}
         </div>

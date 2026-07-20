@@ -1,17 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const BOT = process.env.DISCORD_BOT_TOKEN!
 const DISCORD = 'https://discord.com/api/v10'
-
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
 
 function fmtNumber(n: number) {
   return Math.round(n).toLocaleString('en-US')
@@ -39,7 +33,8 @@ async function editApprovalMessage(row: Record<string, unknown>, outcome: { labe
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const db = getSupabaseAdmin()
   const { data } = await db.from('comp_winners').select('*')
     .eq('guild_id', GUILD_ID).not('status', 'in', '(merged)').order('created_at', { ascending: false }).limit(50)
@@ -48,8 +43,8 @@ export async function GET() {
 
 // PATCH { id, action: 'approve'|'reject', discord_id? }
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id, action, discord_id } = await req.json()
   if (!id || !['approve', 'reject'].includes(action)) return NextResponse.json({ error: 'Invalid params' }, { status: 400 })
 

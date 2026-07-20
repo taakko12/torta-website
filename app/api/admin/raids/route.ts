@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const DISCORD_API = 'https://discord.com/api/v10'
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const now = Math.floor(Date.now() / 1000)
   const { data } = await getSupabaseAdmin().from('raids')
     .select('*').eq('guild_id', GUILD_ID).gt('timestamp', now - 86400).order('timestamp')
@@ -22,8 +16,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { name, timestamp, description, channel_id } = await req.json()
   if (!name?.trim() || !timestamp || !channel_id)
     return NextResponse.json({ error: 'name, timestamp, and channel_id required' }, { status: 400 })

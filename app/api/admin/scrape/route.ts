@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 export const maxDuration = 300
@@ -108,9 +108,8 @@ async function fetchMessages(channelId: string, afterSnowflake: string | null, t
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { period } = await req.json() as { period: 'month' | 'all' }
   const token = process.env.DISCORD_BOT_TOKEN!

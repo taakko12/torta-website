@@ -1,6 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
 import type { DiscordActivity, IngameActivity, VcActivity, LinkRow } from '../_lib/data'
+import { CARD } from './ui'
 
 type Props = {
   discord: DiscordActivity[]
@@ -158,7 +159,7 @@ export default function ActivityPanel({ discord, ingame, vc, links }: Props) {
   }
 
   const th = 'px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7878a8]'
-  const card = 'rounded-xl border border-[#333358] bg-[#161628] overflow-hidden'
+  const card = CARD
 
   return (
     <div className="space-y-4">

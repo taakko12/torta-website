@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { CARD, FIELD } from './ui'
 
 type Entry = { discord_id: string; display_name: string; wins: number }
 type Member = { discord_id: string; display_name: string | null }
@@ -155,8 +156,8 @@ export default function CompPanel() {
     fetch('/api/admin/comp').then(r => r.json()).then(setData) // pick up the new win count
   }
 
-  const card = 'rounded-xl border border-[#333358] bg-[#161628]'
-  const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
+  const card = CARD
+  const inp = FIELD
 
   if (!data) return <p className="text-sm text-[#7878a8] py-8 text-center">Loading…</p>
 

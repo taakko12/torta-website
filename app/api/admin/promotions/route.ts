@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
@@ -7,12 +7,6 @@ const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 const BOT = process.env.DISCORD_BOT_TOKEN!
 const DISCORD = 'https://discord.com/api/v10'
 const GUEST_ROLE_ID = process.env.GUEST_ROLE_ID || '1519867633069981818'
-
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
 
 async function swapRole(userId: string, fromRoleId: string | null, toRoleId: string): Promise<boolean> {
   const headers = { Authorization: `Bot ${BOT}` }
@@ -26,14 +20,15 @@ async function swapRole(userId: string, fromRoleId: string | null, toRoleId: str
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin().from('promotions').select('*').eq('guild_id', GUILD_ID).order('promoted_at', { ascending: false }).limit(200)
   return NextResponse.json({ promotions: data ?? [] })
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, display_name, rsn, from_role, to_role, from_role_id, to_role_id, notes } = await req.json()
   if (!to_role?.trim()) return NextResponse.json({ error: 'to_role required' }, { status: 400 })
 
@@ -59,8 +54,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('promotions').delete().eq('id', id).eq('guild_id', GUILD_ID)
   logAdminAction(session, 'promotions', 'delete', String(id))

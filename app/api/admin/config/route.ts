@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
@@ -9,22 +9,16 @@ const ALLOWED_ARR  = ['staff_role_names', 'recap_excluded_roles']
 const ALLOWED_NUM  = ['comp_poll_day', 'comp_poll_hour']
 const ALLOWED_BOOL = ['feedback_enabled', 'clanchat_tracking_enabled', 'vc_tracking_enabled']
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { data } = await getSupabaseAdmin().from('guild_config').select('*').eq('guild_id', GUILD_ID).maybeSingle()
   return NextResponse.json({ config: data ?? {} })
 }
 
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const body = await req.json()
   const patch: Record<string, unknown> = { guild_id: GUILD_ID }
   const changed: string[] = []

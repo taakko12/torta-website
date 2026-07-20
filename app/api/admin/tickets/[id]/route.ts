@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await params
   const db = getSupabaseAdmin()
   const [{ data: ticket }, { data: messages }] = await Promise.all([
@@ -24,8 +19,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await params
   const { status } = await req.json()
   await getSupabaseAdmin().from('tickets').update({

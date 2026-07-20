@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
@@ -16,12 +16,6 @@ const DEFAULTS = {
   compWinnerCheck: { intervalMinutes: 30, enabled: true },
 }
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 async function getGuildData() {
   const { data } = await getSupabaseAdmin().from('guild_data').select('data').eq('guild_id', GUILD_ID).single()
   return data?.data ?? {}
@@ -32,7 +26,8 @@ async function saveGuildData(data: object) {
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const data = await getGuildData()
   const stored = data.scheduledJobs ?? {}
   const result = Object.fromEntries(
@@ -42,7 +37,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const body = await req.json()
   const { key, ...values } = body
   if (!VALID_KEYS.includes(key)) return NextResponse.json({ error: 'Invalid key' }, { status: 400 })

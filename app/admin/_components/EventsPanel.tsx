@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { ClanEvent, Raid, Channel } from '../_lib/data'
 import type { Competition, CompetitionWithStandings } from '@/lib/wom'
 import { formatMetric } from '@/lib/wom'
+import { CARD, FIELD } from './ui'
 
 type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string; attended: boolean | null }
 type Props = {
@@ -79,8 +80,8 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
     }
   }
 
-  const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
-  const card = 'rounded-xl border border-[#333358] bg-[#161628]'
+  const inp = FIELD
+  const card = CARD
 
   return (
     <div className="space-y-6">

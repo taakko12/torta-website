@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { logAdminAction } from '@/lib/logAction'
 
 const BOT = process.env.DISCORD_BOT_TOKEN!
 const DISCORD = 'https://discord.com/api/v10'
 
 export async function POST(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { discord_id, display_name } = await req.json()
   if (!discord_id) return NextResponse.json({ error: 'discord_id required' }, { status: 400 })

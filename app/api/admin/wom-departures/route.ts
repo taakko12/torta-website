@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { discord_id, rsn } = await req.json()
   if (!discord_id) return NextResponse.json({ error: 'discord_id required' }, { status: 400 })

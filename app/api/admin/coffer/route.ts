@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
@@ -15,12 +15,6 @@ function buildEmbed(leaderboard: { player: string; net: number }[]) {
   return { title: '🏦 Clan Coffer Leaderboard', url: `${SITE}/feed?section=coffer`, description, color: 0xF39C12, timestamp: new Date().toISOString(), footer: { text: 'Updates automatically with each donation' } }
 }
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 function computeLeaderboard(deposits: { player: string; gp: number; action: string }[]) {
   const totals: Record<string, { player: string; net: number; deposited: number }> = {}
   for (const row of deposits) {
@@ -32,7 +26,8 @@ function computeLeaderboard(deposits: { player: string; gp: number; action: stri
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const db = getSupabaseAdmin()
   const [{ data: deposits }, { data: config }, { data: links }] = await Promise.all([
@@ -56,7 +51,8 @@ export async function GET() {
 }
 
 export async function POST() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const token = process.env.DISCORD_BOT_TOKEN
   if (!token) return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 })
 
@@ -94,8 +90,8 @@ export async function POST() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { player, gp, action } = await req.json()
   if (!player || !gp || !['deposited', 'withdrawn'].includes(action))
     return NextResponse.json({ error: 'player, gp, and action (deposited|withdrawn) are required' }, { status: 400 })
@@ -113,7 +109,8 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   const { error } = await getSupabaseAdmin().from('coffer_deposits').delete().eq('id', id).eq('guild_id', GUILD_ID)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

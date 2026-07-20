@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
@@ -27,9 +27,8 @@ const TOS_BUTTON = {
 }
 
 export async function POST() {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const token = process.env.DISCORD_BOT_TOKEN!
   const supabase = getSupabaseAdmin()

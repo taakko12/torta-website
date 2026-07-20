@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 
 export async function POST() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!))
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const botUrl = process.env.BOT_BASE_URL
   const secret = process.env.BOT_ADMIN_SECRET

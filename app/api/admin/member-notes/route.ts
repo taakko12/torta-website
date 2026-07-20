@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session) return null
-  if (!await isAdmin(session.discordId!)) return null
-  return session
-}
-
 export async function GET(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { searchParams } = new URL(req.url)
   const discordId = searchParams.get('discord_id')
   const query = getSupabaseAdmin().from('member_notes').select('*').eq('guild_id', GUILD_ID).order('created_at', { ascending: false })
@@ -22,8 +16,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { discord_id, note } = await req.json()
   if (!discord_id || !note?.trim()) return NextResponse.json({ error: 'discord_id and note required' }, { status: 400 })
   const { data, error } = await getSupabaseAdmin().from('member_notes').insert({
@@ -36,8 +30,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { id } = await req.json()
   await getSupabaseAdmin().from('member_notes').delete().eq('id', id).eq('guild_id', GUILD_ID)
   logAdminAction(session, 'member-notes', 'delete', String(id))

@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logAdminAction } from '@/lib/logAction'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession()
-  if (!session?.discordId || !(await isAdmin(session.discordId))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { from_rsn, to_rsn } = await req.json()
   if (!from_rsn || !to_rsn) return NextResponse.json({ error: 'from_rsn and to_rsn required' }, { status: 400 })

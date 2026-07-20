@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
@@ -30,12 +30,6 @@ async function pushLeaderboardEmbed(board: { users: Record<string, { wins: numbe
   }).catch(() => null)
 }
 
-async function auth() {
-  const session = await getServerSession()
-  if (!session || !await isAdmin(session.discordId!)) return null
-  return session
-}
-
 async function getGuildData() {
   const db = getSupabaseAdmin()
   const { data } = await db.from('guild_data').select('data').eq('guild_id', GUILD_ID).single()
@@ -51,7 +45,8 @@ async function saveGuildData(data: object) {
 }
 
 export async function GET() {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const db = getSupabaseAdmin()
   const [guildData, { data: discord }] = await Promise.all([
@@ -76,7 +71,8 @@ export async function GET() {
 
 // POST { type: 'botw'|'sotw', discord_id, action: 'add'|'remove'|'set', amount }
 export async function POST(req: Request) {
-  if (!await auth()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
   const { type, discord_id, action, amount } = await req.json()
   if (!['botw', 'sotw'].includes(type) || !discord_id || !['add', 'remove', 'set'].includes(action)) {
     return NextResponse.json({ error: 'Invalid params' }, { status: 400 })

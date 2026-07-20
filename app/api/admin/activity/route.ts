@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getServerSession, isAdmin } from '@/lib/auth'
+import { requireAdminSession } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
 export async function GET() {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const supabase = getSupabaseAdmin()
   const [{ data: discord }, { data: ingame }, { data: vc }, { data: links }] = await Promise.all([
@@ -24,9 +23,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!await isAdmin(session.discordId!)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const session = await requireAdminSession()
+  if (session instanceof NextResponse) return session
 
   const { discord_id, note } = await req.json()
   if (!discord_id) return NextResponse.json({ error: 'discord_id required' }, { status: 400 })
