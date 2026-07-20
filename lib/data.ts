@@ -271,6 +271,10 @@ export async function getCofferLeaderboard(): Promise<CofferLeaderboardEntry[]> 
 
 export async function getPlayerActivity(rsn: string): Promise<PlayerActivity> {
   const admin = getSupabaseAdmin()
+  const { data: config } = await admin.from('guild_config')
+    .select('clanchat_tracking_enabled').eq('guild_id', GUILD_ID).maybeSingle()
+  if (!config?.clanchat_tracking_enabled) return { ingame: null, discord: null }
+
   const [{ data: ingame }, { data: link }] = await Promise.all([
     admin.from('ingame_activity').select('message_count, month_count, last_message_at').eq('guild_id', GUILD_ID).ilike('rsn', rsn).maybeSingle(),
     admin.from('rsn_links').select('discord_id').eq('guild_id', GUILD_ID).ilike('rsn', rsn).maybeSingle(),

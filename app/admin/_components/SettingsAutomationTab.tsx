@@ -45,7 +45,7 @@ type SchedKey = keyof SchedJobs
 
 const FEATURES = [
   { key: 'feedback_enabled',          label: 'Feedback Form',          desc: 'Allow anyone to submit anonymous feedback at /feedback' },
-  { key: 'clanchat_tracking_enabled', label: 'In-Game Chat Tracking',  desc: 'Relay TrackScape clan chat to Discord and log activity' },
+  { key: 'clanchat_tracking_enabled', label: 'Chat Activity Tracking', desc: 'Relay TrackScape clan chat to Discord, log in-game + Discord message activity, and show it on player lookup pages' },
   { key: 'vc_tracking_enabled',       label: 'Voice Channel Tracking', desc: 'Track time members spend in voice channels' },
 ] as const
 
