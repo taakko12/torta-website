@@ -1,9 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ClanEvent, Raid, Channel } from '../_lib/data'
 import type { Competition, CompetitionWithStandings } from '@/lib/wom'
 import { formatMetric } from '@/lib/wom'
 import { CARD, FIELD } from './ui'
+
+// Preview what a date+time picked in the browser will actually mean, in the browser's own timezone.
+// Returns null until both fields are filled, so it never renders before the user has picked anything
+// (avoiding any server/client mismatch — this only ever runs in response to user input).
+function previewMoment(dateStr: string, timeStr: string): string | null {
+  if (!dateStr || !timeStr) return null
+  const d = new Date(`${dateStr}T${timeStr}`)
+  if (isNaN(d.getTime())) return null
+  const abs = d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  const diffMin = Math.round((d.getTime() - Date.now()) / 60_000)
+  const past = diffMin < 0
+  const n = Math.abs(diffMin)
+  const rel = n < 60 ? `${n} min` : n < 1440 ? `${Math.round(n / 60)} hr` : `${Math.round(n / 1440)} days`
+  return `${abs} — ${past ? `${rel} ago` : `in ${rel}`}`
+}
 
 type Rsvp = { discord_id: string; display_name: string | null; rsvped_at: string; attended: boolean | null }
 type Props = {
@@ -30,12 +45,18 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
   const [raidTime, setRaidTime] = useState('20:00')
   const [raidDesc, setRaidDesc] = useState('')
   const [raidChannel, setRaidChannel] = useState(channels[0]?.id ?? '')
+  const [localTz, setLocalTz] = useState('')
+
+  useEffect(() => { setLocalTz(Intl.DateTimeFormat().resolvedOptions().timeZone) }, [])
 
   async function createClanEvent() {
     if (!eventTitle.trim() || !eventChannel) return
+    // Convert in the browser so the picked wall-clock time is interpreted in the mod's own
+    // timezone, not re-interpreted as UTC once it reaches the server.
+    const scheduledAt = eventDateD ? new Date(`${eventDateD}T${eventTime}`).toISOString() : null
     const res = await fetch('/api/admin/events', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: eventDateD ? `${eventDateD}T${eventTime}` : null, channel_id: eventChannel }),
+      body: JSON.stringify({ title: eventTitle, description: eventDesc, event_type: eventType, scheduled_at: scheduledAt, channel_id: eventChannel }),
     })
     if (res.ok) {
       const { event } = await res.json()
@@ -124,11 +145,16 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
             {['Event', 'Raid', 'PvM Session', 'Social', 'Competition', 'Other'].map(t => <option key={t}>{t}</option>)}
           </select>
           <div>
-            <label className="text-xs text-[#9898c0] mb-1 block">Date &amp; Time</label>
+            <label className="text-xs text-[#9898c0] mb-1 block">
+              Date &amp; Time {localTz && <span className="text-[#5a5a7a]">({localTz} — your local time)</span>}
+            </label>
             <div className="flex gap-2">
               <input type="date" value={eventDateD} onChange={e => setEventDateD(e.target.value)} className={`flex-1 [color-scheme:dark] ${inp}`} />
               <input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
             </div>
+            {previewMoment(eventDateD, eventTime) && (
+              <p className="text-xs text-[#7c5ce8] mt-1.5">→ {previewMoment(eventDateD, eventTime)}</p>
+            )}
           </div>
           <select value={eventChannel} onChange={e => setEventChannel(e.target.value)} className={inp}>
             {channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
@@ -157,7 +183,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
                   <span className="text-sm font-medium text-[#e8e8f0]">{ev.title}</span>
                   <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-[#7c5ce8]/20 text-[#b09cf8]">{ev.event_type}</span>
                   <div className="text-xs text-[#7878a8] mt-0.5">
-                    {ev.scheduled_at ? new Date(ev.scheduled_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                    {ev.scheduled_at ? new Date(ev.scheduled_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : 'TBD'}
                   </div>
                 </div>
                 <button onClick={() => loadRsvps(ev.id)} className="text-xs text-[#9898c0] hover:text-[#e8e8f0] px-2 py-1 rounded border border-[#333358] hover:border-[#7878a8]">
@@ -193,7 +219,9 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
       <div className={`${card} overflow-hidden`}>
         <div className="px-5 py-3 border-b border-[#333358]">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">Schedule Raid</h2>
-          <p className="text-xs text-[#7878a8] mt-1">Posts a raid signup embed with Discord buttons.</p>
+          <p className="text-xs text-[#7878a8] mt-1">
+            Posts a raid signup embed with Discord buttons. {localTz && <span className="text-[#5a5a7a]">Times below are in your local timezone ({localTz}).</span>}
+          </p>
         </div>
         <div className="px-5 py-4 flex flex-col gap-3">
           <div className="flex gap-2 flex-wrap">
@@ -201,6 +229,9 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
             <input type="date" value={raidDate} onChange={e => setRaidDate(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
             <input type="time" value={raidTime} onChange={e => setRaidTime(e.target.value)} className={`[color-scheme:dark] ${inp}`} />
           </div>
+          {previewMoment(raidDate, raidTime) && (
+            <p className="text-xs text-[#7c5ce8] -mt-1.5">→ {previewMoment(raidDate, raidTime)}</p>
+          )}
           <input value={raidDesc} onChange={e => setRaidDesc(e.target.value)} placeholder="Details / notes (optional)" className={inp} />
           <div className="flex gap-3">
             <select value={raidChannel} onChange={e => setRaidChannel(e.target.value)} className={`flex-1 ${inp}`}>
@@ -222,7 +253,7 @@ export default function EventsPanel({ initialEvents, initialRaids, channels, act
               <div key={raid.id} className="px-5 py-3">
                 <div className="text-sm font-medium text-[#e8e8f0]">{raid.name}</div>
                 <div className="text-xs text-[#7878a8] mt-0.5">
-                  {new Date(raid.timestamp * 1000).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(raid.timestamp * 1000).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
                   {' · '}<span className="text-[#7c5ce8]">{raid.signups?.length ?? 0} signed up</span>
                   {raid.attendees && <span className="text-[#57F287] ml-2">✓ Complete</span>}
                 </div>

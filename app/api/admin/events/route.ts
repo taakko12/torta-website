@@ -43,9 +43,8 @@ export async function POST(req: Request) {
   // Post embed to Discord with RSVP buttons
   const token = process.env.DISCORD_BOT_TOKEN
   if (token) {
-    const dateStr = scheduled_at
-      ? new Date(scheduled_at).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC'
-      : 'TBD'
+    const ts = scheduled_at ? Math.floor(new Date(scheduled_at).getTime() / 1000) : null
+    const dateStr = ts ? `<t:${ts}:F> (<t:${ts}:R>)` : 'TBD'
     const res = await fetch(`${DISCORD_API}/channels/${channel_id}/messages`, {
       method: 'POST',
       headers: { Authorization: `Bot ${token}`, 'Content-Type': 'application/json' },
