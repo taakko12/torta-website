@@ -12,7 +12,7 @@ const CHANNEL_SETTINGS: [string, keyof GuildConfig, string][] = [
   ['Welcome Channel',             'welcome_channel_id',               'New member welcome messages'],
   ['Welcome Mod Channel',         'welcome_mod_channel_id',           'Staff review for welcomes'],
   ['Weekly Recap Channel',        'recap_channel_id',                 'Sunday activity recap post'],
-  ['Moderator Recap Channel',     'inactivity_channel_id',            'Monday moderator recap post'],
+  ['Moderator Recap Channel',     'inactivity_channel_id',            'Monday recap, WOM departures, feedback, and BOTW/SOTW winner approvals'],
   ['Changelog Channel',           'changelog_channel_id',             'Optional: post new changelog entries here'],
 ]
 

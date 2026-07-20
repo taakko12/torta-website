@@ -5,6 +5,12 @@ type Entry = { discord_id: string; display_name: string; wins: number }
 type Member = { discord_id: string; display_name: string | null }
 type Data = { botw: Entry[]; sotw: Entry[]; members: Member[] }
 type Pick = { id: number; metric: string; picked_at: string }
+type Winner = {
+  id: number; comp_type: 'botw' | 'sotw'; title: string; gained: number
+  winner_rsn: string | null; winner_discord_id: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'no_participants'
+  resolved_by_name: string | null
+}
 
 const LABELS = { botw: '💀 Boss of the Week', sotw: '📈 Skill of the Week' } as const
 type CompType = keyof typeof LABELS
@@ -13,6 +19,52 @@ const HISTORY_SIZE = 5
 
 function fmt(metric: string) {
   return metric.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function CompWinnerRow({ winner, members, onResolved }: { winner: Winner; members: Member[]; onResolved: (id: number) => void }) {
+  const [pickId, setPickId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const linkedName = winner.winner_discord_id ? (members.find(m => m.discord_id === winner.winner_discord_id)?.display_name ?? winner.winner_discord_id) : null
+  const unit = winner.comp_type === 'botw' ? 'kc' : 'xp'
+
+  async function resolve(action: 'approve' | 'reject', discordId?: string) {
+    setBusy(true); setError(null)
+    const res = await fetch('/api/admin/comp/winners', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: winner.id, action, discord_id: discordId }),
+    })
+    if (!res.ok) { const d = await res.json(); setError(d.error ?? 'Failed'); setBusy(false); return }
+    onResolved(winner.id)
+  }
+
+  return (
+    <li className="px-4 py-3 flex items-center gap-3 flex-wrap">
+      <span className="text-xl shrink-0">{winner.comp_type === 'botw' ? '💀' : '📈'}</span>
+      <div className="flex-1 min-w-[160px]">
+        <span className="text-sm text-[#e8e8f0]">{winner.title}</span>
+        <span className="text-xs text-[#7878a8] block">
+          {linkedName ? `${linkedName} (${winner.winner_rsn})` : `⚠️ No Discord link for RSN "${winner.winner_rsn}"`} — {Math.round(winner.gained).toLocaleString()} {unit}
+        </span>
+      </div>
+      {!linkedName && (
+        <select value={pickId} onChange={e => setPickId(e.target.value)}
+          className="rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-2 py-1.5 text-xs outline-none focus:border-[#7c5ce8]/60">
+          <option value="">Select member…</option>
+          {members.map(m => <option key={m.discord_id} value={m.discord_id}>{m.display_name ?? m.discord_id}</option>)}
+        </select>
+      )}
+      <button onClick={() => resolve('approve', linkedName ? undefined : pickId)} disabled={busy || (!linkedName && !pickId)}
+        className="text-xs px-3 py-1.5 rounded-lg bg-[#57F287]/20 border border-[#57F287]/40 text-[#57F287] font-semibold hover:bg-[#57F287]/30 disabled:opacity-40 transition-colors shrink-0">
+        {linkedName ? '✅ Approve' : '✅ Assign & Approve'}
+      </button>
+      <button onClick={() => resolve('reject')} disabled={busy}
+        className="text-xs px-3 py-1.5 rounded-lg bg-[#ED4245]/20 border border-[#ED4245]/40 text-[#ED4245] font-semibold hover:bg-[#ED4245]/30 disabled:opacity-40 transition-colors shrink-0">
+        ❌ Reject
+      </button>
+      {error && <span className="text-xs text-[#ED4245] w-full">{error}</span>}
+    </li>
+  )
 }
 
 export default function CompPanel() {
@@ -26,9 +78,11 @@ export default function CompPanel() {
   const [newMetric, setNewMetric] = useState('')
   const [picksLoading, setPicksLoading] = useState(false)
   const [picksError, setPicksError] = useState<string | null>(null)
+  const [winners, setWinners] = useState<Winner[]>([])
 
   useEffect(() => {
     fetch('/api/admin/comp').then(r => r.json()).then(setData)
+    fetch('/api/admin/comp/winners').then(r => r.json()).then(d => setWinners(d.winners ?? []))
   }, [])
 
   useEffect(() => {
@@ -96,6 +150,11 @@ export default function CompPanel() {
     setTimeout(() => setMsg(''), 2000)
   }
 
+  function onWinnerResolved(id: number) {
+    setWinners(prev => prev.filter(w => w.id !== id))
+    fetch('/api/admin/comp').then(r => r.json()).then(setData) // pick up the new win count
+  }
+
   const card = 'rounded-xl border border-[#333358] bg-[#161628]'
   const inp = 'rounded-lg bg-[#1c1c36] border border-[#333358] text-[#e8e8f0] px-3 py-2 text-sm outline-none focus:border-[#7c5ce8]/60'
 
@@ -104,8 +163,27 @@ export default function CompPanel() {
   const board = data[tab]
   const medals = ['🥇', '🥈', '🥉']
 
+  const pendingWinners = winners.filter(w => w.status === 'pending')
+
   return (
     <div className="space-y-6">
+      {/* Pending winner approvals */}
+      {pendingWinners.length > 0 && (
+        <div className={`${card} overflow-hidden border-[#c89b3c]/40`}>
+          <div className="px-5 py-3 border-b border-[#333358]">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#c89b3c]">
+              🏆 Pending Winner Approvals <span className="text-[#7878a8] normal-case font-normal">({pendingWinners.length})</span>
+            </h2>
+            <p className="text-[10px] text-[#5a5a7a] mt-0.5">Auto-detected from ended WOM competitions. Also postable in the mod channel — either surface resolves it.</p>
+          </div>
+          <ul className="divide-y divide-[#1c1c36]">
+            {pendingWinners.map(w => (
+              <CompWinnerRow key={w.id} winner={w} members={data.members} onResolved={onWinnerResolved} />
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Tab nav */}
       <div className="flex gap-2">
         {(Object.keys(LABELS) as CompType[]).map(t => (

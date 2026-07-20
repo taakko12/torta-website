@@ -24,20 +24,22 @@ type DayHourJob  = { day: number; hour: number; enabled: boolean }
 type DomHourJob  = { dayOfMonth: number; hour: number; enabled: boolean }
 type WeeklyRecapJob = DayHourJob & { sections: Record<RecapSectionKey, boolean> }
 type SchedJobs = {
-  weeklyRecap:   WeeklyRecapJob
-  modRecap:      DayHourJob
-  pollRoll:      DayHourJob
-  monthlyReset:  DomHourJob
-  womSync:       { intervalHours: number; enabled: boolean }
-  vcFlush:       { intervalMinutes: number; enabled: boolean }
+  weeklyRecap:      WeeklyRecapJob
+  modRecap:         DayHourJob
+  pollRoll:         DayHourJob
+  monthlyReset:     DomHourJob
+  womSync:          { intervalHours: number; enabled: boolean }
+  vcFlush:          { intervalMinutes: number; enabled: boolean }
+  compWinnerCheck:  { intervalMinutes: number; enabled: boolean }
 }
 const SCHED_DEFAULTS: SchedJobs = {
-  weeklyRecap:  { day: 0, hour: 20, enabled: true, sections: { discordChatters: true, ingameChatters: true, vcTime: true, topDrops: true, deaths: true } },
-  modRecap:     { day: 1, hour: 9,  enabled: true },
-  pollRoll:     { day: 6, hour: 12, enabled: true },
-  monthlyReset: { dayOfMonth: 1, hour: 0, enabled: true },
-  womSync:      { intervalHours: 1, enabled: true },
-  vcFlush:      { intervalMinutes: 5, enabled: true },
+  weeklyRecap:     { day: 0, hour: 20, enabled: true, sections: { discordChatters: true, ingameChatters: true, vcTime: true, topDrops: true, deaths: true } },
+  modRecap:        { day: 1, hour: 9,  enabled: true },
+  pollRoll:        { day: 6, hour: 12, enabled: true },
+  monthlyReset:    { dayOfMonth: 1, hour: 0, enabled: true },
+  womSync:         { intervalHours: 1, enabled: true },
+  vcFlush:         { intervalMinutes: 5, enabled: true },
+  compWinnerCheck: { intervalMinutes: 30, enabled: true },
 }
 type SchedKey = keyof SchedJobs
 
@@ -233,6 +235,7 @@ export default function SettingsAutomationTab({ config, channels, roles, saveCon
           {([
             { key: 'womSync' as const, icon: '🔄', name: 'WOM Group Sync',  desc: 'Syncs member RSNs with Wise Old Man.', intervalKey: 'intervalHours' as const,   label: 'hours',   opts: [1,2,4,6,12,24] },
             { key: 'vcFlush' as const, icon: '🎙️', name: 'VC Session Flush', desc: 'Commits active voice session time to DB.', intervalKey: 'intervalMinutes' as const, label: 'min', opts: [1,5,10,15,30] },
+            { key: 'compWinnerCheck' as const, icon: '🏆', name: 'BOTW/SOTW Winner Check', desc: 'Detects ended competitions and posts a winner approval request.', intervalKey: 'intervalMinutes' as const, label: 'min', opts: [15,30,60,120] },
           ]).map(({ key, icon, name, desc, intervalKey, label, opts }) => {
             const job = schedJobs[key] as unknown as Record<string, number> & { enabled: boolean }
             return (

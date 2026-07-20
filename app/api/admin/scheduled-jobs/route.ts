@@ -4,15 +4,16 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const GUILD_ID = process.env.NEXT_PUBLIC_GUILD_ID!
 
-const VALID_KEYS = ['weeklyRecap','modRecap','pollRoll','monthlyReset','womSync','vcFlush']
+const VALID_KEYS = ['weeklyRecap','modRecap','pollRoll','monthlyReset','womSync','vcFlush','compWinnerCheck']
 
 const DEFAULTS = {
-  weeklyRecap:  { day: 0, hour: 20, enabled: true, sections: { discordChatters: true, ingameChatters: true, vcTime: true, topDrops: true, deaths: true } },
-  modRecap:     { day: 1, hour: 9,  enabled: true },
-  pollRoll:     { day: 6, hour: 12, enabled: true },
-  monthlyReset: { dayOfMonth: 1, hour: 0, enabled: true },
-  womSync:      { intervalHours: 1, enabled: true },
-  vcFlush:      { intervalMinutes: 5, enabled: true },
+  weeklyRecap:     { day: 0, hour: 20, enabled: true, sections: { discordChatters: true, ingameChatters: true, vcTime: true, topDrops: true, deaths: true } },
+  modRecap:        { day: 1, hour: 9,  enabled: true },
+  pollRoll:        { day: 6, hour: 12, enabled: true },
+  monthlyReset:    { dayOfMonth: 1, hour: 0, enabled: true },
+  womSync:         { intervalHours: 1, enabled: true },
+  vcFlush:         { intervalMinutes: 5, enabled: true },
+  compWinnerCheck: { intervalMinutes: 30, enabled: true },
 }
 
 async function auth() {
